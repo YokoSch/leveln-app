@@ -1,17 +1,12 @@
-# Progress 0.3 — Play your day
+# Progress 0.4 — Play your day
 
-**Lokale iPhone-PWA**, ohne Cloud-Account oder Backend-Datenbank. Zur erstmaligen Bereitstellung und für Aktualisierungen werden ausschließlich die statischen App-Dateien über GitHub Pages geladen. Persönliche Einträge werden über IndexedDB auf dem jeweiligen Gerät gespeichert. Keine Tracker, externen Skripte oder Schrift-CDNs.
+Private, lokal speichernde iPhone-Web-App (PWA). **Version 0.4, 28. Oktober 2026.**
 
-## Vor dem Update von 0.1 oder 0.2
+## Unbedingt vor dem Update
 
-1. **Unbedingt zuerst in der alten App unter Einstellungen/Optionen → Backup exportieren eine JSON-Sicherung erstellen.** Datei sicher in der Dateien-App aufbewahren.
-2. **Dasselbe Repository und dieselbe GitHub-Pages-Adresse** wie bisher behalten. Progress 0.3 verwendet die bereits existierende Datenbank `progress-private-v1` und dieselben vier Objektspeicher (`activities`, `entries`, `overrides`, `meta`). Vorhandene Einträge werden nicht bei der Installation gelöscht.
-3. **Die installierte Home-Bildschirm-App zunächst nicht löschen**, bis die Daten in 0.3 und ein Backup kontrolliert wurden. Neue Home-Bildschirm-Installationen können unter iOS getrennte lokale Speicherbereiche verwenden.
-4. Backups aus 0.1/0.2 mit `format: progress-local-backup` und `version: 1` werden unterstützt. 0.3 exportiert weiterhin dieses Format, erweitert aber Einträge/Aktivitäten um optionale Eigenschaften.
-
-## GitHub Pages aktualisieren
-
-Das ZIP entpacken. Die folgenden Dateien **in die Wurzel des bereits existierenden GitHub-Repositories** hochladen und gleichnamige Dateien ersetzen:
+1. In deiner **bisherigen installierten Progress-App** unter **Optionen → JSON-Backup exportieren** eine Sicherung erstellen und in **Dateien → Auf meinem iPhone** (oder an einem anderen selbst gewählten sicheren Ort) ablegen.
+2. Die **bestehende Home-Bildschirm-App nicht löschen**. iOS kann getrennte lokale Datenbereiche für verschiedene Installationen verwenden.
+3. Das ZIP entpacken und die Dateien in das **gleiche öffentliche GitHub-Repository**, in **das gleiche Verzeichnis** wie bisher hochladen (Ordnerstruktur erhalten):
 
 ```
 index.html
@@ -19,54 +14,70 @@ app.js
 styles.css
 sw.js
 manifest.webmanifest
-icons/icon.svg
 icons/icon-180.png
 icons/icon-192.png
 icons/icon-512.png
+icons/icon.svg
 ```
 
-Bei GitHub Pages weiterhin `Settings → Pages → Deploy from a branch → main → /(root)` nutzen. Wenn das Repository schon veröffentlicht ist, muss Pages nicht erneut eingerichtet werden. Die HTTPS-Adresse bleibt unverändert. Bei altem Cache die PWA schließen, in Safari neu laden und erneut öffnen. Service Worker aktualisiert sich online netzwerkbevorzugt und stellt die bekannten Dateien auch offline bereit.
+4. Unter GitHub Pages dieselbe HTTPS-Adresse weiterverwenden. Die PWA schließen und erneut öffnen. Wegen Safari-/Service-Worker-Cache kann ein weiterer Online-Neustart nötig sein.
+5. Aktivitäten und Einträge kontrollieren. **Erst danach** weiterverwenden. Für einen möglichen Rückweg die alte ZIP-Datei und das ursprüngliche Backup behalten.
 
-**Wichtig zum neuen Icon:** Bereits installierte iPhone-Web-Apps übernehmen neue Icons möglicherweise nicht automatisch. Vor dem Entfernen der alten Home-Bildschirm-App unbedingt ein Backup exportieren und die Datensätze in der neuen Installation verifizieren.
+**Privat:** Deine persönlichen Tagesdaten/Kommentare bleiben in IndexedDB auf dem iPhone. Über GitHub Pages werden nur die statischen HTML-, CSS-, JavaScript- und Icon-Dateien bereitgestellt. Keine Drittanbieter-CDNs, kein Login und keine externen Analyse-Skripte. **Ein JSON-Backup ist unverschlüsselt**; bitte niemals ins öffentliche GitHub-Repository hochladen.
 
 ## Bedienung
 
-### Heute
-- Nur eine große Aktivitätskarte vorn. Bis zu zwei nachfolgende Karten zeigen ihre Titel als sichtbare Stapelstreifen. `x/y` zeigt die Position innerhalb der **noch offenen** Karten.
-- **Links/rechts wischen:** offene Karten wechseln. Über die kleinen Pfeile am Datum kann man wochenweise zurück/vor navigieren; die sieben Tagesfelder wechseln den ausgewählten Tag.
-- **Nach oben wischen:** Ziel erreicht. Die Karte wird für den Tag ausgespielt. Für *Leveln* werden eindeutig erreichte tägliche Mindestmengen bereits gutgeschrieben. Bei rein wöchentlichen Anzahlzielen gilt ein erfolgreicher Tag als **eine Einheit**.
-- **Nach unten wischen:** nicht erreicht. Keine Paketphase und keine unmittelbare XP-Gutschrift.
-- Bei einem erfolgreichen Swipe werden passende **Minutenpakete** (`1, 5, 10, 30, 60`) und dann **Anzahlpakete** (`1, 5, 10, 50, 100, 500, 1000`) angeboten. Chips antippen oder mit dem Finger nach oben schleudern. Es gibt ein **×** zum Überspringen jeder Phase.
-- Auto-Weiter nach **1–10 Sekunden** Inaktivität, voreingestellt 3 Sekunden; nach jedem erfolgreichen Paket beginnt die Frist nach dessen Animation neu. Während einer Berührung pausiert sie.
-- Bereits ausgespielte Karten sind **nur noch in der Zeitleiste** bearbeitbar. Neuanlage direkt über das Plus in Heute; Karte über das `⋯`-Menü bearbeiten.
+### Heute – Tageskarten
 
-### Zeitleiste
-Tag/Woche/Monat/Jahr/Gesamt. Im Tag-Modus können tatsächliche Minuten/Anzahlen, Status und Kommentare nachgetragen bzw. geändert werden. Aktivitäten lassen sich dort auch bearbeiten und mit ↑/↓ neu sortieren. Nicht vollständig messbare abgeschlossene Wochen-/Monats-/Jahresziele können manuell bestätigt werden. Das Tagesdatum im Verlauf lässt sich rückwirkend bearbeiten.
+- Pro Zielregel gibt es **jeden Tag** eine Karte – auch für Wochen-, Monats- und Jahresziele.
+- **Links/rechts wischen** wechselt die Karte; die vordere Karte und zwei angedeutete Folgekarten bilden den Stapel.
+- Bereits erfasste Karten **bleiben vorhanden**, werden grau und lassen sich erneut ausspielen oder über das Drei-Punkte-Menü bearbeiten.
+- **Leveln:** nach oben = etwas getan → Minuten-/Anzahlpakete für **tatsächliche Mengen**; nach unten = nichts gemacht (0). Bei einem *täglichen* Levelziel ohne Paketangabe bestätigt das Überspringen die Tages-Mindestmenge; bei mehrtägigen Zielen ist ein expliziter Standardwert pro Tag optional.
+- **Sparen:** nach oben = vollständig verzichtet (0 Verbrauch); nach unten = etwas verbraucht → Minuten-/Anzahlpakete für den **tatsächlichen Verbrauch**. Ohne weitere Paketangabe wird das Tageslimit bzw. ein anteilig geschätztes Mehrtagesbudget angenommen.
+- Paket-Chips antippen oder nach oben schleudern. Paketmenüs gehen automatisch nach **1–10 Sekunden** weiter (Standard: **3 Sekunden**) oder lassen sich mit **×** schließen.
+- Die Datums-Drehtrommel unter dem Deck lässt sich nach links und rechts verschieben, Tage können angetippt werden. Nur **heute und gestern** sind bearbeitbar.
+- Erfasste Mengen werden gespeichert und korrigiert, statt bei wiederholten Gesten XP zu verdoppeln.
+
+### Ziele – Kalender und Verwaltung
+
+- Ziele sind gruppiert in **Tages-, Wochen-, Monats- und Jahresziele**. Namen und Streaks sind zunächst kompakt; Details aufklappen.
+- Oben befindet sich ein **fixierter, aufklappbarer Kalender** mit Wochen-, Monats-, Jahres- und Vierjahresdarstellung.
+- Wähle ein Ziel: Die Kalenderflammen markieren erfolgreiche Perioden; Schneeflocken markieren geschützte Unterbrechungen. Jedes Ziel kann eine eigene Akzentfarbe erhalten.
+- Ein Kalendertag öffnet das **schlichte Tagesprotokoll** (Status, Minuten, Anzahl, Kommentar). Tage vor gestern lassen sich nur betrachten.
+- Ziele können ab heute geändert und archiviert werden; ältere Einträge bleiben erhalten. Beim Ändern des Zeitraums mitten in einer laufenden Periode die neue Periodenberechnung besonders kontrollieren.
+- *Kalendergebunden* (Mo–So, Kalendermonat oder Kalenderjahr) und *Neustart-Perioden* (7, 30, 365 Tage) stehen zur Wahl. Ein Neustart-Zeitraum beginnt nach einer vorzeitigen **Überschreitung** am Folgetag neu.
+
+### Streaks, Glut und Freeze
+
+- Ein Zielzeitraum erhöht die Streak, sobald die erforderliche Menge erreicht bzw. das Maximum eingehalten wurde.
+- **1 Glut** je **10 tatsächlich erfolgreichen Streak-Schritten**; dieselbe Belohnung wird nicht mehrfach vergeben.
+- **5 Glut = 1 Freeze**; maximal **2 im Inventar**.
+- Ein vorhandener Freeze wird bei einem nach Ende der Korrekturfrist festgestellten Bruch einer laufenden Streak automatisch verbraucht. Eine bewusste Sofort-Rettung mit 5 Glut ist bei ungeschützten Brüchen in der Zielverwaltung möglich.
+- Ein Freeze schützt die Streak, verwandelt einen Fehlschlag aber nicht in einen Erfolg. Er zählt nicht selbst als zusätzlicher Streak-Schritt.
+
+### Check-in und feste Frist
+
+- Die App fordert beim Öffnen das Nachtragen **offener Einträge von gestern** ein; ab deiner einstellbaren Uhrzeit auch die offenen Einträge von heute. Der Check-in wird durch Nachtragen oder bewusstes Verweigern abgeschlossen.
+- Ohne Öffnen werden ältere offene Einträge beim nächsten Start automatisch mit **konservativen Ersatzwerten** abgeschlossen. Leveln: 0. Sparen: Tagesbudget bzw. geschätzter Tagesanteil. Ersatzwerte sind in den Daten als geschätzt markiert und zählen nicht zu tatsächlich gemessenen Leistungen.
+- **Heute und gestern** sind bearbeitbar. Danach sind die Datensätze gesperrt und der Blick richtet sich nach vorne.
+- Die PWA kann **ohne zusätzlichen Server keine verlässlichen Push-Nachrichten senden, wenn sie geschlossen ist**. Für externe Erinnerungen eignet sich optional eine iPhone-Kurzbefehle-Automation.
 
 ### Statistik
-Erfolgsquote, Zeit- und Anzahl-XP pro Aktivität, laufende und Rekord-Streaks. Die Gesamtübersicht mit Level und Gesamtdaten befindet sich unter **Zeitleiste → Gesamt**.
 
-### Einstellungen
-Hell/Dunkel/System, zwei frei einstellbare Akzentfarben (Sparen/Leveln), Countdown 1–10 Sekunden, Sound, Export/Import und Daten löschen.
+- Säulendiagramme zu **tatsächlich gesparter/gelevelter Zeit**, **Anzahlen** und **XP**, mit den konfigurierten Farben für Sparen und Leveln.
+- Filter: **Alle Ziele oder ein einzelnes Ziel**, und **Kalendertag, Kalenderwoche, Kalendermonat, Kalenderjahr oder Gesamtzeitraum**. Mit den Pfeilen kann man zum nächsten oder vorherigen Kalenderzeitraum wechseln. Laufende Perioden zeigen den *bisherigen* Stand.
+- Für Zeit gilt **10 XP pro Stunde**. Zusätzliche Anzahl-XP werden separat berücksichtigt und **nicht als tatsächlich verbrachte Stunden ausgegeben**.
 
-## XP-Regeln
+## Technischer Aufbau
 
-- **Zeit:** `10 XP` pro Stunde = `Minuten / 6` XP, ohne Rundung bei der Speicherung.
-- **1 Level:** `1000 XP`. Start bei `lvl. 1`.
-- **Leveln:** Gemessene oder eindeutig bestätigte Minuten zählen als XP. Bei täglichem Mindestziel bringt bereits das erfolgreiche Abhaken die Mindestzeit. Danach verschossene Minuten sind **zusätzliche** Zeit. Bei rein wöchentlichem Zeitziel wird die gesamte Wochenmindestdauer **nicht** automatisch an jedem Tag gutgeschrieben.
-- **Anzahl:** Individuell einstellbare `XP je Einheit`, standardmäßig **0**. Immer **zusätzlich** zu Zeit-XP. Bei täglichen Minima wird die Mindestanzahl beim erfolgreichen Abhaken vorgefüllt; Pakete erfassen weitere Einheiten. Bei rein wöchentlichem Anzahlziel zählt das Tageshäkchen eine Einheit.
-- **Sparen:** Nur nachgewiesene Ersparnis gegenüber Variante **A**, also dem konfigurierten Maximum. Bei einem Tagesmaximum von 60 min und 30 eingesparten Minuten werden 5 XP vergeben. Ohne exakte Minuten oder explizite Sparpakete keine Spar-Zeit-XP. Das Gleiche gilt für Anzahlen, multipliziert mit den eingestellten XP je Einheit.
-- Für **Sparziele ohne tägliches Maximum** (nur Woche/Monat/Jahr) werden die entsprechenden Pakete *nicht* täglich angeboten: Sonst ließe sich das Periodenmaximum versehentlich mehrfach anrechnen. Ein langer Zeitraum kann nachträglich über tatsächliche Tagesmengen vollständig ausgewertet werden. Alternativ zusätzlich ein Tageslimit hinterlegen.
-- Tages-Pakete für Sparen sind auf die noch verfügbare Ersparnis begrenzt. Null-Limits vergeben keine positive Ersparnis. Bei zeitlich überlappenden Grenzwerten wird je Messgröße nur der **engste Referenzzeitraum** gewertet (Tag vor Woche vor Monat vor Jahr), innerhalb desselben Zeitraums der strengste Grenzwert.
-- Alle XP werden **aus den gespeicherten Werten und Zielversionen berechnet**, nicht bei jeder Geste auf einen Zähler addiert. Änderungen in der Zeitleiste korrigieren auch frühere XP. Die Fortschrittsleiste zeigt **exakt die XP-Quellen des aktuellen Levels** in den beiden ausgewählten Farben.
+- PWA mit Manifest und Service Worker, Offline-Caching statischer Ressourcen.
+- IndexedDB `progress-private-v1`, Stores `activities`, `entries`, `overrides`, `meta` – gleiche Speicheradresse und Stores wie 0.3.
+- Bestehende 0.3-Einträge können weitergelesen werden, neu erfasste Einträge liegen zusätzlich pro Zielregel getrennt vor.
+- Export/Import per `progress-local-backup`, Version 1; inkl. Glut/Freezes in den Metadaten.
+- Unbekannte Messwerte bleiben von 0 unterscheidbar. Feste Frist orientiert sich am **lokalen Kalenderdatum des Geräts**, nicht an exakt 48 Stunden.
 
-## Datenschutz und technische Grenzen
+## Teststatus und Grenzen
 
-- Persönliche Daten werden auf dem Gerät in IndexedDB aufbewahrt. Ein **Backup ist unverschlüsseltes JSON**; es sollte ausschließlich privat und geschützt aufbewahrt werden. **Niemals** die Backupdatei in das öffentliche GitHub-Repository hochladen.
-- iOS kann lokale Web-App-Daten entfernen. Backups regelmäßig erstellen und nach Import prüfen. Keine Geräte-Synchronisation.
-- Sound und animierte Flugbewegungen funktionieren in der Web-App. **Frei programmierbare Haptik/Vibrationen sind in Safari auf dem iPhone nicht zuverlässig verfügbar**; die App nutzt die Vibrations-API nur, wenn der Browser sie bereitstellt.
-- Browseroberflächen, Schriftgrößen und Gerätetypen können sich unterscheiden; vor produktiver Nutzung bitte auf dem eigenen iPhone testen.
+JavaScript-Syntax und wesentliche Abläufe wurden geprüft; die Interaktion, Tageskarten, Zielanlage, Teil-XP, Wochenneustart und einmalige Glutvergabe wurden in einer Chromium-Testumgebung mit **simulierter IndexedDB** ausprobiert. Der vollständige Test mit echter IndexedDB, Service Worker und **Safari auf deinem iPhone** ist noch ausstehend. Bitte die Version nach einem Backup erst mit einigen Beispieldaten testen. Vergangene Zieländerungen und manuelle Rettungen nach komplexen Korrekturen möglichst mit kontrollierten Daten prüfen.
 
-## Entwicklungs- und Teststatus
-
-JavaScript-Syntax, mehrere wichtige Abläufe in einem mobilen Chromium-Testharness (Swipe nach oben, Spar-Minutenpaket, kombinierte Leveln-Minuten-/Anzahlziele, XP-Werte, Aktivität erstellen, Zeitleistenänderung, Einstellungen) und die Darstellung in 393×852 sowie 375×667 wurden überprüft. Die Tests verwenden eine simulierte IndexedDB; **ein vollständiger End-to-End-Test auf einem echten iPhone/Safari ist hier noch nicht erfolgt**. Bitte daher zunächst mit Beispieldaten und einem Export testen.
+Ein Service Worker kann bei einem Update kurzzeitig noch alte Dateien zeigen; dann PWA einmal online schließen und erneut öffnen. Um die Daten nicht zu verlieren, niemals leichtfertig App-/Website-Daten löschen.
