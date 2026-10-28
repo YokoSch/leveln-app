@@ -67,3 +67,64 @@ body::after{content:"";position:fixed;inset:0;background:var(--bg);opacity:var(-
 .icon-choice.selected{border-color:var(--level)}.icon-choice img{width:100%;max-width:108px;aspect-ratio:1;object-fit:cover;border-radius:18px}.icon-choice small{font-size:10px;font-weight:750}
 .settings-panel label input[type=file]{max-width:100%;font-size:10px;padding-top:5px}
 @media(max-height:740px){.stats-compact{gap:6px}.stats-controls{gap:6px}.stats-metric button{padding:6px 2px}.stats-period button{padding:7px 2px}.stats-single{gap:5px;padding:8px}.stat-head strong{font-size:18px}.bar-key{max-height:43px}.stats-compact .page-heading h1{font-size:24px}}
+/* Leveln 0.6 · RPG character and questboard */
+html,body,#app,.sheet,.settings-panel{max-width:100%;overflow-x:hidden}
+#app{padding-top:calc(env(safe-area-inset-top,0px) + 21px)}
+#settingsShortcut{position:fixed;z-index:34;top:calc(env(safe-area-inset-top,0px) + 8px);right:max(calc((100vw - 680px)/2 + 14px),10px)}
+.settings-shortcut{width:34px;height:34px;border-radius:11px;border:1px solid var(--border);background:color-mix(in srgb,var(--panel) 91%,transparent);color:var(--text);display:grid;place-items:center;box-shadow:0 3px 12px #0001;backdrop-filter:blur(10px)}
+.settings-shortcut .ico{width:19px;height:19px}
+.page-heading{padding-right:43px}
+#bottomNav .nav-avatar{height:27px;width:27px;border-radius:100%;object-fit:cover;flex-shrink:0}
+#bottomNav .avatar-sigil{display:grid;place-items:center;background:color-mix(in srgb,var(--avatar-color) 22%,var(--panel));color:var(--avatar-color)}
+#bottomNav .nav-avatar .ico{width:17px;height:17px}
+.rpg-screen{display:flex;flex-direction:column;gap:14px;padding-bottom:20px;max-width:100%;overflow-x:hidden}
+.hero-panel{position:relative;border-radius:23px;background:linear-gradient(130deg,color-mix(in srgb,var(--hero-accent) 14%,var(--panel)),var(--panel) 60%);border:1px solid color-mix(in srgb,var(--hero-accent) 38%,var(--border));padding:17px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow);overflow:hidden}
+.hero-panel::before{content:'';position:absolute;top:-65px;right:-40px;width:195px;height:195px;border-radius:50%;background:var(--hero-accent);opacity:.08;filter:blur(36px);pointer-events:none}
+.hero-edit{position:absolute;right:11px;top:9px;z-index:1}
+.hero-intro{display:flex;align-items:center;gap:14px;min-width:0;padding-right:22px}
+.avatar-hero{width:82px;height:82px;border-radius:20px;object-fit:cover;flex-shrink:0}
+.avatar-sigil{display:grid;place-items:center;color:var(--avatar-color);background:color-mix(in srgb,var(--avatar-color) 20%,var(--panel));border:1px solid color-mix(in srgb,var(--avatar-color) 40%,var(--panel))}
+.avatar-hero .ico{width:45px;height:45px}
+.hero-intro>div{min-width:0}.hero-intro h2{font-size:23px;letter-spacing:-.5px;overflow-wrap:anywhere}
+.hero-intro small{font-size:9px;font-weight:900;letter-spacing:1.8px;color:var(--muted)}
+.hero-intro p{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5;overflow-wrap:anywhere}
+.hero-lvl{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.hero-lvl strong{font-size:26px;font-weight:900}.hero-lvl small,.hero-panel>small{font-size:11px;color:var(--muted)}
+.hero-meter{height:13px;overflow:hidden;border-radius:99px;background:var(--panel2);border:1px solid var(--border)}
+.hero-meter div{height:100%;border-radius:99px;transition:width .4s}
+.skills-heading{display:flex;align-items:center;justify-content:space-between;padding:4px 3px}
+.skills-heading h2{font-size:19px}.skills-heading h2 span{font-size:13px;color:var(--muted)}
+.skill-card{border:1px solid var(--border);border-left:4px solid var(--skill-accent);border-radius:17px;display:flex;gap:13px;align-items:center;background:var(--panel);color:var(--text);width:100%;padding:13px;text-align:left;box-shadow:0 7px 24px #00000008;min-width:0}
+.skill-glyph{width:47px;height:47px;border-radius:13px;background:color-mix(in srgb,var(--skill-accent) 16%,var(--panel2));display:grid;place-items:center;color:var(--skill-accent);flex-shrink:0}
+.skill-glyph .ico{width:25px;height:25px}
+.skill-info{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
+.skill-info strong{font-size:14px;overflow-wrap:anywhere}.skill-info small{font-size:10px;color:var(--muted)}
+.skill-meter{height:9px;border-radius:99px;overflow:hidden;background:var(--panel2);width:100%}.skill-meter i{height:100%;display:block;border-radius:99px;transition:width .2s}
+.skill-arrow{font-size:24px;color:var(--muted)}
+.empty-skill{border:1px dashed var(--border);border-radius:15px;padding:20px;color:var(--muted);font-size:13px}
+.goal-section>h3 .ico{width:17px;height:17px;vertical-align:middle}
+.quest-one-time{display:flex;align-items:flex-start;gap:9px;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--level);padding:12px;border-radius:14px;margin-bottom:8px;min-width:0;flex-wrap:wrap}
+.quest-one-icon{width:36px;height:36px;background:color-mix(in srgb,var(--level) 15%,var(--panel2));border-radius:11px;color:var(--level);display:grid;place-items:center;flex-shrink:0}
+.quest-one-text{flex:1;min-width:145px;display:flex;flex-direction:column;gap:5px}
+.quest-one-text strong{font-size:14px}.quest-one-text small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+.quest-one-actions{display:flex;gap:5px;flex-wrap:wrap;width:100%}
+.quest-one-actions button.tiny{font-size:10px;padding:8px 11px;min-width:0;flex:1}
+.once-card{border-top-color:#65cb82!important}
+.quest-type-banner{padding:10px 12px;border-radius:10px;font-size:11px;letter-spacing:1.1px;font-weight:900;color:var(--type-color);background:color-mix(in srgb,var(--type-color) 13%,var(--panel2));border-left:4px solid var(--type-color)}
+.quest-form{display:flex;flex-direction:column;gap:13px;max-width:100%;min-width:0}
+.quest-form input,.quest-form select,.quest-form textarea,.rpg-form input,.rpg-form select,.rpg-form textarea{max-width:100%;width:100%;min-width:0}
+.quest-form label,.rpg-form label{min-width:0;overflow-wrap:anywhere}
+.quest-form [hidden]{display:none!important}
+.quest-bindings{display:flex;flex-direction:column;gap:9px;border-radius:16px;background:var(--panel2);padding:12px;min-width:0}
+.quest-bindings h3{font-size:14px}
+.binding-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.15fr) minmax(0,.7fr) 28px;gap:4px;align-items:center;min-width:0}
+.binding-row select,.binding-row input{font-size:11px!important;padding:9px 4px!important;height:39px!important;min-width:0}
+.binding-row.reward-row{grid-template-columns:minmax(0,2fr) minmax(0,1fr) 28px}
+.binding-remove{width:28px;height:36px;border:0;background:var(--panel);color:var(--text);border-radius:8px;font-size:20px}
+.binding-buttons{display:flex;gap:8px}.binding-buttons button{width:100%}
+.sheet,.sheet form,.settings-panel{min-width:0;max-width:100%;overflow-x:hidden}
+.sheet{overflow-y:auto;overscroll-behavior:contain}
+.settings-panel details,.mini-doc{font-size:12px;line-height:1.6}.mini-doc summary{font-weight:750;cursor:pointer}.mini-doc p{padding-top:8px;color:var(--muted)}
+.ember-icon{width:23px!important;height:23px!important;vertical-align:middle;filter:drop-shadow(0 0 3px rgba(255,152,46,.30))}
+.check-actions{display:flex;flex-direction:column;gap:8px;margin-top:15px}.check-actions button{width:100%}.check-row{grid-template-columns:1fr auto}
+@media(max-width:390px){.hero-intro{gap:8px}.avatar-hero{width:67px;height:67px}.hero-intro h2{font-size:20px}.binding-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 62px 23px;gap:3px}.binding-row select,.binding-row input{font-size:10px!important}.binding-remove{width:23px}}
