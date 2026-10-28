@@ -1,83 +1,60 @@
-# Progress 0.4 — Play your day
+# Leveln 0.5 — Play your day
 
-Private, lokal speichernde iPhone-Web-App (PWA). **Version 0.4, 28. Oktober 2026.**
+**iPhone-optimierte lokale PWA, 28. Oktober 2026.** Neuer Name der bisherigen App **Progress**. Die App speichert Tageswerte weiterhin lokal in IndexedDB und kann auf der **gleichen GitHub-Pages-Adresse** aktualisiert werden.
 
-## Unbedingt vor dem Update
+## Vor dem Update (unbedingt!)
 
-1. In deiner **bisherigen installierten Progress-App** unter **Optionen → JSON-Backup exportieren** eine Sicherung erstellen und in **Dateien → Auf meinem iPhone** (oder an einem anderen selbst gewählten sicheren Ort) ablegen.
-2. Die **bestehende Home-Bildschirm-App nicht löschen**. iOS kann getrennte lokale Datenbereiche für verschiedene Installationen verwenden.
-3. Das ZIP entpacken und die Dateien in das **gleiche öffentliche GitHub-Repository**, in **das gleiche Verzeichnis** wie bisher hochladen (Ordnerstruktur erhalten):
+1. In der **bisherigen installierten Progress-App** unter **Optionen → JSON-Backup exportieren** ein vollständiges Backup erstellen und sicher in Dateien ablegen. **Die JSON-Datei niemals in das öffentliche GitHub-Repository hochladen.**
+2. Die vorhandene Home-Bildschirm-App **nicht löschen**. Das könnte den lokalen Datenspeicher unzugänglich machen.
+3. Die ZIP entpacken. Den **Inhalt**, nicht den umschließenden Ordner, in das **gleiche Repository und Verzeichnis** wie die bisherige App hochladen. Gleichnamige Dateien ersetzen und die neuen Dateien (`manifest-light.webmanifest`, `manifest-dark.webmanifest`, `manifest-mono.webmanifest`, `icons/icon-*`) hinzufügen.
+4. GitHub Pages publizieren lassen, App online öffnen und komplett schließen/neustarten; falls nötig in Safari online die gleiche GitHub-Pages-URL erneut öffnen. Der Service Worker wurde für Version 0.5 aktualisiert.
+5. Prüfen, ob alte Ziele und Tageswerte noch da sind. Vorher keine produktiven Daten ausschließlich in 0.5 speichern. Altes Backup und alte ZIP aufheben.
 
-```
+## Neue Funktionen
+
+- **Heute:** Kartenmodus für **heute und gestern**, ohne Zielbearbeitungsmenü; bereits erfasste Karten bleiben grau. Wenn ein Tageswert auf **Offen** gesetzt und gespeichert wird, ist die Karte wieder aktiv.
+- **Datumsleiste:** Nur Gestern/Heute, horizontal ziehbar oder antippbar, mit vorhersehbarem Einrasten; keine historischen Karten, die man versehentlich ändern könnte.
+- **Ziele:** Einzige Stelle für neue oder geänderte Ziele. **Startdatum frühestens heute**; spätere Startdaten sind erlaubt und erzeugen vorher keine Tageskarten. Zielzeilen nach links wischen für **Bearbeiten / Archivieren**. Archivierte Ziele erzeugen ab dem Archivdatum keine neuen Karten; ältere Daten bleiben erhalten.
+- **Korrekturen:** Oben in Ziele dauerhaft die Aktionen **Heute korrigieren** und **Gestern korrigieren** für alle Ziele. Ein einzelnes aufgeklapptes Ziel hat eigene Korrekturen nur für dieses Ziel. **Offen** entfernt den aktuellen Datensatz, statt ihn zu überspringen. Nur heute/gestern können geändert werden.
+- **Farben:** Individuelle Zielfarbe kann per Checkbox komplett deaktiviert werden; dann übernimmt das Ziel automatisch die aktuelle Sparen-/Leveln-Farbe.
+- **Statistik:** Eine einzige **gestapelte Säule**, ihre volle Referenz entspricht der Gesamtmenge aller Ziele im gewählten Kalenderzeitraum. Filter: **Tag / Woche / Monat / Jahr / Gesamt**, **Alle Ziele oder ein Ziel**, **Zeit (Stunden) / Anzahl / XP**. Bei Alle Ziele kann man per Checkbox alle Ziele einzeln farbig stapeln, sonst sind Sparen und Leveln die beiden Segmente. Bei einem einzelnen Ziel wird dessen Beitrag am **unveränderten Gesamtwert** dargestellt. Zahlen aus unterschiedlichen Tätigkeiten sind bei Anzahl nicht automatisch inhaltlich vergleichbar.
+- **Hintergründe:** Hell, Dunkel, System sowie frei wählbare Farbe oder eigenes Foto (lokal verkleinert und gespeichert); auf Bildern einstellbarer Abdunklungsgrad. Ein vollständig exportiertes Backup enthält auch Bilddaten.
+- **Neue App-Identität:** Name **Leveln**, drei gewählte `lvl+`-Icons: weiß/grün, schwarz/grün und monochrom. In **Optionen → Homescreen-Icon** wählen. Die Wahl aktualisiert die Web-App-Metadaten, aber **iOS aktualisiert ein bereits installiertes Homescreen-Icon unter Umständen nicht automatisch**. Zum Neu-Hinzufügen vorher Daten sichern und die bisherige Installation nicht löschen.
+
+## Bekannte Spiel- und Zielregeln, die erhalten bleiben
+
+- Sparen/Leveln, Karten-Swipes, Minuten- und Anzahlpakete, Paket-Timeout 1–10 Sekunden.
+- Kombinierte Zeit-/Anzahlziele, Tages- und mehrtägige Ziele, kalendergebundene und Neustart-Zeiträume.
+- XP nach tatsächlich gesparten oder investierten Mengen; Streaks getrennt. Glut und Streak-Freezes bleiben getrennt von XP.
+- Lokaler Check-in, konservative Ersatzwerte nach versäumten Tagen, Kalender und JSON-Backup.
+
+## Technische Datenhaltung
+
+Die **bestehende** IndexedDB heißt bewusst weiterhin `progress-private-v1` mit den Stores `activities`, `entries`, `overrides`, `meta`. Dies ist **keine neue Datenbank**: Das Beibehalten der Kennung ist für die Datenmigration wichtig.
+
+Für jede Tagesregel gilt der Schlüssel `Aktivitäts-ID|Zielregel-ID|YYYY-MM-DD`. Tageskorrekturen erfolgen atomar per IndexedDB-Transaktion (PUT oder DELETE). Nach dem Speichern werden Tageskarten, Kalender, XP, Streaks und Statistiken aus den aktuellen Daten neu berechnet. Alte Einträge aus Version 0.3 können zusätzlich gelesen werden.
+
+Backups bleiben kompatibel mit `progress-local-backup` Version 1. Der Exportdateiname lautet künftig `Leveln-Backup-YYYY-MM-DD.json`. **Backups sind unverschlüsselt**; sichere sie entsprechend.
+
+## Dateien
+
+```text
 index.html
 app.js
 styles.css
 sw.js
 manifest.webmanifest
-icons/icon-180.png
-icons/icon-192.png
-icons/icon-512.png
-icons/icon.svg
+manifest-light.webmanifest
+manifest-dark.webmanifest
+manifest-mono.webmanifest
+icons/icon-{light,dark,mono}-{180,192,512}.png
+README.md
 ```
 
-4. Unter GitHub Pages dieselbe HTTPS-Adresse weiterverwenden. Die PWA schließen und erneut öffnen. Wegen Safari-/Service-Worker-Cache kann ein weiterer Online-Neustart nötig sein.
-5. Aktivitäten und Einträge kontrollieren. **Erst danach** weiterverwenden. Für einen möglichen Rückweg die alte ZIP-Datei und das ursprüngliche Backup behalten.
+## Tests und Grenzen
 
-**Privat:** Deine persönlichen Tagesdaten/Kommentare bleiben in IndexedDB auf dem iPhone. Über GitHub Pages werden nur die statischen HTML-, CSS-, JavaScript- und Icon-Dateien bereitgestellt. Keine Drittanbieter-CDNs, kein Login und keine externen Analyse-Skripte. **Ein JSON-Backup ist unverschlüsselt**; bitte niemals ins öffentliche GitHub-Repository hochladen.
-
-## Bedienung
-
-### Heute – Tageskarten
-
-- Pro Zielregel gibt es **jeden Tag** eine Karte – auch für Wochen-, Monats- und Jahresziele.
-- **Links/rechts wischen** wechselt die Karte; die vordere Karte und zwei angedeutete Folgekarten bilden den Stapel.
-- Bereits erfasste Karten **bleiben vorhanden**, werden grau und lassen sich erneut ausspielen oder über das Drei-Punkte-Menü bearbeiten.
-- **Leveln:** nach oben = etwas getan → Minuten-/Anzahlpakete für **tatsächliche Mengen**; nach unten = nichts gemacht (0). Bei einem *täglichen* Levelziel ohne Paketangabe bestätigt das Überspringen die Tages-Mindestmenge; bei mehrtägigen Zielen ist ein expliziter Standardwert pro Tag optional.
-- **Sparen:** nach oben = vollständig verzichtet (0 Verbrauch); nach unten = etwas verbraucht → Minuten-/Anzahlpakete für den **tatsächlichen Verbrauch**. Ohne weitere Paketangabe wird das Tageslimit bzw. ein anteilig geschätztes Mehrtagesbudget angenommen.
-- Paket-Chips antippen oder nach oben schleudern. Paketmenüs gehen automatisch nach **1–10 Sekunden** weiter (Standard: **3 Sekunden**) oder lassen sich mit **×** schließen.
-- Die Datums-Drehtrommel unter dem Deck lässt sich nach links und rechts verschieben, Tage können angetippt werden. Nur **heute und gestern** sind bearbeitbar.
-- Erfasste Mengen werden gespeichert und korrigiert, statt bei wiederholten Gesten XP zu verdoppeln.
-
-### Ziele – Kalender und Verwaltung
-
-- Ziele sind gruppiert in **Tages-, Wochen-, Monats- und Jahresziele**. Namen und Streaks sind zunächst kompakt; Details aufklappen.
-- Oben befindet sich ein **fixierter, aufklappbarer Kalender** mit Wochen-, Monats-, Jahres- und Vierjahresdarstellung.
-- Wähle ein Ziel: Die Kalenderflammen markieren erfolgreiche Perioden; Schneeflocken markieren geschützte Unterbrechungen. Jedes Ziel kann eine eigene Akzentfarbe erhalten.
-- Ein Kalendertag öffnet das **schlichte Tagesprotokoll** (Status, Minuten, Anzahl, Kommentar). Tage vor gestern lassen sich nur betrachten.
-- Ziele können ab heute geändert und archiviert werden; ältere Einträge bleiben erhalten. Beim Ändern des Zeitraums mitten in einer laufenden Periode die neue Periodenberechnung besonders kontrollieren.
-- *Kalendergebunden* (Mo–So, Kalendermonat oder Kalenderjahr) und *Neustart-Perioden* (7, 30, 365 Tage) stehen zur Wahl. Ein Neustart-Zeitraum beginnt nach einer vorzeitigen **Überschreitung** am Folgetag neu.
-
-### Streaks, Glut und Freeze
-
-- Ein Zielzeitraum erhöht die Streak, sobald die erforderliche Menge erreicht bzw. das Maximum eingehalten wurde.
-- **1 Glut** je **10 tatsächlich erfolgreichen Streak-Schritten**; dieselbe Belohnung wird nicht mehrfach vergeben.
-- **5 Glut = 1 Freeze**; maximal **2 im Inventar**.
-- Ein vorhandener Freeze wird bei einem nach Ende der Korrekturfrist festgestellten Bruch einer laufenden Streak automatisch verbraucht. Eine bewusste Sofort-Rettung mit 5 Glut ist bei ungeschützten Brüchen in der Zielverwaltung möglich.
-- Ein Freeze schützt die Streak, verwandelt einen Fehlschlag aber nicht in einen Erfolg. Er zählt nicht selbst als zusätzlicher Streak-Schritt.
-
-### Check-in und feste Frist
-
-- Die App fordert beim Öffnen das Nachtragen **offener Einträge von gestern** ein; ab deiner einstellbaren Uhrzeit auch die offenen Einträge von heute. Der Check-in wird durch Nachtragen oder bewusstes Verweigern abgeschlossen.
-- Ohne Öffnen werden ältere offene Einträge beim nächsten Start automatisch mit **konservativen Ersatzwerten** abgeschlossen. Leveln: 0. Sparen: Tagesbudget bzw. geschätzter Tagesanteil. Ersatzwerte sind in den Daten als geschätzt markiert und zählen nicht zu tatsächlich gemessenen Leistungen.
-- **Heute und gestern** sind bearbeitbar. Danach sind die Datensätze gesperrt und der Blick richtet sich nach vorne.
-- Die PWA kann **ohne zusätzlichen Server keine verlässlichen Push-Nachrichten senden, wenn sie geschlossen ist**. Für externe Erinnerungen eignet sich optional eine iPhone-Kurzbefehle-Automation.
-
-### Statistik
-
-- Säulendiagramme zu **tatsächlich gesparter/gelevelter Zeit**, **Anzahlen** und **XP**, mit den konfigurierten Farben für Sparen und Leveln.
-- Filter: **Alle Ziele oder ein einzelnes Ziel**, und **Kalendertag, Kalenderwoche, Kalendermonat, Kalenderjahr oder Gesamtzeitraum**. Mit den Pfeilen kann man zum nächsten oder vorherigen Kalenderzeitraum wechseln. Laufende Perioden zeigen den *bisherigen* Stand.
-- Für Zeit gilt **10 XP pro Stunde**. Zusätzliche Anzahl-XP werden separat berücksichtigt und **nicht als tatsächlich verbrachte Stunden ausgegeben**.
-
-## Technischer Aufbau
-
-- PWA mit Manifest und Service Worker, Offline-Caching statischer Ressourcen.
-- IndexedDB `progress-private-v1`, Stores `activities`, `entries`, `overrides`, `meta` – gleiche Speicheradresse und Stores wie 0.3.
-- Bestehende 0.3-Einträge können weitergelesen werden, neu erfasste Einträge liegen zusätzlich pro Zielregel getrennt vor.
-- Export/Import per `progress-local-backup`, Version 1; inkl. Glut/Freezes in den Metadaten.
-- Unbekannte Messwerte bleiben von 0 unterscheidbar. Feste Frist orientiert sich am **lokalen Kalenderdatum des Geräts**, nicht an exakt 48 Stunden.
-
-## Teststatus und Grenzen
-
-JavaScript-Syntax und wesentliche Abläufe wurden geprüft; die Interaktion, Tageskarten, Zielanlage, Teil-XP, Wochenneustart und einmalige Glutvergabe wurden in einer Chromium-Testumgebung mit **simulierter IndexedDB** ausprobiert. Der vollständige Test mit echter IndexedDB, Service Worker und **Safari auf deinem iPhone** ist noch ausstehend. Bitte die Version nach einem Backup erst mit einigen Beispieldaten testen. Vergangene Zieländerungen und manuelle Rettungen nach komplexen Korrekturen möglichst mit kontrollierten Daten prüfen.
-
-Ein Service Worker kann bei einem Update kurzzeitig noch alte Dateien zeigen; dann PWA einmal online schließen und erneut öffnen. Um die Daten nicht zu verlieren, niemals leichtfertig App-/Website-Daten löschen.
+- JavaScript-Syntax kontrolliert.
+- In einem mobilen Chromium-UI-Test mit **simulierter IndexedDB** kontrolliert: Laden, Ziele, Tageswerte speichern → erneut laden → auf Offen setzen → ursprüngliche Karte reaktivieren, einzelne Zielkorrektur, Archivieren und historisches Ziel erhalten, geplante zukünftige Ziele, Zeitraum-/Metrikfilter, Icon-Auswahl, individuelles Hintergrundfarbschema.
+- **Nicht vollständig verifiziert:** echte Safari-/iOS-PWA, Service Worker und Persistenz unter echter IndexedDB. Bitte nach dem Backup zuerst mit Beispieldaten testen.
+- **Erinnerungen:** Ohne eigenen Server kann die Web-App beim vollständigen Schließen keine verlässlichen Push-Benachrichtigungen an iOS senden. Der Check-in wird beim Öffnen gezeigt; externe Erinnerungen können über iPhone-Kurzbefehle erfolgen.
+- **Haptik:** Safari unterstützt kein beliebig frei programmierbares haptisches Feedback für Web-App-Gesten. Animationen und Sounds sind umgesetzt, aber haptische Gesten-Effekte nicht garantiert.
