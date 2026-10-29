@@ -1,58 +1,48 @@
-# Leveln 0.6 — Charakter-RPG
+# Leveln 0.7 – Mana & Questkarten
 
-**Stand: 29. Oktober 2026.** Offline-fähige iPhone-Web-App für GitHub Pages. Die persönlichen Daten bleiben lokal auf dem iPhone in IndexedDB. Die bestehenden drei `lvl+`-Icons wurden beibehalten.
+**Stand:** 29. Oktober 2026 · iPhone-PWA · Testversion
 
-## Unbedingt vor dem Update
+Eine lokale, offline-fähige Progressive Web App (PWA) mit vier Bereichen: **Heute/Gestern, Quests, Charakter und Statistik**. Die Einstellungen öffnen sich über das Zahnrad oben rechts. Über die Diskette oben links lässt sich auf allen Hauptseiten ein JSON-Backup erzeugen.
 
-1. **In Leveln 0.5 erst ein JSON-Backup erstellen**, in der iPhone-Dateien-App sicher aufbewahren (nicht auf GitHub hochladen).
-2. Die aktuelle Home-Bildschirm-App **nicht löschen**. Die Installation kann einen eigenen Datenspeicher besitzen.
-3. Die ZIP entpacken und **ihren Inhalt** im **gleichen GitHub-Pages-Repository und demselben Unterverzeichnis** wie zuvor hochladen. Dabei `index.html`, `app.js`, `styles.css` und `sw.js` ersetzen; Manifest-Dateien und `icons` behalten/aktualisieren.
-4. Die bislang genutzte URL öffnen; nach dem Laden die App schließen und wieder öffnen. Der Service-Worker-Cache ist auf `progress-pwa-v0.6-20261029-1` angehoben.
-5. Die übernommenen Quests, Tageswerte, XP, Streaks und Freezes zunächst kontrollieren. Das alte Backup sicher aufbewahren, bis du die neue Version getestet hast.
+## Vor dem Update von 0.6
 
-## RPG-System
+1. **Unbedingt in Leveln 0.6 ein JSON-Backup erstellen** und privat in der iPhone-Dateien-App sichern. Niemals persönliche JSON-Dateien auf GitHub hochladen.
+2. **Die vorhandene Home-Bildschirm-App vorerst nicht löschen.** Eine neue Installation kann getrennten lokalen Speicher verwenden.
+3. Die ZIP entpacken. Den **Inhalt des Ordners**, also `index.html`, `app.js`, `styles.css`, `sw.js`, die `manifest*.webmanifest` und `icons/`, in dasselbe bereits verwendete GitHub-Pages-Repository und denselben Pfad hochladen; alte Dateien ersetzen.
+4. Die bestehende URL in Safari öffnen und nach erfolgtem Laden die App schließen und erneut öffnen. Der Service-Worker-Cache verwendet Version `progress-pwa-v0.7-20261029-2`.
+5. Unter Einstellungen die Version überprüfen und anschließend Quests, Skills, XP, Streaks und die Einträge von heute und gestern kontrollieren. Das alte Backup unbedingt behalten, bis du sicher bist.
 
-### Charakter
-- Vier Hauptseiten: **Heute · Quests · Charakter · Statistik**. Das **Zahnrad** führt von allen Seiten zu **Einstellungen**.
-- Charakter: Name, Beschreibung, Themenfarbe, eines von acht Standard-Emblemen oder eigenes lokales Bild.
-- Gesamtcharakter: **1.000 XP pro Level**, beginnt bei lvl. 1.
-- Jeder Skill: **100 XP pro Stufe**, beginnt bei **St. 1**.
-- Dieselben verdienten Quest-XP zählen für die Skills und den Charakter **nicht doppelt**.
+## Neu in Version 0.7
 
-### Quests
-- Eine wiederkehrende Quest kann **beliebig viele Skills** trainieren. Für jeden Skill lässt sich separat festlegen, wie viele XP eine Stunde bzw. eine Anzahl erzeugt.
-- Die **Summe der Skillbelohnungen ist die gesamte Questbelohnung**. Ohne aktive Skillzuordnung entstehen künftig keine XP.
-- Ein Skill kann von mehreren Quests trainiert werden. Beim Anlegen einer Quest kannst du bestehende Skills auswählen oder per `Neuen Skill erstellen` einen Skill hinzufügen.
-- Wiederkehrende Quests behalten Zeit-/Anzahlbudgets, tägliche Karten, Kalender-/Neustart-Zeiträume, Streaks, Glut und Freezes.
-- **Einmalige Quests** besitzen Anfangs- und Enddatum und frei festgelegte XP je Skill. Ein Abschluss zahlt **einmalig** XP, die Quest bleibt anschließend als abgeschlossen in der Historie. Keine Streaks oder Freezes für einmalige Quests. Optional lassen sie sich in der Tageskartenansicht anheften.
-- Archivierte Quests bleiben in der Historie. Im Questboard gibt es für wiederkehrende Quests weiterhin die Links-Wisch-Aktion **Archivieren**.
+- **Zaubern statt Sparen:** Zeit- und Anzahlobergrenzen werden als **Mana-Budget** angezeigt. Ein eigens gestalteter **dunkelblauer, länglicher Kristall** stellt Mana dar. Die bestehende mathematische Spar-/XP-Logik bleibt erhalten.
+- **Einheitliche Kartengesten:** **Nach oben** erfasst bei Level-Quests eine Leistung und bei Zauber-Quests einen Verbrauch. **Nach unten** bedeutet in beiden Fällen `0` (nichts trainiert bzw. kein Mana verbraucht).
+- **Direkte Eingabe auf der Karte:** Über **„Werte eintragen“** lassen sich Minuten und Anzahl ausklappen. Wenn du keine Werte änderst, verwendet der obere Swipe den bei der Quest gespeicherten **täglichen Standard**; der untere Swipe schreibt `0`. Die Zeit-/Anzahlpaket-Modi sind entfernt.
+- **Tagesstandards:** Beim **erstmaligen Erstellen** schlägt das Formular für tägliche Zeitziele den Zielwert, für mehrtägige Zeitziele `Ziel ÷ 7/30/365` und für Anzahlen `1` vor. Danach werden die vom Nutzer gespeicherten Standardwerte **nicht mehr automatisch neu berechnet**. Bestehende Quests erhalten beim Datenformat-Upgrade einmalig einen eingefrorenen Vorschlagswert, sofern vorher keiner gespeichert war.
+- **Kartendeck:** Echt überlagerte, seitlich verschiebbare Karten mit **maximal fünfstelligem Kürzel** am unteren Rand. Darunterliegende Karten werden sichtbar, sobald die Vorderkarte zur Seite gezogen wird. Erfasste Karten bleiben als ausgegraute Karten erreichbar.
+- **Tag wechseln:** Die untere Datumstrommel ist entfernt. Ein erneuter Tap auf den **bereits aktiven** unteren Reiter Heute/Gestern wechselt zwischen den beiden Tagen. Von einem anderen Reiter aus kehrt man zum zuletzt gewählten Tag zurück.
+- **Quests filtern:** **Alle**, Einmalig, Täglich, Wöchentlich, Monatlich, Jährlich und Archiv. In **Alle** bleiben die Gruppen gemeinsam sichtbar.
+- **Einmalige Quests:** Optional **ohne Ablaufdatum**. Ein Abschluss ist weiterhin nur einmal möglich.
+- **Mehr Symbole:** Zusätzliche Vektor-Icons für Menschen, Magier, Ritter, Tiere und Fabelwesen, gemeinsam für Quests, Skills und Charakter verfügbar.
+- **Mana-zu-XP-Effekt:** Beim tatsächlichen XP-Gewinn aus Zaubern fliegen animierte blaue Kristalle in Richtung XP-Leiste. Bei mehrtägigen Zauberquests erfolgt die endgültige Abrechnung weiterhin **nur einmal je vollständig erfasstem Zeitraum**, nicht täglich.
+- **Backup-Diskette:** Oben links; unter iOS wird bevorzugt das native Teilen-Menü („In Dateien sichern“) geöffnet. Falls dies nicht unterstützt wird, erfolgt ein Browser-Download. **Ein dauerhaft voreingestellter Speicherordner ist auf iPhone-Safari nicht verfügbar.** Normale Eingaben werden weiterhin automatisch in IndexedDB gespeichert.
+- **Hilfe aufgeräumt:** Flammen-/Freeze-Erklärung bleibt in den aufklappbaren Einstellungen, nicht als dauerhafte Kalenderbeschriftung. Der Paket-Timer entfällt aus den Einstellungen.
 
-### Skill entfernen
-Beim Entfernen eines Skills wählst du **einmalig**: historische XP auf einen anderen Skill übertragen oder nur im Charakterlevel behalten. Für spätere Questbelohnungen wird der entfernte Anteil gelöscht; keine automatische Neuzuweisung an den Charakter. **Aus Konsistenzgründen greifen Änderungen an wiederkehrenden Tagesquests ab dem nächsten Kalendertag**, damit heute bereits verbuchte Tages-XP nicht nachträglich verschwinden. Einmalige noch offene Questbelohnungen werden sofort angepasst. Diese Entscheidung ist innerhalb der App endgültig. Ein älteres Backup kann prinzipiell einen älteren Datenstand wiederherstellen.
+## Datenmigration
 
-### Check-in
-Nur offene **gestrige** wiederkehrende Quests werden ab der eingestellten Check-in-Uhrzeit angemahnt. Es gibt genau drei Optionen: **Jetzt nachtragen** (Protokoll), **Später** (unverändert, das Kartendeck bleibt verwendbar) und **Verzichten** (Ersatzwerte für gestern). Nach Ablauf des Folgetags werden noch offene Tage automatisch konservativ geschlossen, wenn Leveln wieder gestartet wird. Externe echte Push-Benachrichtigungen bei geschlossener App erfordern weiterhin einen Push-Dienst und sind nicht Bestandteil dieser rein lokalen Version.
+- **Datenbank:** weiterhin `progress-private-v1`, IndexedDB-Version `2`; deine bestehenden Daten werden dadurch auf derselben Origin weiterverwendet.
+- **Backupformat:** `progress-local-backup`, **Version 3**. Der Import unterstützt die älteren **Versionen 1 (0.5) und 2 (0.6)** sowie Version 3.
+- Beim Upgrade werden bisherige Quests und Skills behalten, ihre gespeicherten Tageswerte unverändert übernommen, tägliche Standardwerte bei Bedarf einmalig festgelegt und die frühere Spar-Karten-Gestenanzeige auf die neue Bedienlogik umgestellt. Es erfolgt **keine erneute XP-Gutschrift**, sondern die XP werden aus den zugrunde liegenden Datensätzen berechnet.
+- Der Backup-Import validiert die Daten und ersetzt die lokalen Stores erst nach expliziter Bestätigung in einer gemeinsamen IndexedDB-Transaktion.
+- **„Alle Daten löschen“** entfernt vollständig sämtliche Quests, Skills, Tagebucheinträge, Einstellungen, Glut, Freezes und das Charakterprofil. Es werden **keine Demo-Daten** automatisch angelegt.
 
-### Glut
-Die Ressource Glut erhält ein eigenes **glühendes Kohle-Symbol**, sichtbar anders als die Streakflamme. Vergabe: 1 Glut je 10 Streak-Schritte; ein Freeze kostet 5 Glut und maximal 2 Freezes werden bevorratet. Historische Charakter-XP werden durch Glutkäufe nicht verändert.
+## Technische Hinweise und Grenzen
 
-## Datenmigration und Backups
-
-- Der **Datenbankname bleibt `progress-private-v1`**, damit die alte Installation ihre Daten erkennt. Die IndexedDB-Schemaversion wird **2**, mit neuem Store `skills`; die alten Stores `activities`, `entries`, `overrides` und `meta` bleiben bestehen.
-- Beim ersten Start mit bestehender Leveln-0.5-Datenbank werden die bisherigen Zielaktivitäten automatisch zu wiederkehrenden Quests. Für jede bisherige Aktivität wird ein eigener Start-Skill erzeugt, die historischen XP-Sätze aus den vorhandenen Zielversionen übernommen.
-- Die Migration erfolgt in einer **atomaren IndexedDB-Transaktion**; die alten Tagesdatensätze werden **nicht umgeschrieben**. Vorhandene Aktivitäten, Streaks, Glut und Freezes werden beibehalten.
-- Neue Backups benutzen Format `progress-local-backup`, **Version 2**, einschließlich des Skill-Stores, des Charakters und sämtlicher historischen Daten.
-- Der Import erkennt **Version 1 (Leveln 0.5)** und **Version 2**. Version 1 wird zunächst **im Speicher** konvertiert und validiert. Erst nach expliziter Bestätigung werden alle Stores **in einer einzigen Transaktion** ersetzt. Ein fehlgeschlagener Schritt soll die bisherige Datenbank unangetastet lassen.
-- Beim **Alle Daten löschen** werden alle Stores, Quests, Skills, Historien und Einstellungen entfernt. Die App legt danach keine automatischen Demo-Quests an.
-- JSON-Backups sind **unverschlüsselt**. Bitte privat aufbewahren und niemals in ein öffentliches GitHub-Repository hochladen.
-
-## Bekannte Grenzen / Teststatus
-
-- **Geprüft:** JavaScript-Syntax (`node --check`), Logiktests für Migration v1→v2, XP auf zwei Skills, einmalige Questbelohnung, historischen XP-Erhalt bei Skilllöschung, Darstellung der vier Seiten und der Editor-HTML-Vorlagen.
-- **Noch nicht auf einem echten iPhone getestet:** Safari-Gesten, tatsächliche IndexedDB-Persistenz/Migration, Dateiauswahl/Charakterbild, Offline-Installation, Service-Worker-Update. In dieser Arbeitsumgebung wurde der grafische Browser-Test beim Öffnen einer lokalen Seite blockiert. Daher ist dies eine **Testversion**; vor produktiver Verwendung bitte Backup erstellen und die Datenübernahme kontrollieren.
-- Eine Quest, deren einziger Skill gelöscht wurde, kann bei Bedarf ohne XP-Zuordnung bestehen bleiben; neue Quests benötigen mindestens eine positive Skillzuordnung.
-- Ein einmaliger Questabschluss ist absichtlich nicht rückgängig zu machen, um unbegrenzte XP-Gutschriften zu verhindern.
-- Für eine spätere Version wären weitere UI-Tests auf einem echten iPhone und ein automatisiertes Testset mit echter IndexedDB sinnvoll.
+- Gespeicherte persönliche Daten werden nicht an GitHub übertragen. Der Code ist über GitHub Pages öffentlich, deine Daten liegen lokal in IndexedDB. Backups enthalten persönliche Daten **unverschlüsselt**.
+- Eine PWA kann nicht zuverlässig selbst einen festen Ordner in iOS wählen und dort ohne Nutzeraktion speichern. Regelmäßige manuelle JSON-Sicherungen werden ausdrücklich empfohlen.
+- Für Push-Benachrichtigungen bei geschlossener App wäre ein separater Push-Dienst nötig. Die aktuelle rein lokale App zeigt Erinnerungen **beim Öffnen**, nur für gestern.
+- Die Web-Vibrations-API wird von iOS-Safari nicht allgemein unterstützt; Sound und visuelle Effekte können funktionieren, echtes haptisches Feedback bei freien Gesten ist nicht garantiert.
+- **Geprüft:** JavaScript-Syntax, Logiktests für Mana-/Level-XP, mehrfach zugeordnete Skills, Questkürzel und Backups von Datenformat 1→2→3.
+- **Noch nicht geprüft:** vollständige Gesten-/Bildschirmdarstellung und Freigabe-/Dateien-Dialog auf einem echten iPhone; in der Laufzeitumgebung war ein vollständiger Browser-Test blockiert. Darum dies zunächst als **Testversion** verwenden.
 
 ## Dateien
 
