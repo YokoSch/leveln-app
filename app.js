@@ -1,4 +1,4 @@
-/* Leveln 0.7 · Mana & Karten · 2026-10-29 */
+/* Leveln 0.8 · Laufende Questbuchungen und Icon-Galerie · 2026-10-29 */
 'use strict';
 const DB_NAME='progress-private-v1', STORES=['activities','entries','overrides','meta','skills'];
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
@@ -51,7 +51,7 @@ function allDays(start,end,cap=4000){const a=[];for(let x=start;x<end&&a.length<
 function valueFor(g,d,metric){const e=entry(g,d);return finite(e?.[metric])?e[metric]:null}
 function assessment(g,p){const a=g.a,r=p.rule||rules(a,p.start).find(x=>x.id===g.r.id)||g.r,keys=metricKeys(r);let totals={minutes:0,count:0},complete=true,hasEstimated=false;const effectiveStart=Math.max(0,dayDiff(p.start, (a.createdAt||S.started||p.start).slice(0,10)));
  for(let d of allDays(dayAdd(p.start,effectiveStart),(p.end<dayAdd(nowDay(),1)?p.end:dayAdd(nowDay(),1)))){let e=entry(g,d);if(!e){complete=false;continue}if(e.source==='auto'||e.source==='refused')hasEstimated=true;for(const k of keys){if(!finite(e[k]))complete=false;else totals[k]+=e[k]}}
- let finished=p.end<=dayAdd(nowDay(),1),state='pending';
+ let finished=p.end<=nowDay(),state='pending';
  if(a.kind==='reduce'){
    if(keys.some(k=>totals[k]>ruleValue(r,k)+1e-9))state='fail';
    else if(finished&&complete)state='success';
@@ -87,7 +87,7 @@ function currentPeriod(g,d){return periods(g,d).find(p=>p.start<=d&&p.end>d)||nu
 function finalLocked(p){return dayAdd(p.end,1)<=nowDay()}
 function frozenKey(g,p){return `${g.key}|${p.start}`}
 function outcome(g,p){const a=assessment(g,p);return {...a,frozen:S.wallet?.frozen?.includes(frozenKey(g,p))||false}}
-function stData(g){let ps=periods(g),run=0,best=0;for(let p of ps){const o=outcome(g,p);if(o.state==='success'){run++;best=Math.max(best,run)}else if(o.frozen){best=Math.max(best,run)}else if(o.state==='fail'&&p.closed){run=0}}
+function stData(g){let ps=periods(g),run=0,best=0;for(let p of ps){const o=outcome(g,p);if(o.state==='success'){run++;best=Math.max(best,run)}else if(o.frozen){best=Math.max(best,run)}else if(o.state==='fail'&&(p.closed||g.a.kind==='reduce')){run=0}}
  // pending current period should not shorten the visible streak
  return {current:run,best};}
 function assumed(g,d){let r=g.r,minutes=ruleValue(r,'minutes'),count=ruleValue(r,'count');let span=limit(r);
@@ -139,7 +139,7 @@ function xpEvents(){const ev=[];for(let g of allGoals()){
   }
  }else{
   for(let p of periods(g)){
-   if(p.end>dayAdd(nowDay(),1)||a.archivedAt&&p.end>a.archivedAt.slice(0,10))continue;
+   if(p.end>nowDay()||a.archivedAt&&p.end>a.archivedAt.slice(0,10))continue;
    const assess=assessment(g,p),historical=p.rule||r;if(!assess.complete||assess.hasEstimated)continue;
    for(let k of metricKeys(historical)){
     if(!metricOwner(g,k,p.start))continue;
@@ -192,7 +192,7 @@ function settingsView(){let w=S.wallet;return `<div class="page-heading"><span c
  <section class="settings-panel"><h3>Darstellung</h3><label>Hintergrund<select data-setting="theme"><option value="system" ${S.theme==='system'?'selected':''}>System</option><option value="light" ${S.theme==='light'?'selected':''}>Hell</option><option value="dark" ${S.theme==='dark'?'selected':''}>Dunkel</option></select></label><div class="color-row"><label>Zaubern <input type="color" data-setting="colorSave" value="${S.colors.save}"></label><label>Leveln <input type="color" data-setting="colorLevel" value="${S.colors.level}"></label></div></section>
  <section class="settings-panel"><h3>Spiel & Check-in</h3><label>Paket-Timeout · <b>${S.timeout} Sekunden</b><input type="range" min="1" max="10" step="1" value="${S.timeout}" data-setting="packetTimeout"></label><label>Erfolgssounds <input type="checkbox" data-setting="sound" ${S.sound?'checked':''}></label><label>Täglicher Check-in ab <input type="time" value="${S.checkTime}" data-setting="checkTime"></label><button class="thin-button" data-act="checkin">Offene Tage prüfen</button><p class="muted">Ohne Server sind keine automatischen Push-Mitteilungen außerhalb der App möglich. Eine tägliche iPhone-Kurzbefehle-Erinnerung kann Leveln öffnen.</p></section>
  <section class="settings-panel"><h3>Private Daten</h3><p class="muted">Alle Einträge liegen ausschließlich auf diesem Gerät. Sichere sie regelmäßig: iOS kann Website-Daten löschen.</p><button class="thin-button" data-act="export">JSON-Backup exportieren</button><button class="thin-button" data-act="import">JSON-Backup importieren</button><button class="danger-button" data-act="erase">Alle Daten löschen</button></section>`}
-function sheet(title,html,lock=false){$('#modalRoot').innerHTML=`<div class="shade" ${lock?'':'data-act="modal-close"'}><section class="sheet" role="dialog" aria-modal="true" aria-label="${safe(title)}"><div class="sheet-handle"></div><header><h2>${safe(title)}</h2>${lock?'':`<button class="icon-button" data-act="modal-close">${ico('close')}</button>`}</header>${html}</section></div>`}
+function sheet(title,html,lock=false){$('#modalRoot').innerHTML=`<div class="shade" ${lock?'':'data-act="modal-close"'}><section class="sheet" role="dialog" aria-modal="true" aria-label="${safe(title)}"><div class="sheet-handle"></div><header><h2>${safe(title)}</h2>${lock?'':`<button class="icon-button" data-act="modal-close">${ico('close')}</button>`}</header>${html}</section></div>`;enhanceIconSelectors()}
 function renderModal05(){if(!S.modal){$('#modalRoot').innerHTML='';return}
  if(S.modal.type==='edit-goal')return editGoalModal();if(S.modal.type==='edit-day')return editDayModal();if(S.modal.type==='checkin')return checkinModal();if(S.modal.type==='menu')return cardMenuModal();}
 function closeModal(){S.modal=null;renderModal()}
@@ -212,7 +212,7 @@ function editDayModal(){let d=S.modal.day,editable=canEdit(d),grouped=goals(d),a
  let html=`<div class="edit-day-sub">${pretty(d)} · ${editable?'Bearbeitbar':'Nur ansehen – nach zwei Kalendertagen gesperrt'}</div><form id="dayForm" data-day="${d}">${all.map((g,i)=>{let e=entry(g,d),s=e?.mode||'',comment=e?.comment||'';let ck=metricKeys(g.r);return `<div class="day-edit-row" data-goal="${safe(g.key)}"><div class="day-edit-title"><strong>${safe(g.a.name)}</strong><small>${g.a.kind==='reduce'?'Zaubern':'Leveln'} · ${NAMES[g.r.period]}</small></div><div class="day-edit-field"><label>Status<select name="mode_${i}" ${editable?'':'disabled'}><option value="" ${!s?'selected':''}>Offen</option><option value="up" ${s==='up'?'selected':''}>${g.a.kind==='reduce'?'Verzichtet':'Etwas gemacht'}</option><option value="down" ${s==='down'?'selected':''}>${g.a.kind==='reduce'?'Verbraucht':'Nichts gemacht'}</option><option value="refused" ${e?.source==='refused'||e?.source==='auto'?'selected':''}>Nicht eingetragen / verweigert</option></select></label></div><div class="field-grid">${ck.includes('minutes')?`<label>Minuten<input name="minutes_${i}" type="number" min="0" step="0.01" ${editable?'':'disabled'} value="${e?.minutes??''}" placeholder="Unbekannt"></label>`:'<div></div>'}${ck.includes('count')?`<label>Anzahl<input name="count_${i}" type="number" min="0" step="1" ${editable?'':'disabled'} value="${e?.count??''}" placeholder="Unbekannt"></label>`:'<div></div>'}</div><label class="comment-label">Kommentar<input name="comment_${i}" maxlength="1000" value="${safe(comment)}" ${editable?'':'disabled'} placeholder="Optional"></label></div>`}).join('')}${editable?`<button class="primary save-day" type="submit">Tagesprotokoll speichern</button>`:''}</form>`;
  sheet('Tagesprotokoll',html)}
 function cardMenuModal(){let g=goalByKey(S.modal.key,S.day);if(!g){closeModal();return}sheet(g.a.name,`<div class="menu-actions"><button data-act="edit-goal" data-key="${safe(g.key)}">${ico('target')} Ziel bearbeiten</button><button data-act="edit-day" data-day="${S.day}">${ico('edit')} Tageswerte ansehen / korrigieren</button><button data-act="show-goal" data-key="${safe(g.key)}">${ico('calendar')} Im Kalender anzeigen</button></div>`)}
-function checkinItems(){const ds=[dayAdd(nowDay(),-1)],currentTime=new Date().toTimeString().slice(0,5);if(currentTime>=S.checkTime)ds.push(nowDay());return ds.flatMap(d=>goals(d).filter(g=>!entry(g,d)).map(g=>({g,d})))}
+function checkinItems(){const d=dayAdd(nowDay(),-1);return goals(d).filter(g=>!entry(g,d)).map(g=>({g,d}))}
 function checkinModal(){const items=checkinItems();if(!items.length){closeModal();return}sheet('Dein täglicher Check-in',`<p class="form-help">${items.length} offene Einträge. Bitte nachtragen oder bewusst als nicht erfasst abschließen. Das wird nach Ablauf des Folgetags automatisch konservativ angenommen.</p><div class="check-list">${items.map(({g,d})=>`<div class="check-row"><div><strong>${safe(g.a.name)}</strong><small>${pretty(d)} · ${g.a.kind==='reduce'?'Zaubern':'Leveln'}</small></div><button data-act="check-edit" data-day="${d}">Nachtragen</button><button data-act="refuse" data-day="${d}" data-key="${safe(g.key)}">Verweigern</button></div>`).join('')}</div><button class="thin-button" data-act="refuse-all">Alle bewusst verweigern</button>`,true)}
 function maybeCheckin(force=false){if(S.modal||S.packet)return;let items=checkinItems();if(items.length&&(force||!S.checkShown)){S.checkShown=true;S.modal={type:'checkin'};renderModal()}}
 async function saveDay(form){const d=S.modal.day;if(!canEdit(d))throw Error('Dieser Tag ist bereits gesperrt.');const all=goals(d).filter(x=>x.a.kind==='build').concat(goals(d).filter(x=>x.a.kind==='reduce'));let changes=[];
@@ -368,7 +368,7 @@ function xpEvents(){const ev=[];
     }
    }else{
     for(const p of periods(g)){
-     if(p.end>dayAdd(nowDay(),1)||a.archivedAt&&p.end>a.archivedAt.slice(0,10))continue;
+     if(p.end>nowDay()||a.archivedAt&&p.end>a.archivedAt.slice(0,10))continue;
      const assess=assessment(g,p),historical=p.rule||g.r;if(!assess.complete||assess.hasEstimated)continue;
      for(const k of metricKeys(historical))if(metricOwner(g,k,p.start)){
       const amount=Math.max(0,ruleValue(historical,k)-assess.totals[k]);
@@ -451,8 +451,8 @@ async function importBackup(file){if(file.size>60*1024*1024)throw Error('Backup 
 async function handleRPGAction(act,el){
  if(act==='quest-filter'){S.questFilter=el.dataset.filter;render();return true}
  if(act==='card-toggle'){S.cardExpanded=!S.cardExpanded;render();return true}
- if(act==='tab'){const p=el.dataset.page;if(p==='today'&&S.page==='today'){S.day=S.day===nowDay()?dayAdd(nowDay(),-1):nowDay();S.card=0;S.cardExpanded=false;S.cardDrafts.clear();render();return true}S.cardExpanded=false;go(p);return true}
- if(act==='settings-toggle'){if(S.page==='settings')go(S.previousPage||'today');else{S.previousPage=S.page;go('settings')}return true}
+ if(act==='tab'){S.moreOpen=false;const p=el.dataset.page;if(p==='today'&&S.page==='today'){S.day=S.day===nowDay()?dayAdd(nowDay(),-1):nowDay();S.card=0;S.cardExpanded=false;S.cardDrafts.clear();render();return true}S.cardExpanded=false;go(p);return true}
+ if(act==='settings-toggle'){S.moreOpen=false;if(S.page==='settings')go(S.previousPage||'today');else{S.previousPage=S.page;go('settings')}return true}
  if(act==='profile-edit'){S.modal={type:'profile'};renderModal();return true}
  if(act==='skill-new'){S.modal={type:'skill'};renderModal();return true}
  if(act==='skill-edit'){S.modal={type:'skill',id:el.dataset.id};renderModal();return true}
@@ -470,7 +470,12 @@ async function handleRPGAction(act,el){
 function handleAction(act,el){
  // Safari requires a live user activation to open its native share dialog.
  // Do not insert an awaited promise before exportBackup() is invoked.
- if(act==='export'){exportBackup().catch(showError);return}
+ if(act==='export'){S.moreOpen=false;nav();exportBackup().catch(showError);return}
+ if(act==='more-toggle'){S.moreOpen=!S.moreOpen;nav();return}
+ if(act==='icon-open'){openIconGallery(el);return}
+ if(act==='icon-choice'){chooseIcon(el.dataset.value);return}
+ if(act==='icon-category'){S.iconCategory=el.dataset.category;renderIconGallery();return}
+ if(act==='icon-close'){closeIconGallery();return}
  (async()=>{if(await handleRPGAction(act,el))return;await handleAction05(act,el)})().catch(showError)
 }
 
@@ -486,32 +491,71 @@ S.questFilter='all';S.cardExpanded=false;S.cardDrafts=new Map();
 function cardDraft(g){const key=entryKey(g,S.day),stored=S.cardDrafts.get(key);if(stored)return stored;const e=entry(g,S.day);const values={};for(const k of metricKeys(g.r)){const configured=g.r[k==='minutes'?'standardMinutes':'standardCount'];values[k]=e&&finite(e[k])?String(e[k]):configured!==null&&configured!==undefined?String(configured):''}S.cardDrafts.set(key,values);return values}
 function manaInPeriod(g){if(g.a.kind!=='reduce')return null;const p=currentPeriod(g,S.day);if(!p)return null;let used={minutes:0,count:0};for(const d of allDays(p.start,dayAdd(S.day,1))){const e=entry(g,d);if(e)for(const k of metricKeys(g.r))if(finite(e[k]))used[k]+=e[k]}return {p,used};}
 function manaPanel(g){const d=manaInPeriod(g);if(!d)return '';const r=g.r,parts=metricKeys(r).map(k=>{let all=ruleValue(r,k),used=d.used[k],left=Math.max(0,all-used);return `<div class="mana-row">${MANA_CRYSTAL}<span><b>${num(left,1)} / ${num(all,1)} ${k==='minutes'?'min':'×'}</b><small>Mana übrig ${k==='minutes'?'(Zeit)':'(Anzahl)'}</small></span></div>`});return `<div class="mana-budget">${parts.join('')}</div>`}
-function cardHtml(g,behind=false){const a=g.a,once=isOnce(a),done=once?false:initialState(g,S.day)!=='open',color=once?hex(a.color,S.colors.level):goalColor(g),k=safe(g.key),abbr=shortCode(a.shortName||a.name),r=g.r,expanded=S.cardExpanded&&!behind,draft=once?{}:cardDraft(g),meters=once?'':metricKeys(r).map(metric=>`<label>${metric==='minutes'?'Minuten':'Anzahl'}<input class="card-entry-input" data-metric="${metric}" data-goal="${k}" type="number" inputmode="decimal" min="0" step="${metric==='minutes'?'0.01':'1'}" value="${safe(draft[metric]??'')}" placeholder="Täglicher Standard"></label>`).join('');
- const st=once?'':stData(g).current;
- return `<div class="play-card ${behind?'peek':'face'} ${done?'played':''} ${once?'once-card':''}" style="--card-accent:${color}" ${behind?'':'id="activeCard"'} data-goal="${k}"><div class="card-header"><span class="card-pill">${once?'EINMALIG':a.kind==='reduce'?'ZAUBERN':'LEVELN'}</span><span class="card-head-icon">${once?ico('scroll'):a.kind==='reduce'?MANA_CRYSTAL:ico('spark')}</span></div><div class="card-main">${art(a)}<h2>${safe(a.name)}</h2><p>${once?(a.availableUntil?'Bis '+pretty(a.availableUntil):'Ohne Zeitlimit')+' · einmalige Quest':safe(detailGoal(g))}</p>${!once&&a.kind==='reduce'?manaPanel(g):''}</div>${!behind&&!once&&meters?`<div class="card-collapsible"><button class="card-entry-toggle" data-act="card-toggle" aria-expanded="${expanded}">${ico(expanded?'chevron':'edit')} Werte ${expanded?'schließen':'eintragen'}</button>${expanded?`<div class="card-entry-fields">${meters}</div>`:''}</div>`:''}<div class="card-foot"><span class="streak">${once?ico('scroll')+' '+num((a.rewardBindings||[]).reduce((sum,x)=>sum+x.xp,0),1)+' XP':ico('flame')+' '+st}</span><b class="card-short">${safe(abbr)}</b><span class="played-label">${once?'QUEST':done?'ERFASST':'OFFEN'}</span></div></div>`}
+function cardHtml(g,behind=false){
+ const a=g.a,once=isOnce(a),color=once?hex(a.color,S.colors.level):goalColor(g),k=safe(g.key),abbr=shortCode(a.shortName||a.name),r=g.r,expanded=S.cardExpanded&&!behind,draft=once?{}:cardDraft(g),e=once?null:entry(g,S.day),keys=once?[]:metricKeys(r);
+ const meters=once?'':keys.map(metric=>`<label>${metric==='minutes'?'Minuten buchen':'Anzahl buchen'}<input class="card-entry-input" data-metric="${metric}" data-goal="${k}" type="number" inputmode="decimal" min="0" step="${metric==='minutes'?'0.01':'1'}" value="${safe(draft[metric]??'')}" placeholder="Täglicher Standard"></label>`).join('');
+ const st=once?'':stData(g).current, assess=once?null:currentPeriod(g,S.day),evaluation=assess?assessment(g,assess):null;
+ const remaining=once?false:a.kind==='reduce'&&manaInPeriod(g)&&keys.some(m=>{const x=manaInPeriod(g);return ruleValue(r,m)-x.used[m]>0;});
+ const success=!once&&a.kind==='build'&&evaluation?.state==='success';
+ const glow=success?'level-glow':remaining?'mana-glow':'';
+ const current=once?'':keys.map(m=>`${m==='minutes'?num(e?.minutes??0,1)+' min':num(e?.count??0,0)+' ×'}`).join(' · ');
+ const subtext=once?'':e?`${a.kind==='reduce'?'Heute verbraucht':'Heute trainiert'}: ${current}`:'Noch keine Buchung heute';
+ return `<div class="play-card ${behind?'peek':'face'} ${glow} ${once?'once-card':''}" style="--card-accent:${color}" ${behind?'':'id="activeCard"'} data-goal="${k}"><div class="card-header"><span class="card-pill">${once?'EINMALIG':a.kind==='reduce'?'ZAUBERN':'LEVELN'}</span><span class="card-head-icon">${once?ico('scroll'):a.kind==='reduce'?MANA_CRYSTAL:ico('spark')}</span></div><div class="card-main">${art(a)}<h2>${safe(a.name)}</h2><p>${once?(a.availableUntil?'Bis '+pretty(a.availableUntil):'Ohne Zeitlimit')+' · einmalige Quest':safe(detailGoal(g))}</p>${!once&&a.kind==='reduce'?manaPanel(g):''}${!once?`<small class="card-daily-tally">${safe(subtext)}</small>`:''}</div>${!behind&&!once&&meters?`<div class="card-collapsible"><button class="card-entry-toggle" data-act="card-toggle" aria-expanded="${expanded}">${ico(expanded?'chevron':'edit')} Neue Menge ${expanded?'schließen':'eintragen'}</button>${expanded?`<div class="card-entry-fields">${meters}</div>`:''}</div>`:''}<div class="card-foot"><span class="streak">${once?ico('scroll')+' '+num((a.rewardBindings||[]).reduce((sum,x)=>sum+x.xp,0),1)+' XP':ico('flame')+' '+st}</span><b class="card-short">${safe(abbr)}</b><span class="played-label">${once?'QUEST':e?'BUCHUNG':'BEREIT'}</span></div></div>`;
+}
 function todayView(){if(!canEdit(S.day))S.day=nowDay();const gs=goals(S.day);S.card=Math.min(Math.max(0,S.card),Math.max(0,gs.length-1));const g=gs[S.card],edited=gs.filter(x=>cardStatus(x,S.day)!=='open').length;
  return `<div class="today-head"><div class="today-topline"><span>LEVELN · PLAY YOUR DAY</span><span>${edited}/${gs.length} erfasst</span></div>${xpBar()}</div><div class="deck-area">${g?`<div class="deck-stack">${[2,1].map(i=>{if(gs.length<=i)return '';const pg=gs[(S.card+i)%gs.length];return `<div class="peek-wrap peek-${i}">${cardHtml(pg,true)}</div>`}).join('')}${cardHtml(g)}</div>`:`<div class="empty-state">${ico('scroll')}<h2>Keine Questkarten</h2><p>Lege im Questboard deine erste Quest an.</p><button class="primary" data-act="go-goals">Questboard öffnen</button></div>`}</div><div class="deck-caption">${gs.length?`${S.card+1}/${gs.length} Karten · ${pretty(S.day,{day:'numeric',month:'short'})}`:pretty(S.day,{day:'numeric',month:'short'})}</div>`}
-function nav(){const tabs=[['today','home',S.day===nowDay()?'Heute':'Gestern'],['goals','goals','Quests'],['character','user','Charakter'],['stats','chart','Statistik']];$('#bottomNav').innerHTML=`<nav class="tabs">${tabs.map(([p,i,t])=>`<button class="tab ${S.page===p?'on':''}" data-act="tab" data-page="${p}">${p==='character'?avatarMarkup(profile(),'nav-avatar'):ico(i)}<small>${t}</small></button>`).join('')}</nav>`;
- const h=$('#settingsShortcut');if(h)h.innerHTML=`<button class="settings-shortcut" data-act="settings-toggle" aria-label="Einstellungen">${ico(S.page==='settings'?'back':'settings')}</button>`;
- const save=$('#backupShortcut');if(save)save.innerHTML=`<button class="backup-shortcut" data-act="export" aria-label="JSON-Sicherung speichern" title="Backup speichern">${ico('save')}</button>`;
+function nav(){
+ const tabs=[['today','home',S.day===nowDay()?'Heute':'Gestern'],['goals','goals','Quests'],['character','user','Charakter'],['stats','chart','Statistik']];
+ $('#bottomNav').innerHTML=`<nav class="tabs tabs-five">${tabs.map(([p,i,t])=>`<button class="tab ${S.page===p?'on':''}" data-act="tab" data-page="${p}">${p==='character'?avatarMarkup(profile(),'nav-avatar'):ico(i)}<small>${t}</small></button>`).join('')}<div class="nav-more-wrap"><button class="tab nav-more ${S.moreOpen?'on':''}" data-act="more-toggle" aria-label="Mehr Optionen" aria-expanded="${!!S.moreOpen}">${ico('dots')}<small>Mehr</small></button>${S.moreOpen?`<div class="nav-more-pop"><button data-act="export">${ico('save')} Backup sichern</button><button data-act="settings-toggle">${ico('settings')} ${S.page==='settings'?'Zurück':'Einstellungen'}</button></div>`:''}</div></nav>`;
+ if($('#settingsShortcut'))$('#settingsShortcut').innerHTML='';
+ if($('#backupShortcut'))$('#backupShortcut').innerHTML='';
 }
 PATH.save='<path d="M4 3h14l3 3v15H3V3zM7 3v7h10V3M7 21v-8h10v8M9 5v3h6"/>';
 function goalGroups(){return ['day','week','month','year'].map(p=>({p,items:goals().filter(g=>!isOnce(g.a)&&g.r.period===p)}))}
 function goalsView(){const archived=allGoals().filter(g=>!isOnce(g.a)&&!goals().some(x=>x.key===g.key)),once=S.activities.filter(isOnce);
  const filters=[['all','Alle'],['once','Einmalig'],['day','Täglich'],['week','Wöchentlich'],['month','Monatlich'],['year','Jährlich'],['archive','Archiv']];const show=p=>S.questFilter==='all'||S.questFilter===p;
- return `<div class="page-heading"><span class="eyebrow">DEIN ABENTEUER</span><div class="heading-row"><h1>Quests</h1><button class="circle-action" data-act="new" aria-label="Neue Quest">${ico('plus')}</button></div></div><div class="quest-filter-bar">${filters.map(([p,label])=>`<button data-act="quest-filter" data-filter="${p}" class="quest-filter ${S.questFilter===p?'selected':''}">${label}</button>`).join('')}</div><div class="goals-sticky">${calendarHTML()}</div><div class="goals-scroll"><div class="goals-actions goals-dual"><button class="thin-button" data-act="edit-day" data-day="${nowDay()}">${ico('edit')} Heute korrigieren</button><button class="thin-button" data-act="edit-day" data-day="${dayAdd(nowDay(),-1)}">${ico('edit')} Gestern korrigieren</button></div>${show('once')?`<section class="goal-section"><h3>${ico('scroll')} EINMALIGE QUESTS</h3>${once.filter(a=>!a.archivedAt&&!a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine offenen einmaligen Quests</p>'}</section>`:''}${goalGroups().filter(gr=>show(gr.p)).map(gr=>`<section class="goal-section"><h3>${({day:'TÄGLICHE',week:'WÖCHENTLICHE',month:'MONATLICHE',year:'JÄHRLICHE'})[gr.p]} QUESTS</h3>${gr.items.map(g=>goalRow(g)).join('')||'<p class="muted">Noch keine Quests</p>'}</section>`).join('')}${(show('archive'))?`<section class="goal-section archived-list"><h3>ARCHIV & ABGESCHLOSSEN</h3>${archived.map(g=>goalRow(g,true)).join('')}${once.filter(a=>a.archivedAt||a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine archivierten Quests</p>'}</section>`:''}</div>`}
+ return `<div class="page-heading"><span class="eyebrow">DEIN ABENTEUER</span><div class="heading-row"><h1>Quests</h1><button class="circle-action" data-act="new" aria-label="Neue Quest">${ico('plus')}</button></div></div><div class="goals-sticky">${calendarHTML()}</div><div class="quest-filter-bar">${filters.map(([p,label])=>`<button data-act="quest-filter" data-filter="${p}" class="quest-filter ${S.questFilter===p?'selected':''}">${label}</button>`).join('')}</div><div class="goals-scroll"><div class="goals-actions goals-dual"><button class="thin-button" data-act="edit-day" data-day="${nowDay()}">${ico('edit')} Heute korrigieren</button><button class="thin-button" data-act="edit-day" data-day="${dayAdd(nowDay(),-1)}">${ico('edit')} Gestern korrigieren</button></div>${show('once')?`<section class="goal-section"><h3>${ico('scroll')} EINMALIGE QUESTS</h3>${once.filter(a=>!a.archivedAt&&!a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine offenen einmaligen Quests</p>'}</section>`:''}${goalGroups().filter(gr=>show(gr.p)).map(gr=>`<section class="goal-section"><h3>${({day:'TÄGLICHE',week:'WÖCHENTLICHE',month:'MONATLICHE',year:'JÄHRLICHE'})[gr.p]} QUESTS</h3>${gr.items.map(g=>goalRow(g)).join('')||'<p class="muted">Noch keine Quests</p>'}</section>`).join('')}${(show('archive'))?`<section class="goal-section archived-list"><h3>ARCHIV & ABGESCHLOSSEN</h3>${archived.map(g=>goalRow(g,true)).join('')}${once.filter(a=>a.archivedAt||a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine archivierten Quests</p>'}</section>`:''}</div>`}
 function onceQuestState(a){return a.completedAt?'completed':a.archivedAt?'archived':nowDay()<a.availableFrom?'planned':a.availableUntil&&nowDay()>a.availableUntil?'expired':'available'}
 function oneTimeGoals(d){return S.activities.filter(a=>d===nowDay()&&isOnce(a)&&a.pinned&&a.availableFrom<=d&&(!a.availableUntil||a.availableUntil>=d)&&!a.completedAt&&!a.archivedAt).map(a=>({a,r:{id:'once',period:'day',minutes:null,count:null},index:0,key:onceKey(a)}))}
 function detailGoal(g){const parts=metricKeys(g.r).map(k=>k==='minutes'?formatMin(ruleValue(g.r,k)):num(ruleValue(g.r,k))+' ×');return `${g.a.kind==='reduce'?'Mana:':'Ziel:'} ${parts.join(' + ')} · ${NAMES[g.r.period]}${isRestart(g.r)?' · Neustart':''}`}
-function settingsView(){return settingsView05().replace('<h1>Optionen</h1>','<h1>Einstellungen</h1>').replaceAll(ico('flame'),EMBER_SVG).replace(/<label>Paket-Timeout[\s\S]*?<\/label>/,'').replace(/<p class="muted">1 Glut/,'<p class="muted">1 Glut').replace('Zaubern<input type="color"','Zaubern<input type="color"')+'<details class="settings-panel mini-doc"><summary>So funktioniert Leveln</summary><p>Nach oben wischen: Leveln = Trainingswerte, Zaubern = Mana verbrauchen. Nach unten wischen: kein Training bzw. kein Mana verbraucht. Ohne Eingabe gelten deine gespeicherten Tagesstandards. Streak = Flamme, Freeze = Schneeflocke, Glut = glühende Kohle. Quests trainieren Skills; 100 XP je Skill-Stufe, 1.000 XP je Charakterlevel. Eine einmalige Quest kann ohne Zeitlimit verfügbar sein.</p><p><b>Leveln 0.7 · Datenformat 3</b></p></details>'}
+function settingsView(){return settingsView05().replace('<h1>Optionen</h1>','<h1>Einstellungen</h1>').replaceAll(ico('flame'),EMBER_SVG).replace(/<label>Paket-Timeout[\s\S]*?<\/label>/,'').replace(/<p class="muted">1 Glut/,'<p class="muted">1 Glut').replace('Zaubern<input type="color"','Zaubern<input type="color"')+'<details class="settings-panel mini-doc"><summary>So funktioniert Leveln</summary><p>Nach oben wischen: neue Trainings- oder Mana-Verbrauchsmengen zum heutigen Tageswert hinzubuchen. Nach unten wischen: 0 bestätigen, bestehende Mengen bleiben erhalten. Ohne Eingabe gelten deine gespeicherten Tagesstandards. Streak = Flamme, Freeze = Schneeflocke, Glut = glühende Kohle. Quests trainieren Skills; 100 XP je Skill-Stufe, 1.000 XP je Charakterlevel. Eine einmalige Quest kann ohne Zeitlimit verfügbar sein.</p><p><b>Leveln 0.8 · Datenformat 3</b></p></details>'}
 function skillModal(){const s=skillById(S.modal.id);sheet(s?'Skill bearbeiten':'Neuen Skill erstellen',`<form id="skillForm" class="rpg-form"><label>Skillname<input name="name" maxlength="60" required value="${safe(s?.name||'')}"></label><label>Beschreibung<textarea name="description" maxlength="350" rows="3">${safe(s?.description||'')}</textarea></label><div class="field-grid"><label>Farbe<input type="color" name="color" value="${skillColor(s)}"></label><label>Symbol<select name="icon">${iconChoices(s?.icon)}</select></label></div><div class="sheet-actions"><button type="button" data-act="modal-close" class="thin-button">Abbrechen</button><button type="submit" class="primary">Skill speichern</button></div></form>${s?`<button class="danger-button" data-act="skill-delete" data-id="${safe(s.id)}">Skill unwiderruflich entfernen</button>`:''}`)}
 function profileModal(){const p=profile();sheet('Charakter gestalten',`<form id="profileForm" class="rpg-form"><label>Name<input name="name" maxlength="60" required value="${safe(p.name)}"></label><label>Beschreibung<textarea name="description" maxlength="350" rows="3">${safe(p.description)}</textarea></label><label>Themenfarbe<input type="color" name="color" value="${hex(p.color,'#67c65d')}"></label><label>Standard-Avatar<select name="avatar">${iconChoices(p.avatar)}</select></label><label>Eigenes Charakterbild<input name="image" type="file" accept="image/jpeg,image/png,image/webp"></label><label class="check-color"><input type="checkbox" name="removeImage"> Eigenes Bild entfernen</label><div class="sheet-actions"><button class="thin-button" type="button" data-act="modal-close">Abbrechen</button><button type="submit" class="primary">Charakter speichern</button></div></form>`)}
 function avatarMarkup(p=profile(),cls='avatar-circle'){if(p.image&&/^data:image\/(png|jpeg|webp);base64,/.test(p.image))return `<img class="${cls}" src="${p.image}" alt="Charakterbild">`;return `<span class="${cls} avatar-sigil" style="--avatar-color:${hex(p.color,'#67c65d')}">${ico(PATH[p.avatar]?p.avatar:'shield')}</span>`}
 function onceQuestRow(a){const state=onceQuestState(a),label={completed:'Abgeschlossen',archived:'Archiviert',planned:'Geplant',expired:'Abgelaufen',available:'Verfügbar'}[state],reward=(a.rewardSnapshot||a.rewardBindings||[]).reduce((sum,b)=>sum+b.xp,0);return `<div class="quest-one-time"><div class="quest-one-icon">${ico('scroll')}</div><div class="quest-one-text"><strong>${safe(a.name)}</strong><small>${label} · ${num(reward,1)} XP · ${a.availableUntil?'bis '+pretty(a.availableUntil):'ohne Zeitlimit'}</small><small>${(a.rewardBindings||[]).map(b=>safe(skillById(b.skillId)?.name||'Historischer Skill')).join(' · ')}</small></div><div class="quest-one-actions">${state==='available'?`<button data-act="once-complete" data-id="${safe(a.id)}" class="primary tiny">Abschließen</button>`:''}${!a.completedAt&&!a.archivedAt?`<button data-act="once-edit" data-id="${safe(a.id)}" class="tiny thin-button">Bearbeiten</button><button data-act="once-archive" data-id="${safe(a.id)}" class="tiny thin-button">Archiv</button>`:''}</div></div>`}
-function defaultCardFields(g,up){const e=entry(g,S.day),draft=cardDraft(g),out={mode:up?'up':'down',status:up?'yes':'no',source:'user',estimated:false};for(const k of metricKeys(g.r)){let value=up?(draft[k]??''):0;if(value===''||value===null){out[k]=null;continue}const v=Number(value);if(!Number.isFinite(v)||v<0||v>1e6||k==='count'&&!Number.isInteger(v))throw Error(`Ungültiger Kartenwert: ${k}`);out[k]=v}out.comment=e?.comment||'';return out}
-async function startCard(g,up){if(!g||S.busy||!canEdit(S.day))return;if(isOnce(g.a)){if(up)await completeOnce(g.a.id);else{rotate(1)}return}
- const before=xpStats().sum,fields=defaultCardFields(g,up);await dbPut('entries',makeEntry(g,S.day,fields));S.cardDrafts.delete(entryKey(g,S.day));await sync();const after=xpStats().sum;vibrate();if(after>before+1e-8&&g.a.kind==='reduce')manaConvert(after-before);else if(after>before+1e-8)xpToast(after-before);
- const newLvl=Math.floor((after+1e-7)/1000);if(newLvl>Math.floor((before+1e-7)/1000))await celebrate(newLvl+1);sound(false);S.cardExpanded=false;rotate(1);}
+function cardDraft(g){
+ const key=entryKey(g,S.day),old=S.cardDrafts.get(key);if(old)return old;
+ const values={};for(const k of metricKeys(g.r)){const standard=g.r[k==='minutes'?'standardMinutes':'standardCount'];values[k]=standard===null||standard===undefined?'':String(standard)}
+ S.cardDrafts.set(key,values);return values;
+}
+function bookingFields(g,up){
+ const existing=entry(g,S.day),draft=cardDraft(g),out={mode:up?'up':'down',status:up?'yes':'no',source:'user',estimated:false};
+ for(const k of metricKeys(g.r)){
+  const raw=up?draft[k]:0;
+  if(raw===''||raw===null||raw===undefined){out[k]=finite(existing?.[k])?existing[k]:null;continue}
+  const v=Number(raw);if(!Number.isFinite(v)||v<0||v>1e6||(k==='count'&&!Number.isInteger(v)))throw Error(`Ungültige Buchung: ${k}`);
+  const total=(finite(existing?.[k])?existing[k]:0)+(up?v:0);if(total>1e7)throw Error('Zu viele Einheiten');out[k]=total;
+ }
+ // An empty swipe confirms zero; a later zero swipe does not erase earlier values.
+ if(!up&&existing){out.mode=existing.mode||'up';out.status=existing.status||'yes'}
+ out.comment=existing?.comment||'';return out;
+}
+async function startCard(g,up){
+ if(!g||S.busy||!canEdit(S.day))return;
+ if(isOnce(g.a)){if(up)await completeOnce(g.a.id);else rotate(1);return}
+ S.busy=true;
+ try{
+  const before=xpStats().sum,fields=bookingFields(g,up);
+  await dbPut('entries',makeEntry(g,S.day,fields));S.cardDrafts.delete(entryKey(g,S.day));
+  await sync();await reconcileWallet();
+  const after=xpStats().sum;vibrate();
+  if(after>before+1e-8)xpToast(after-before); // Mana is settled only on completed days/periods.
+  const prevLevel=Math.floor((before+1e-7)/1000),newLevel=Math.floor((after+1e-7)/1000);
+  if(newLevel>prevLevel)await celebrate(newLevel+1);
+  sound(false);S.cardExpanded=false;S.card=(S.card+1)%Math.max(1,goals(S.day).length);render();
+  toast(up?'Menge gebucht · du kannst später erneut buchen':'Nullverbrauch erfasst');
+ }finally{S.busy=false}
+}
 function manaConvert(xp){
  const track=document.querySelector('#xpTrack');
  const target=track?.getBoundingClientRect();
@@ -541,7 +585,7 @@ function manaConvert(xp){
  document.body.appendChild(label);
  setTimeout(()=>label.remove(),1650);
 }
-async function exportBackup(){const data={activities:S.activities,entries:S.entries,overrides:S.overrides,meta:S.meta,skills:S.skills};const fileName=`Leveln-Backup-v3-${nowDay()}.json`,blob=new Blob([JSON.stringify({format:'progress-local-backup',version:3,exportedAt:new Date().toISOString(),appVersion:'0.7',data},null,2)],{type:'application/json'});const file=new File([blob],fileName,{type:'application/json'});
+async function exportBackup(){const data={activities:S.activities,entries:S.entries,overrides:S.overrides,meta:S.meta,skills:S.skills};const fileName=`Leveln-Backup-v3-${nowDay()}.json`,blob=new Blob([JSON.stringify({format:'progress-local-backup',version:3,exportedAt:new Date().toISOString(),appVersion:'0.8',data},null,2)],{type:'application/json'});const file=new File([blob],fileName,{type:'application/json'});
  if(navigator.share&&navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:'Leveln Backup'});return}catch(err){if(err?.name==='AbortError')return}}
  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=fileName;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
 function migrateV2toV3(input){const data=structuredClone(input);if(!Array.isArray(data.activities)||!Array.isArray(data.meta))throw Error('Ungültiges Backupformat 2');for(const a of data.activities){if(!a.shortName)a.shortName=shortCode(a.name);if(isOnce(a)){if(a.availableUntil===undefined)a.availableUntil=null;continue}for(const rev of a.revisions||[]){for(const r of rev.rules||[]){for(const metric of ['minutes','count']){const fld=metric==='minutes'?'standardMinutes':'standardCount';if(r[fld]===null||r[fld]===undefined){const proposal=suggestStandard(r.period,r[metric],metric);if(proposal!=='')r[fld]=proposal}}}}}
@@ -562,6 +606,59 @@ async function setup(){db=await dbOpen();await sync();if(meta('schemaVersion',1)
 async function importBackup(file){if(file.size>60*1024*1024)throw Error('Backup größer als 60 MB');const json=JSON.parse(await file.text());if(json.format!=='progress-local-backup'||![1,2,3].includes(json.version))throw Error('Unbekanntes Backupformat');let d=json.version===1?migrateV1Data(json.data):structuredClone(json.data);if(json.version<3)d=migrateV2toV3(d);validateBackup(d);if(!confirm(`${d.activities.length} Quests, ${d.entries.length} Einträge und ${d.skills.length} Skills importieren? Der aktuelle lokale Datenstand wird ersetzt.`))return;
  await dbTx(STORES,t=>{for(const n of STORES){const store=t.objectStore(n);store.clear();for(const rec of d[n])store.put(rec)}});S.cardDrafts.clear();S.modal=null;S.packet=null;S.page='today';S.day=nowDay();S.card=0;await sync();await reconcile();render();toast('Backup erfolgreich migriert und importiert')}
 
+
+// One shared, icon-first gallery for Quest, Skill and character form selects.
+const ICON_GROUPS={
+ 'Alle':[],
+ 'Menschen':['user','person','mage','knight','robot','wizard','archer','ranger','priest'],
+ 'Tiere':['cat','wolf','fox','owl','paw','bear','rabbit','horse','bird'],
+ 'Fabelwesen':['dragon','unicorn','phoenix','griffin','slime'],
+ 'Gegenstände':['shield','scroll','book','phone','dumbbell','wallet','game','sword','potion','key','bag'],
+ 'Symbole':['spark','star','moon','sun','heart','target','palette','flame','snow','plus']
+};
+Object.assign(PATH,{
+ wizard:'<path d="M4 20h16M6 16l6-12 6 12M8 12q4 3 8 0M9 16q3 3 6 0M12 4l2-2"/><path d="M4 20q8 4 16 0"/>',
+ archer:'<path d="M5 20q9-9 0-18M5 2l8 9-8 9m0-9h16m-4-3 4 3-4 3"/>',
+ ranger:'<path d="m3 9 9-7 9 7-4 12H7zM6 10h12m-9 4h6m-4 4h2"/>',
+ priest:'<path d="M12 2v20M7 7h10M5 19q7-5 14 0M3 22h18"/>',
+ bear:'<path d="M5 8Q1 1 7 3l2 3q3-2 6 0l2-3q6-2 3 5 3 9-5 13H9Q2 17 5 8Z"/><path d="M8 12h.1m8 0h.1M10 16q2 3 4 0m-2-2v1"/>',
+ rabbit:'<path d="M8 10Q2 1 6 2q4 0 5 8m3 0q0-9 5-8 4 1-3 9m-8 0q-4 3-3 8 7 7 14 0 1-5-3-8"/><path d="M9 15h.1m6 0h.1M12 17l1 1-1 1-1-1z"/>',
+ horse:'<path d="m6 21 1-7-3-5 5-7 6 2 5 9-3 8H6ZM9 7l2 2m5 4h.1M7 15h10"/>',
+ bird:'<path d="M3 15Q6 6 18 4q-4 6-2 8l5 1-5 3Q8 22 3 15Zm5-2 7-3M12 17l2 5"/>',
+ griffin:'<path d="M3 17q5-6 8-8l1-7 4 5 5 1-5 5-1 8H9l-2-5m-4 1 5 4m6-11h.1"/>',
+ slime:'<path d="M4 18q-3-5 3-11 5-7 10 0 6 6 3 11-2 5-8 4-6 1-8-4Z"/><path d="M8 14h.1m8 0h.1m-6 4q2 2 4 0"/>',
+ sword:'<path d="m5 20 5-5 10-12 1 4-10 10-5 5M3 13l8 8m-4-8 4-4M4 20l-2 2"/>',
+ potion:'<path d="M9 2h6m-5 0v7l-5 5q-3 7 7 8 10-1 7-8l-5-5V2m-7 14q5-4 10 0m-6-3h.1"/>',
+ key:'<circle cx="7" cy="8" r="4"/><path d="M10 11l11 11m-6-6 3-3m-1 5 3-3"/>'
+});
+let pickerSelect=null;
+S.moreOpen=false;S.iconCategory='Alle';
+function enhanceIconSelectors(){
+ const root=$('#modalRoot');if(!root)return;
+ for(const sel of root.querySelectorAll('select[name="iconKey"],select[name="icon"],select[name="avatar"]')){
+  if(sel.dataset.galleryReady)return;
+  sel.dataset.galleryReady='1';sel.classList.add('icon-select-hidden');
+  const button=document.createElement('button');button.type='button';button.className='icon-gallery-trigger';button.dataset.act='icon-open';
+  button.innerHTML=`<span class="gallery-preview">${ico(sel.value||'spark')}</span><span>Symbol auswählen <small>Icon-Galerie öffnen</small></span>${ico('chevron')}`;
+  sel.after(button);
+ }
+}
+function openIconGallery(button){pickerSelect=button.previousElementSibling;
+ if(!pickerSelect||pickerSelect.tagName!=='SELECT')return;
+ S.iconCategory='Alle';renderIconGallery();}
+function renderIconGallery(){
+ const root=$('#iconPickerRoot');if(!root||!pickerSelect)return;
+ const listed=Object.entries(ICON_GROUPS).filter(([k])=>k!=='Alle');
+ const icons=S.iconCategory==='Alle'?[...new Set(listed.flatMap(([,v])=>v))]:ICON_GROUPS[S.iconCategory]||[];
+ root.innerHTML=`<div class="gallery-backdrop" data-act="icon-close"><section class="icon-gallery" role="dialog" aria-modal="true" aria-label="Symbol auswählen"><header><h2>Symbol wählen</h2><button data-act="icon-close" class="icon-gallery-x" aria-label="Schließen">${ico('close')}</button></header><div class="icon-categories">${Object.keys(ICON_GROUPS).map(k=>`<button class="${S.iconCategory===k?'on':''}" data-act="icon-category" data-category="${safe(k)}">${safe(k)}</button>`).join('')}</div><div class="icon-gallery-grid">${pickerSelect.name==='iconKey'?`<button class="icon-tile ${pickerSelect.value===''?'picked':''}" data-act="icon-choice" data-value="">${ico('spark')}<small>Standard</small></button>`:''}${icons.filter(k=>PATH[k]).map(k=>`<button class="icon-tile ${pickerSelect.value===k?'picked':''}" data-act="icon-choice" data-value="${safe(k)}">${ico(k)}<small>${safe(k)}</small></button>`).join('')}</div></section></div>`;
+}
+function chooseIcon(value){if(!pickerSelect)return;if(value&&!PATH[value])return;
+ // Select entries absent from legacy dropdown need an option for clean FormData persistence.
+ if(![...pickerSelect.options].some(o=>o.value===value)){const o=document.createElement('option');o.value=value;o.textContent=value;pickerSelect.append(o)}
+ pickerSelect.value=value;pickerSelect.dispatchEvent(new Event('change',{bubbles:true}));
+ const trigger=pickerSelect.nextElementSibling;if(trigger){trigger.querySelector('.gallery-preview').innerHTML=ico(value||'spark');}
+ closeIconGallery();}
+function closeIconGallery(){pickerSelect=null;$('#iconPickerRoot').innerHTML=''}
 
 let goalSwipe=null;let suppressClickUntil=0;
 document.addEventListener('click',e=>{if(Date.now()<suppressClickUntil)return;let el=e.target.closest('[data-act]');if(!el)return;if(el.classList.contains('shade')&&e.target!==el)return;handleAction(el.dataset.act,el)});
@@ -591,5 +688,5 @@ document.addEventListener('pointercancel',()=>{gesture=null;wheelGesture=null;if
 document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(timer);else{if(S.packet)armTimer();else if(!S.modal){reconcile().then(()=>{render();maybeCheckin()}).catch(console.error)}}});
 window.addEventListener('focus',()=>{if(S.packet)armTimer()});
 setInterval(()=>{if(!document.hidden&&!S.packet&&!S.modal){if(S.day!==nowDay()&&S.day===dayAdd(nowDay(),-1)){}maybeCheckin()}},60000);
-window.addEventListener('error',e=>console.error('Leveln 0.6',e.error));
+window.addEventListener('error',e=>console.error('Leveln 0.8',e.error));
 setup().catch(e=>{$('#app').innerHTML=`<div class="fatal"><h2>Leveln konnte nicht starten</h2><p>${safe(e.message)}</p><p>Bitte GitHub Pages über HTTPS und Safari öffnen.</p></div>`;console.error(e)});

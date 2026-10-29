@@ -191,3 +191,68 @@ body::before,body::after{filter:none!important}
 .mana-xp-impact{position:fixed;z-index:501;pointer-events:none;transform:translate(-50%,0);font-weight:900;color:#8cdc69;text-shadow:0 2px 9px #102a3277;white-space:nowrap;animation:manaImpact 1.55s ease-out forwards}
 @keyframes manaImpact{0%{opacity:0;transform:translate(-50%,13px) scale(.7)}27%{opacity:1;transform:translate(-50%,-8px) scale(1.13)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-34px) scale(.92)}}
 @media(prefers-reduced-motion:reduce){.mana-xp-impact{animation:none;opacity:1}.mana-flying-crystal{display:none}}
+
+/* Leveln 0.8 · continuous logging, readable quest calendar, accessible icon gallery */
+/* Every card remains in color: a glow shows the current progress, never that it is 'used up'. */
+.play-card.face,.peek-wrap .play-card.peek{transition:box-shadow .24s, border-color .24s, background .24s}
+.play-card.face.level-glow,.peek-wrap .play-card.peek.level-glow{
+  border:2px solid color-mix(in srgb,var(--card-accent) 78%,white);
+  border-top-width:4px;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--card-accent) 18%,transparent),0 0 27px color-mix(in srgb,var(--card-accent) 46%,transparent),0 10px 30px #0a1b261a;
+}
+.play-card.face.mana-glow,.peek-wrap .play-card.peek.mana-glow{
+  border:2px solid #2877db;
+  border-top-width:4px;
+  box-shadow:0 0 0 2px #2268bf22,0 0 26px #247bd488,0 10px 30px #091a2b18;
+}
+.play-card .card-daily-tally{color:var(--muted);font-size:11px;line-height:1.35;text-align:center;font-weight:750;display:block;max-width:100%}
+.play-card .card-main{min-height:0;}
+.card-entry-fields label{font-size:11px}
+/* Move filter below calendar and make the sticky calendar visually part of the page, with opaque masking. */
+.goals-sticky{top:0!important;z-index:15;background:var(--bg)!important;isolation:isolate;
+  border-bottom:1px solid var(--border);padding:8px 0 10px;
+  box-shadow:0 12px 18px -16px #0007;
+}
+.goals-sticky::before{content:"";position:absolute;top:-90px;left:-40px;right:-40px;height:100px;background:var(--bg);z-index:-1;pointer-events:none}
+.quest-filter-bar{position:relative;z-index:1;padding:10px 0 8px;margin-top:4px;background:var(--bg)}
+/* Thumb-friendly persistent navigation with expandable actions. */
+.tabs.tabs-five{grid-template-columns:repeat(5,minmax(0,1fr));overflow:visible}
+.nav-more-wrap{position:relative;display:flex;align-items:stretch;justify-content:center;min-width:0}
+.nav-more-wrap .tab{width:100%}
+.nav-more-pop{position:absolute;bottom:calc(100% + 12px);right:0;display:flex;flex-direction:column;gap:5px;
+  min-width:204px;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:17px;
+  box-shadow:0 15px 42px #0004;z-index:70}
+.nav-more-pop button{display:flex;align-items:center;gap:11px;min-height:47px;padding:10px 13px;
+  border:0;background:transparent;color:var(--text);border-radius:11px;font-size:14px;font-weight:750;text-align:left;white-space:nowrap}
+.nav-more-pop button:active{background:var(--panel2)}
+.nav-more-pop .ico{height:21px;width:21px;flex-shrink:0}
+#backupShortcut,#settingsShortcut{display:none!important}
+/* One accessible icon picker for all avatar/skill/quest forms, replacing name-only dropdowns. */
+.icon-select-hidden{display:none!important}
+.icon-gallery-trigger{display:flex;align-items:center;gap:12px;width:100%;min-height:55px;background:var(--panel);border:1px solid var(--border);border-radius:13px;
+  color:var(--text);text-align:left;padding:9px 12px;font-size:13px;font-weight:800}
+.icon-gallery-trigger .gallery-preview{display:grid;place-items:center;flex-shrink:0;width:39px;height:39px;border-radius:11px;
+  background:color-mix(in srgb,var(--level) 15%,var(--panel2))}
+.icon-gallery-trigger .gallery-preview .ico{height:30px;width:30px;color:var(--save)}
+.icon-gallery-trigger span:nth-child(2){flex:1;min-width:0}
+.icon-gallery-trigger small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.icon-gallery-trigger>.ico{height:17px;width:17px;transform:rotate(-90deg)}
+#iconPickerRoot{position:relative;z-index:800}
+.gallery-backdrop{position:fixed;inset:0;background:#060c19b7;display:flex;align-items:flex-end;justify-content:center;z-index:800}
+.icon-gallery{width:min(100%,680px);height:min(78dvh,720px);background:var(--bg);border-radius:25px 25px 0 0;
+  padding:15px 14px max(env(safe-area-inset-bottom,0px),15px);display:flex;flex-direction:column;
+  box-shadow:0 -12px 45px #0004;min-width:0}
+.icon-gallery header{display:flex;justify-content:space-between;align-items:center;padding:4px 5px 14px;gap:10px}
+.icon-gallery h2{font-size:21px;letter-spacing:-.4px}
+.icon-gallery-x{width:39px;height:39px;display:grid;place-items:center;color:var(--text);background:var(--panel2);border:0;border-radius:12px}
+.icon-categories{display:flex;gap:7px;overflow-x:auto;touch-action:pan-x;overscroll-behavior-x:contain;padding:0 0 12px;flex-shrink:0;scrollbar-width:none}
+.icon-categories button{border:1px solid var(--border);border-radius:99px;background:var(--panel);color:var(--muted);padding:9px 14px;font-size:12px;white-space:nowrap;font-weight:750}
+.icon-categories button.on{color:var(--text);background:color-mix(in srgb,var(--level) 24%,var(--panel));border-color:var(--level)}
+.icon-gallery-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;overflow-y:auto;overscroll-behavior:contain;align-content:start;padding:3px 2px 24px;min-height:0}
+.icon-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:87px;
+ background:var(--panel);border:1px solid var(--border);border-radius:16px;color:var(--text)}
+.icon-tile.picked{border:2px solid var(--save);background:color-mix(in srgb,var(--save) 12%,var(--panel))}
+.icon-tile .ico{width:35px;height:35px;stroke-width:1.7}
+.icon-tile small{font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+@media(max-width:350px){.icon-gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tabs.tabs-five .tab small{font-size:9px}.nav-more-pop{min-width:190px}}
+@media (prefers-reduced-motion:reduce){.play-card.face.level-glow,.play-card.face.mana-glow{box-shadow:0 0 0 2px var(--card-accent)}}
