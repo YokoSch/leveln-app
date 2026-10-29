@@ -256,3 +256,49 @@ body::before,body::after{filter:none!important}
 .icon-tile small{font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
 @media(max-width:350px){.icon-gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tabs.tabs-five .tab small{font-size:9px}.nav-more-pop{min-width:190px}}
 @media (prefers-reduced-motion:reduce){.play-card.face.level-glow,.play-card.face.mana-glow{box-shadow:0 0 0 2px var(--card-accent)}}
+
+/* Leveln 0.9 — card hierarchy, colored aura, compact quest lines, two-deep peek */
+.play-card.face.mana-glow,.peek-wrap .play-card.peek.mana-glow{
+ border:2px solid color-mix(in srgb,var(--card-accent) 80%,white);
+ border-top-width:4px;
+ box-shadow:0 0 0 2px color-mix(in srgb,var(--card-accent) 17%,transparent),0 0 28px color-mix(in srgb,var(--card-accent) 44%,transparent),0 10px 30px #091a2b18;
+}
+.play-card.face.level-glow,.peek-wrap .play-card.peek.level-glow{
+ box-shadow:0 0 0 2px color-mix(in srgb,var(--card-accent) 19%,transparent),0 0 28px color-mix(in srgb,var(--card-accent) 47%,transparent),0 10px 30px #0a1b261a;
+}
+.deck-stack{isolation:isolate}
+.deck-stack .peek-1{transform:translateY(24px) scale(.975);z-index:2}
+.deck-stack .peek-2{transform:translateY(50px) scale(.946);z-index:1}
+.deck-gesture-tail{position:absolute;bottom:0;left:0;right:0;height:52px;touch-action:none;z-index:4;user-select:none;-webkit-user-select:none;background:transparent}
+.goal-section .once-swipe{border-radius:13px;margin-bottom:7px}
+.goal-section .once-swipe .goal-row{display:flex;flex-wrap:nowrap;align-items:center;min-height:49px;padding:7px 8px;gap:5px;width:100%;border-left:3px solid var(--goal-color)}
+.once-title{flex:1 1 0%;min-width:0;padding:0 0 0 2px}
+.once-title strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;font-size:13px}
+.once-label{font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.once-finish{display:flex;align-items:center;gap:3px;background:color-mix(in srgb,var(--goal-color) 14%,var(--panel));border:1px solid color-mix(in srgb,var(--goal-color) 40%,var(--border));color:var(--text);border-radius:9px;padding:7px 6px;font-size:10px;line-height:1;font-weight:800;white-space:nowrap;flex-shrink:0;min-height:33px}
+.once-finish .ico{width:14px;height:14px;color:var(--goal-color)}
+.once-status{font-size:10px;white-space:nowrap;color:var(--muted)}
+.goals-triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.goals-triple .thin-button{margin:0;padding:10px 3px;gap:3px;min-width:0;font-size:10px;white-space:nowrap}
+.goals-triple .ico{width:14px;height:14px;flex-shrink:0}
+.goals-triple .add-quest-button{background:color-mix(in srgb,var(--level) 15%,var(--panel));border-color:color-mix(in srgb,var(--level) 45%,var(--border));font-weight:850}
+@media(max-width:365px){.goals-triple .thin-button{font-size:9px}.once-label{display:none}.once-finish span{font-size:9px}}
+/* Flat, pure-black long-haired female cat mascot; decorative lavender stars, no 3D effects. */
+.mana-check-dialog{text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 1px 12px}
+.mana-check-dialog .eyebrow{letter-spacing:1px}
+.mana-check-dialog h3{font-weight:900;font-size:clamp(20px,5.3vw,26px);line-height:1.14;letter-spacing:-.6px}
+.mana-check-dialog p{color:var(--muted);font-size:13px;max-width:325px;line-height:1.45}
+.cat-scene{position:relative;width:min(100%,205px);height:187px;display:grid;place-items:center;margin:0 auto 2px}
+.cat-2d{height:100%;width:100%;overflow:visible;animation:catSurprise 1.8s ease-in-out infinite alternate}
+@keyframes catSurprise{from{transform:translateY(2px) rotate(-1deg)}to{transform:translateY(-2px) rotate(1deg)}}
+.cat-spark{position:absolute;color:#ae9ed6;pointer-events:none;font-size:22px}
+.cat-spark.s1{left:5%;top:18%}.cat-spark.s2{right:1%;top:7%;font-size:30px}
+.mana-confirm-actions{display:flex;flex-direction:column;width:100%;gap:8px;margin-top:5px}
+.mana-answer{width:100%;border-radius:12px;min-height:44px;border:1px solid var(--border);background:var(--panel2);color:var(--text);padding:10px 14px;font-weight:750;font-size:13px}
+.mana-answer.is-confirm{background:color-mix(in srgb,var(--save) 18%,var(--panel));border-color:color-mix(in srgb,var(--save) 54%,var(--border));font-weight:900}
+.mana-answer.is-unknown{color:var(--muted);background:var(--panel)}
+.mana-note{color:var(--muted);font-size:10px;line-height:1.5;max-width:310px}
+.icon-gallery-grid .icon-tile .ico{stroke-width:1.5;}
+.icon-gallery-grid .icon-tile small{white-space:normal;line-height:1.2;overflow-wrap:anywhere}
+@media(max-height:705px){.cat-scene{height:130px}.mana-check-dialog{gap:7px}.mana-confirm-actions{gap:5px}.mana-answer{min-height:40px}}
+@media(prefers-reduced-motion:reduce){.cat-2d{animation:none}}
