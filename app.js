@@ -1,760 +1,1714 @@
-/* Leveln 0.9 · Trust-based Mana tracking, 2D cat, intuitive card deck · 2026-10-29 */
-'use strict';
-const DB_NAME='progress-private-v1', STORES=['activities','entries','overrides','meta','skills'];
-const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid=()=>crypto.randomUUID?.()||'p'+Date.now().toString(36)+Math.random().toString(36).slice(2);
-const pad=x=>String(x).padStart(2,'0');
-const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const nowDay=()=>iso(new Date());
-const asDate=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d,12)};
-const dayAdd=(s,n)=>{let d=asDate(s);d.setDate(d.getDate()+n);return iso(d)};
-const dayDiff=(a,b)=>Math.round((asDate(b)-asDate(a))/86400000);
-const dayName=s=>asDate(s).toLocaleDateString('de-DE',{weekday:'short'});
-const pretty=(s,options={day:'numeric',month:'long',year:'numeric'})=>asDate(s).toLocaleDateString('de-DE',options);
-const finite=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0;
-const num=(n,d=1)=>Number(n||0).toLocaleString('de-DE',{maximumFractionDigits:d});
-const formatMin=m=>m==null?'—':m>=60?`${num(m/60,1)} h`:`${num(m,1)} min`;
-const NAMES={day:'Täglich',week:'Wöchentlich',month:'Monatlich',year:'Jährlich'};
-const CAT={fitness:['Fitness','dumbbell'],health:['Gesundheit','heart'],learning:['Lernen','book'],digital:['Digitales','phone'],creative:['Kreativität','palette'],productive:['Produktivität','target'],finance:['Finanzen','wallet'],leisure:['Freizeit','game'],personal:['Persönliches','star'],sleep:['Schlaf','moon'],outdoors:['Draußen','sun'],other:['Sonstiges','spark']};
-const PATH={shield:'<path d="M12 2 20 6v6c0 5-3.5 8.4-8 10-4.5-1.6-8-5-8-10V6z"/>',scroll:'<path d="M6 3h12v15c0 4-5 4-5 1V6H4v13c0 3 3 3 5 3h7"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-8 16-8 16 0"/>',dumbbell:'<path d="M3 10v4m3-7v10M2 9h4m0 3h12M18 7v10m3-7v4m-3-2h4"/>',heart:'<path d="M20.8 8.1c0 5-8.8 11.2-8.8 11.2S3.2 13.1 3.2 8.1C3.2 3.9 9 2.5 12 6.7c3-4.2 8.8-2.8 8.8 1.4z"/>',book:'<path d="M12 5c-3-2-6-2-9-1v15c3-1 6-1 9 1m0-15c3-2 6-2 9-1v15c-3-1-6-1-9 1V5z"/>',phone:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>',palette:'<path d="M12 2a10 10 0 1 0 0 20h2a2 2 0 0 0 2-2c0-1.5-1-2 0-3 1-1 2 0 3.5-1.5A9 9 0 0 0 12 2z"/><path d="M7 9h.01M12 6h.01M17 9h.01M7 14h.01"/>',target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',wallet:'<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 9V5a2 2 0 0 1 2-2h13m-1 10h4"/>',game:'<path d="M6 9h12a4 4 0 0 1 4 4l-1 5a3 3 0 0 1-5 2l-3-3h-2l-3 3a3 3 0 0 1-5-2l-1-5a4 4 0 0 1 4-4zM8 12v5m-2.5-2.5h5M16 13h.01M19 15h.01"/>',star:'<path d="m12 2 3.1 6.4 7 1-5 5 1.2 7-6.3-3.3-6.3 3.3 1.2-7-5-5 7-1z"/>',moon:'<path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/>',spark:'<path d="m12 2 2.7 7.3L22 12l-7.3 2.7L12 22l-2.7-7.3L2 12l7.3-2.7z"/>',flame:'<path d="M12 22c5 0 8-4 8-9 0-3-2-6-5-8 .4 3-1 4-2 5-1-4-3-6-4-8 0 6-5 9-5 13 0 4 3 7 8 7z"/>',snow:'<path d="M12 2v20M4 7l16 10M20 7 4 17M9 5l3 3 3-3M9 19l3-3 3 3"/>',back:'<path d="m15 5-7 7 7 7"/>',plus:'<path d="M12 4v16M4 12h16"/>',dots:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',home:'<path d="m3 10 9-7 9 7v10H4V10zM9 20v-7h6v7"/>',goals:'<path d="M6 3h12v18l-6-4-6 4V3zM9 8h6m-6 4h6"/>',chart:'<path d="M4 20V9m6 11V4m6 16v-8m5 8V6"/>',settings:'<path d="M4 6h16M4 12h16M4 18h16M8 4v4M16 10v4M10 16v4"/>',close:'<path d="M5 5l14 14M19 5 5 19"/>',check:'<path d="m4 12 5 5L20 6"/>',lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',arrow:'<path d="M12 20V4m-6 6 6-6 6 6"/>',edit:'<path d="M4 17 16 5l3 3L7 20H4v-3z"/>',chevron:'<path d="m7 10 5 5 5-5"/>',bag:'<path d="M4 8h16l-1 13H5L4 8zM9 9V6a3 3 0 0 1 6 0v3"/>'};
-function ico(k,cl=''){return `<svg class="ico ${cl}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATH[k]||PATH.spark}</svg>`}
-function art(a){if(a.iconData&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(a.iconData))return `<img class="card-art" src="${a.iconData}" alt="">`;return ico(PATH[a.iconKey]?a.iconKey:(CAT[a.category]?.[1]||'spark'),'card-art')}
-let db;
-const S={skills:[],activities:[],entries:[],overrides:[],meta:[],page:'today',day:nowDay(),card:0,packet:null,packetBusy:false,modal:null,editDay:null,editing:null,theme:'system',colors:{save:'#168a70',level:'#9be948'},timeout:3,sound:true,checkTime:'21:00',calendarOpen:true,calView:'month',calAnchor:nowDay(),selectedGoal:null,goalExpanded:null,statPeriod:'month',statAnchor:nowDay(),statGoal:'all',settingsDraft:null,wallet:null,started:null,busy:false,checkShown:false};
-let EM=new Map(),timer=0,gesture=null,wheelGesture=null,packageGesture=null,audioCtx=null, periodCache=new Map();
-function dbOpen(){return new Promise((resolve,reject)=>{let q=indexedDB.open(DB_NAME,1);q.onupgradeneeded=()=>{for(const n of STORES)if(!q.result.objectStoreNames.contains(n))q.result.createObjectStore(n,{keyPath:n==='meta'?'key':'id'})};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
-function dbAll(name){return new Promise((resolve,reject)=>{const q=db.transaction(name).objectStore(name).getAll();q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
-function dbTx(names,fn){return new Promise((resolve,reject)=>{let t=db.transaction(names,'readwrite');try{fn(t)}catch(e){t.abort();reject(e);return}t.oncomplete=resolve;t.onerror=()=>reject(t.error);t.onabort=()=>reject(t.error||Error('Speicherung abgebrochen'))})}
-const dbPut=(name,value)=>dbTx([name],t=>t.objectStore(name).put(value));
-const meta=(key,fallback)=>S.meta.find(x=>x.key===key)?.value??fallback;
-async function saveMeta(key,value){await dbPut('meta',{key,value});S.meta=S.meta.filter(x=>x.key!==key);S.meta.push({key,value})}
-function revision(a,d){const arr=[...(a.revisions||[])].sort((x,y)=>x.from.localeCompare(y.from));return [...arr].reverse().find(x=>x.from<=d)||{rules:[],countXp:0}}
-function rules(a,d){return revision(a,d).rules||[]}
-function goals(d=nowDay()){return S.activities.flatMap(a=>{const started=(a.createdAt||S.started||d).slice(0,10);if(started>d||a.archivedAt?.slice(0,10)<=d)return [];return rules(a,d).map((r,i)=>({a,r,index:i,key:`${a.id}|${r.id}`}))}).sort((g,h)=>(g.a.order??0)-(h.a.order??0)||g.index-h.index)}
-function allGoals(){const result=[];for(const a of S.activities){let ids=new Map();for(const rev of a.revisions||[])for(let i=0;i<(rev.rules||[]).length;i++)ids.set(rev.rules[i].id,{r:rev.rules[i],index:i});for(const [ruleId,x] of ids)result.push({a,r:x.r,index:x.index,key:`${a.id}|${ruleId}`})}return result}
-function goalByKey(key,d=nowDay()){return goals(d).find(g=>g.key===key)||allGoals().find(g=>g.key===key)}
-function entryKey(g,d){return `${g.key}|${d}`}
-function entry(g,d){const current=EM.get(entryKey(g,d));if(current)return current;
- // 0.3 used one entry per activity, not per goal. Map it only onto the first rule.
- if(g.index===0){const old=EM.get(`${g.a.id}|${d}`);if(old)return {...old,source:old.source||'legacy',mode:old.status==='yes'?'up':old.status==='no'?'down':null}}
- return null}
-function ruleValue(r,k){return finite(Number(r[k]))&&r[k]!==null&&r[k]!==''?Number(r[k]):null}
-function metricKeys(r){return ['minutes','count'].filter(k=>ruleValue(r,k)!==null)}
-function rate(g,d){return Math.max(0,Number(revision(g.a,d).countXp)||0)}
-function limit(r){return r.period==='day'?1:r.period==='week'?7:r.period==='month'?30:365}
-function isRestart(r){return r.period!=='day'&&r.mode==='restart'}
-function calendarStart(p,d){let t=asDate(d);if(p==='week')t.setDate(t.getDate()-(t.getDay()+6)%7);if(p==='month')t.setDate(1);if(p==='year')t.setMonth(0,1);return iso(t)}
-function calendarNext(p,start){let d=asDate(start);if(p==='day')d.setDate(d.getDate()+1);if(p==='week')d.setDate(d.getDate()+7);if(p==='month')d.setMonth(d.getMonth()+1);if(p==='year')d.setFullYear(d.getFullYear()+1);return iso(d)}
-function periodRange(r,d){let start=calendarStart(r.period,d);return {start,end:calendarNext(r.period,start),closed:calendarNext(r.period,start)<=nowDay()}}
-function allDays(start,end,cap=4000){const a=[];for(let x=start;x<end&&a.length<cap;x=dayAdd(x,1))a.push(x);return a}
-function valueFor(g,d,metric){const e=entry(g,d);return finite(e?.[metric])?e[metric]:null}
-function assessment(g,p){const a=g.a,r=p.rule||rules(a,p.start).find(x=>x.id===g.r.id)||g.r,keys=metricKeys(r);let totals={minutes:0,count:0},complete=true,hasEstimated=false;const effectiveStart=Math.max(0,dayDiff(p.start, (a.createdAt||S.started||p.start).slice(0,10)));
- for(let d of allDays(dayAdd(p.start,effectiveStart),(p.end<dayAdd(nowDay(),1)?p.end:dayAdd(nowDay(),1)))){let e=entry(g,d);if(!e){complete=false;continue}if(e.source==='auto'||e.source==='refused')hasEstimated=true;for(const k of keys){if(!finite(e[k]))complete=false;else totals[k]+=e[k]}}
- let finished=p.end<=nowDay(),state='pending';
- if(a.kind==='reduce'){
-   if(keys.some(k=>totals[k]>ruleValue(r,k)+1e-9))state='fail';
-   else if(finished&&complete)state='success';
- }else{
-   if(keys.every(k=>totals[k]+1e-9>=ruleValue(r,k)))state='success';
-   else if(finished&&complete)state='fail';
- }
- // A refused/estimated DAY counts as failed, but estimated daily usage inside a longer budget is aggregated normally.
- if(r.period==='day'&&hasEstimated)state='fail';
- if(r.period==='day'){let e=entry(g,p.start);if(!e)state='pending';else if(e.source==='legacy'&&!finite(e.minutes)&&!finite(e.count))state=e.status==='yes'?'success':e.status==='no'?'fail':'pending';else if(!complete&&e.mode==='up'&&!keys.length)state='success'}
- return {state,totals,complete,hasEstimated,finished};}
-function periods(g,end=nowDay()){const {a,r}=g;let start=(a.createdAt||S.started||end).slice(0,10),out=[];if(a.archivedAt&&end>=a.archivedAt.slice(0,10))end=dayAdd(a.archivedAt.slice(0,10),-1);if(start>end)return out;
- // Each rule's first day is the activity creation date; prevent updating pre-creation dates.
- if(!isRestart(r)){
-  let cursor=calendarStart(r.period,start);for(let i=0;cursor<=end&&i<2300;i++){
-    const next=calendarNext(r.period,cursor);out.push({start:cursor,end:next,closed:next<=nowDay(),rule:rules(a,cursor).find(x=>x.id===r.id)||r});cursor=next;
-  }
- }else{
-  let cursor=start;const span=limit(r);for(let i=0;cursor<=end&&i<2300;i++){
-    let upper=dayAdd(cursor,span),cut=upper;
-    // An excessive saving budget ends a restart window on the overspend day.
-    if(a.kind==='reduce'){
-      let sums={minutes:0,count:0};for(let d=cursor;d<upper&&d<=end;d=dayAdd(d,1)){
-        let e=entry(g,d);for(let k of metricKeys(r))if(finite(e?.[k]))sums[k]+=e[k];
-        if(metricKeys(r).some(k=>sums[k]>ruleValue(r,k)+1e-9)){cut=dayAdd(d,1);break}
-      }
-    }
-    out.push({start:cursor,end:cut,closed:cut<=nowDay(),rule:rules(a,cursor).find(x=>x.id===r.id)||r});cursor=cut;
-  }
- }
- return out;}
-function currentPeriod(g,d){return periods(g,d).find(p=>p.start<=d&&p.end>d)||null}
-function finalLocked(p){return dayAdd(p.end,1)<=nowDay()}
-function frozenKey(g,p){return `${g.key}|${p.start}`}
-function outcome(g,p){const a=assessment(g,p);return {...a,frozen:S.wallet?.frozen?.includes(frozenKey(g,p))||false}}
-function stData(g){let ps=periods(g),run=0,best=0;for(let p of ps){const o=outcome(g,p);if(o.state==='success'){run++;best=Math.max(best,run)}else if(o.frozen){best=Math.max(best,run)}else if(o.state==='fail'&&(p.closed||g.a.kind==='reduce')){run=0}}
- // pending current period should not shorten the visible streak
- return {current:run,best};}
-function assumed(g,d){let r=g.r,minutes=ruleValue(r,'minutes'),count=ruleValue(r,'count');let span=limit(r);
- return {mode:g.a.kind==='build'?'down':'down',status:'no',minutes:minutes===null?null:g.a.kind==='reduce'?Math.ceil(minutes/span*100)/100:0,count:count===null?null:g.a.kind==='reduce'?Math.max(1,Math.ceil(count/span)):0,source:'auto',estimated:true};}
-function makeEntry(g,d,fields){const old=entry(g,d)||{};return {...old,id:entryKey(g,d),activityId:g.a.id,ruleId:g.r.id,date:d,comment:old.comment||'',...fields,updatedAt:new Date().toISOString()}}
-async function sync05(){[S.activities,S.entries,S.overrides,S.meta]=await Promise.all(STORES.map(dbAll));S.activities.sort((a,b)=>(a.order||0)-(b.order||0));EM=new Map(S.entries.map(e=>[e.id,e]));periodCache.clear();S.started=meta('v04StartedOn',null);
- S.theme=meta('theme','system');S.colors={save:hex(meta('colorSave','#168a70'),'#168a70'),level:hex(meta('colorLevel','#9be948'),'#9be948')};S.timeout=Math.min(10,Math.max(1,Number(meta('packetTimeout',3))||3));S.sound=meta('sound',true)!==false;S.checkTime=meta('checkTime','21:00');S.wallet=meta('emberWallet',{glut:0,inventory:0,awarded:[],frozen:[],history:[]});S.bgMode=meta('backgroundMode','system');S.bgColor=hex(meta('backgroundColor','#e6f8e9'),'#e6f8e9');S.bgImage=meta('backgroundImage','');S.bgShade=Math.min(90,Math.max(0,Number(meta('backgroundShade',35))));S.iconVariant=meta('iconVariant','light');applyTheme()}
-function hex(x,def){return /^#[\da-f]{6}$/i.test(String(x))?x:def}
-function applyTheme(){let dark=S.theme==='dark'||(S.theme==='system'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.dataset.theme=dark?'dark':'light';document.documentElement.style.setProperty('--save',S.colors.save);document.documentElement.style.setProperty('--level',S.colors.level);$('#themeMeta').content=dark?'#111520':'#f8fafc'}
-async function setup(){db=await dbOpen();await sync();if(!S.meta.find(x=>x.key==='initialized')){let a=defaultGoals();await dbTx(['activities','meta'],t=>{for(let x of a)t.objectStore('activities').put(x);t.objectStore('meta').put({key:'initialized',value:true})});await sync()}
- if(!S.started){await saveMeta('v04StartedOn',nowDay());S.started=nowDay()}
- await reconcile();render();maybeCheckin();if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(console.warn)}
-function defaultGoals(){return [{name:'Social Media',kind:'reduce',category:'digital',minutes:60},{name:'Sport',kind:'build',category:'fitness',minutes:30},{name:'Französisch',kind:'build',category:'learning',minutes:20}].map((x,i)=>({id:uid(),name:x.name,kind:x.kind,category:x.category,createdAt:new Date().toISOString(),order:i,revisions:[{from:nowDay(),countXp:0,rules:[{id:uid(),period:'day',mode:'calendar',minutes:x.minutes,count:null,standardMinutes:x.minutes,standardCount:null}]}]}))}
-async function reconcile(){// Do not backfill years of old data after an upgrade; begin closeouts at 0.4 activation.
- const last=dayAdd(nowDay(),-2),newEntries=[];
- for(let d=S.started;d<=last;d=dayAdd(d,1))for(let g of goals(d).filter(g=>!isOnce(g.a)))if(!entry(g,d))newEntries.push(makeEntry(g,d,assumed(g,d)));
- if(newEntries.length){await dbTx(['entries'],t=>newEntries.forEach(e=>t.objectStore('entries').put(e)));await sync()}
- await reconcileWallet();}
-function streakBefore(g,at,w){let run=0;for(let previous of periods(g,dayAdd(at.start,-1))){if(previous.end>at.start)continue;let v=assessment(g,previous);if(v.state==='success')run++;else if(w.frozen.includes(frozenKey(g,previous))){}else if(v.state==='fail')run=0}return run}
-async function reconcileWallet(){// Milestones settle only AFTER the two-day edit window closes. No retroactive Glut farming.
- let w=structuredClone(S.wallet),changed=false;const items=[];
- for(let g of goals().filter(g=>!isOnce(g.a)))for(let p of periods(g)){if(!finalLocked(p)||p.end<=S.started)continue;items.push({g,p})}
- items.sort((x,y)=>x.p.end.localeCompare(y.p.end)||x.g.key.localeCompare(y.g.key));
- // Keep prior freeze decisions immutable; process each failed period once, even after offline gaps.
- const processed=new Set((w.history||[]).filter(x=>x.type==='settled').map(x=>x.key));
- for(let {g,p} of items){const key=frozenKey(g,p);if(processed.has(key))continue;const v=assessment(g,p);if(v.state==='pending')continue;
-  if(v.state==='fail'&&!v.hasUnknown&&w.inventory>0&&streakBefore(g,p,w)>0){w.inventory--;w.frozen.push(key);w.history.push({type:'freeze-used',key,at:new Date().toISOString()})}
-  w.history.push({type:'settled',key,status:v.state,at:new Date().toISOString()});changed=true;
- }
- // Count streaks, including already frozen failed periods, and issue only unique 10th-step milestones.
- for(let g of goals().filter(g=>!isOnce(g.a))){let successCount=0;let chain=0;for(let p of periods(g)){
-  if(!finalLocked(p))continue;const v=assessment(g,p),key=frozenKey(g,p);
-  if(v.state==='success'){chain++;successCount++;if(chain>0&&chain%10===0&&p.end>S.started){let milestone=`${key}|milestone-${chain}`;if(!w.awarded.includes(milestone)){w.awarded.push(milestone);w.glut++;w.history.push({type:'glut-earned',key:milestone,at:new Date().toISOString()});changed=true}}}
-  else if(w.frozen.includes(key)){/* protected without increment */}
-  else if(v.state==='fail')chain=0;
- }}
- if(changed){await saveMeta('emberWallet',w);S.wallet=w}}
-async function buyFreeze(useKey){let w=structuredClone(S.wallet);if(w.glut<5)throw Error('Du brauchst 5 Glut.');if(!useKey&&w.inventory>=2)throw Error('Dein Inventar ist voll (maximal 2 Freezes).');if(useKey&&w.frozen.includes(useKey))throw Error('Dieser Zeitraum ist bereits geschützt.');w.glut-=5;if(useKey){w.frozen.push(useKey);w.history.push({type:'instant-freeze',key:useKey,at:new Date().toISOString()})}else{w.inventory++;w.history.push({type:'freeze-bought',at:new Date().toISOString()})}await saveMeta('emberWallet',w);S.wallet=w;render();toast(useKey?'Streak gerettet!':'Freeze gekauft')}
-// XP ledger: amounts and their dates are canonical; gestures never directly add XP to a counter.
-function metricOwner(g,k,d){let rs=rules(g.a,d).filter(r=>ruleValue(r,k)!==null).sort((a,b)=>({day:0,week:1,month:2,year:3}[a.period]-{day:0,week:1,month:2,year:3}[b.period]));return rs[0]?.id===g.r.id}
-function xpEvents(){const ev=[];for(let g of allGoals()){
- const {a,r}=g;if(a.kind==='build'){
-  for(let e of S.entries){if(e.date>nowDay()||a.archivedAt?.slice(0,10)<=e.date||e.ruleId&&e.ruleId!==r.id||e.activityId!==a.id)continue;
-   if(!e.ruleId&&(g.index!==0||EM.has(entryKey(g,e.date))))continue;
-   const historical=rules(a,e.date).find(x=>x.id===r.id);if(!historical)continue;
-   for(let k of metricKeys(historical))if(metricOwner(g,k,e.date)&&finite(e[k])&&e.source!=='auto'&&e.source!=='refused'){
-    let xp=e[k]*(k==='minutes'?1/6:rate(g,e.date));if(xp>0)ev.push({goal:g.key,day:e.date,kind:'level',metric:k,amount:e[k],xp})
-   }
-  }
- }else{
-  for(let p of periods(g)){
-   if(p.end>nowDay()||a.archivedAt&&p.end>a.archivedAt.slice(0,10))continue;
-   const assess=assessment(g,p),historical=p.rule||r;if(!assess.complete||assess.hasEstimated)continue;
-   for(let k of metricKeys(historical)){
-    if(!metricOwner(g,k,p.start))continue;
-    const saved=Math.max(0,ruleValue(historical,k)-assess.totals[k]);const xp=saved*(k==='minutes'?1/6:rate(g,p.start));
-    if(xp>0)ev.push({goal:g.key,day:dayAdd(p.end,-1),kind:'save',metric:k,amount:saved,xp});
-   }
-  }
- }
- }
- return ev.sort((x,y)=>x.day.localeCompare(y.day)||x.kind.localeCompare(y.kind))}
-function xpStats(){let sum=0,save=0,level=0,barSave=0,barLevel=0;const ev=xpEvents();for(let e of ev){sum+=e.xp;if(e.kind==='save')save+=e.xp;else level+=e.xp}let levelN=1+Math.floor((sum+1e-7)/1000),from=(levelN-1)*1000,cursor=0;for(let e of ev){let n=Math.max(0,Math.min(sum,cursor+e.xp)-Math.max(from,cursor));if(e.kind==='save')barSave+=n;else barLevel+=n;cursor+=e.xp}return {sum,save,level,barSave,barLevel,progress:Math.max(0,sum-from),levelN,events:ev}}
-function xpBar(){let x=xpStats();return `<div class="xp-summary"><span class="level-small">lvl. ${x.levelN}</span><div class="xp-box"><div class="xp-track" id="xpTrack"><span style="width:${x.barSave/10}%;background:var(--save)"></span><span style="width:${x.barLevel/10}%;background:var(--level)"></span></div><small>${num(x.progress,1)}/1000 XP</small></div></div>`}
-function detailGoal(g){let {a,r}=g,parts=metricKeys(r).map(k=>`${k==='minutes'?formatMin(ruleValue(r,k)):num(ruleValue(r,k),1)+' ×'}`);return `${a.kind==='reduce'?'Maximal':'Mindestens'} ${parts.join(' und ')} · ${NAMES[r.period]}${isRestart(r)?' · '+limit(r)+'-Tage-Neustart':''}`}
-function goalColor(g){return hex(g.r.color,g.a.kind==='reduce'?S.colors.save:S.colors.level)}
-function initialState(g,d){const e=entry(g,d);return !e?'open':e.mode==='up'?'up':'down'}
-function nav(){const tabs=[['today','home','Heute'],['goals','goals','Ziele'],['stats','chart','Statistik'],['settings','settings','Optionen']];$('#bottomNav').innerHTML=`<nav class="tabs">${tabs.map(([p,i,t])=>`<button class="tab ${S.page===p?'on':''}" data-act="tab" data-page="${p}">${ico(i)}<small>${t}</small></button>`).join('')}</nav>`}
-function render(){clearTimeout(timer);const todayMode=S.page==='today';$('#app').className='app'+(todayMode?' today-app':S.page==='stats'?' stats-app':'');$('#app').innerHTML=todayMode?todayView():S.page==='goals'?goalsView():S.page==='stats'?statsView():settingsView();nav();renderModal();if(S.packet)armTimer()}
-function cardHtml(g,behind=false){const state=initialState(g,S.day),done=state!=='open',st=stData(g).current;let color=goalColor(g);return `<div class="play-card ${behind?'peek':'face'} ${done?'played':''} ${g.a.kind==='reduce'?'saving':'leveling'}" style="--card-accent:${color}" ${behind?'':'id="activeCard"'} data-goal="${safe(g.key)}">
- <div class="card-header"><span class="card-pill">${g.a.kind==='reduce'?'ZAUBERN':'LEVELN'}</span>${behind?'':`<button class="icon-button card-more" data-act="menu" data-key="${safe(g.key)}" aria-label="Zielmenü">${ico('dots')}</button>`}</div>
- <div class="card-main">${art(g.a)}<h2>${safe(g.a.name)}</h2><p>${safe(detailGoal(g))}</p></div>
- <div class="card-foot"><span class="streak">${ico('flame')} ${st}</span><span class="played-label">${done?'ERFASST':'BEREIT'}</span></div>
- </div>`}
-function todayView(){const gs=goals(S.day);if(S.card>=gs.length)S.card=0;if(S.card<0)S.card=0;let g=gs[S.card];const edited=gs.filter(x=>initialState(x,S.day)!=='open').length;
- const wheel=Array.from({length:7},(_,i)=>{const d=dayAdd(S.day,i-3);return `<button data-act="date" data-day="${d}" class="wheel-date ${i===3?'chosen':''} dist-${Math.abs(i-3)}" ${d>nowDay()?'disabled':''}><small>${dayName(d)}</small><b>${Number(d.slice(-2))}</b></button>`}).join('');
- return `<div class="today-head"><div class="today-topline"><span>PLAY YOUR DAY</span><span>${edited}/${gs.length} erfasst</span></div>${xpBar()}</div>
- <div class="deck-area">${S.packet&&g?packetView(g):g?`<div class="deck-stack">${[2,1].map(i=>{let pg=gs[(S.card+i)%gs.length];return gs.length>i?`<div class="peek-wrap peek-${i}">${cardHtml(pg,true)}<span class="peek-name">${safe(pg.a.name)}</span></div>`:''}).join('')}${cardHtml(g)}<div class="deck-gesture-tail" role="presentation" aria-hidden="true"></div></div>`:`<div class="empty-state">${ico('plus')}<h2>Dein erster Fortschritt</h2><p>Lege dein erstes Ziel an.</p><button class="primary" data-act="new">Ziel erstellen</button></div>`}</div>
- <div class="day-wheel"><button class="wheel-small" data-act="date-shift" data-shift="-1" aria-label="Vorheriger Tag">‹</button><div id="wheelTrack" class="wheel-track">${wheel}</div><button class="wheel-small" data-act="date-shift" data-shift="1" aria-label="Nächster Tag">›</button></div><div class="deck-caption">${g?`${S.card+1} / ${gs.length} Karten · ${S.day===nowDay()?'Heute':pretty(S.day)}`:''}</div>`}
-function packetView(g){let k=S.packet?.phase,minutes=k==='minutes',amounts=minutes?[1,5,10,30,60]:[1,5,10,50,100,500,1000],isSave=g.a.kind==='reduce';return `<section class="packet-mode"><div class="packet-heading"><span class="eyebrow">${safe(g.a.name)}</span><h2>${minutes?'Minuten':'Anzahlen'} ${isSave?'verbraucht':'gelevelt'}</h2><p>${isSave?'Wie viel hast du genutzt?':'Wie viel hast du geschafft?'} Tippen oder nach oben schießen.</p></div><div class="package-grid">${amounts.map(n=>`<button class="package-chip" data-act="packet" data-n="${n}">${isSave?'':'+'}${n}${minutes?' min':'×'}</button>`).join('')}</div><button class="package-exit" data-act="packet-skip" aria-label="Paketmodus beenden">${ico('close')}</button></section>`}
-function goalGroups(){return ['day','week','month','year'].map(p=>({p,items:goals().filter(g=>!isOnce(g.a)&&g.r.period===p)}))}
-function calRange(){let d=S.calAnchor;if(S.calView==='week'){let s=calendarStart('week',d);return {start:s,end:dayAdd(s,7)}}if(S.calView==='month')return {start:calendarStart('month',d),end:calendarNext('month',calendarStart('month',d))};if(S.calView==='year'){let s=calendarStart('year',d);return {start:s,end:calendarNext('year',s)}}let start=String(Math.floor(+d.slice(0,4)/4)*4)+'-01-01';return {start,end:String(+start.slice(0,4)+4)+'-01-01'}}
-function badgeFor(g,d){if(!g)return '';const p=currentPeriod(g,d);if(!p)return '';let o=outcome(g,p);if(g.r.period!=='day'&&dayAdd(p.end,-1)!==d)return '';if(o.frozen)return `<span class="cal-icon snow">${ico('snow')}</span>`;if(o.state==='success')return `<span class="cal-icon fire" style="color:${goalColor(g)}">${ico('flame')}</span>`;return ''}
-function monthCalendar(anchor,g,mini=false){let begin=calendarStart('month',anchor),end=calendarNext('month',begin);let offset=(asDate(begin).getDay()+6)%7;let cellCount=Math.ceil((offset+dayDiff(begin,end))/7)*7;return `<div class="month-calendar ${mini?'mini':''}"><div class="cal-weekdays">${['M','D','M','D','F','S','S'].map(x=>`<small>${x}</small>`).join('')}</div><div class="cal-days">${Array.from({length:cellCount},(_,i)=>{let d=dayAdd(begin,i-offset),inside=d>=begin&&d<end;return `<button data-act="cal-day" data-day="${d}" class="cal-day ${inside?'':'outside'} ${d===nowDay()?'today':''}" ${d>nowDay()?'disabled':''}><b>${Number(d.slice(-2))}</b>${inside?badgeFor(g,d):''}</button>`}).join('')}</div></div>`}
-function calendarHTML(){if(!S.calendarOpen)return `<button class="calendar-collapse" data-act="cal-toggle">${ico('calendar')} Kalender anzeigen ${ico('chevron')}</button>`;let {start,end}=calRange(),g=goalByKey(S.selectedGoal),label=S.calView==='week'?`${pretty(start,{day:'numeric',month:'short'})} – ${pretty(dayAdd(end,-1),{day:'numeric',month:'short'})}`:S.calView==='month'?pretty(start,{month:'long',year:'numeric'}):S.calView==='year'?start.slice(0,4):`${start.slice(0,4)}–${+end.slice(0,4)-1}`;
- let content='';if(S.calView==='week')content=`<div class="cal-week">${allDays(start,end).map(d=>`<button data-act="cal-day" data-day="${d}" class="week-cell"><small>${dayName(d)}</small><b>${Number(d.slice(-2))}</b>${badgeFor(g,d)}</button>`).join('')}</div>`;
- else if(S.calView==='month')content=monthCalendar(start,g);
- else if(S.calView==='year')content=`<div class="year-grid">${Array.from({length:12},(_,i)=>{let d=`${start.slice(0,4)}-${pad(i+1)}-01`;return `<button class="year-cell" data-act="cal-jump" data-day="${d}"><b>${pretty(d,{month:'short'})}</b><span>${g?allDays(d,calendarNext('month',d)).filter(x=>badgeFor(g,x)).length+' ✦':'Kalender'}</span></button>`}).join('')}</div>`;
- else content=`<div class="year-grid">${Array.from({length:4},(_,i)=>{let d=`${Number(start.slice(0,4))+i}-01-01`;return `<button class="year-cell" data-act="cal-jump-year" data-day="${d}"><b>${d.slice(0,4)}</b><span>${g?periods(g,d.slice(0,4)+'-12-31').filter(p=>p.start.startsWith(d.slice(0,4))&&outcome(g,p).state==='success').length+' Erfolge':'Ansehen'}</span></button>`}).join('')}</div>`;
- return `<div class="calendar-top"><div class="calendar-tools"><button class="icon-button" data-act="cal-prev">‹</button><strong>${safe(label)}</strong><button class="icon-button" data-act="cal-next">›</button><button class="icon-button" data-act="cal-toggle">${ico('chevron')}</button></div><div class="cal-filter">${['week','month','year','multi'].map((x,i)=>`<button class="${S.calView===x?'sel':''}" data-act="cal-view" data-view="${x}">${['Woche','Monat','Jahr','4 Jahre'][i]}</button>`).join('')}</div>${content}</div>`}
-function goalsView(){const g=goalByKey(S.selectedGoal);return `<div class="page-heading"><span class="eyebrow">DEINE ENTWICKLUNG</span><div class="heading-row"><h1>Ziele</h1><button class="circle-action" data-act="new">${ico('plus')}</button></div></div><div class="goals-sticky">${calendarHTML()}</div><div class="goals-scroll"><div class="goals-actions"><button class="thin-button" data-act="edit-day" data-day="${nowDay()}">${ico('edit')} Tagesprotokoll bearbeiten</button></div>${goalGroups().map(gr=>`<section class="goal-section"><h3>${({day:'TAGESZIELE',week:'WOCHENZIELE',month:'MONATSZIELE',year:'JAHRESZIELE'})[gr.p]}</h3>${gr.items.map(g=>`<div class="goal-row ${S.selectedGoal===g.key?'active':''}" style="--goal-color:${goalColor(g)}"><button data-act="goal-select" data-key="${safe(g.key)}" class="goal-name"><span class="goal-dot"></span><strong>${safe(g.a.name)}</strong></button><span class="goal-streak">${ico('flame')} ${stData(g).current}</span><button class="icon-button" data-act="goal-expand" data-key="${safe(g.key)}">${ico('chevron')}</button>${S.goalExpanded===g.key?`<div class="goal-details"><p>${safe(detailGoal(g))}</p><small>Beste Streak: ${stData(g).best} · ${g.a.kind==='reduce'?'Zaubern':'Leveln'}</small><div><button data-act="edit-goal" data-key="${safe(g.key)}">Ziel bearbeiten</button><button data-act="edit-day" data-day="${nowDay()}">Heute korrigieren</button></div>${freezeAction(g)}</div>`:''}</div>`).join('')||'<p class="muted">Keine Ziele</p>'}</section>`).join('')}</div>`}
-function freezeAction(g){let ps=periods(g).filter(p=>p.closed&&outcome(g,p).state==='fail'&&!outcome(g,p).frozen);let p=ps.at(-1);if(!p||!finalLocked(p)||dayDiff(p.end,nowDay())>2)return '';return `<button data-act="rescue" data-key="${safe(g.key)}" data-start="${p.start}" class="rescue">${ico('snow')} Streak für ${pretty(dayAdd(p.end,-1))} retten · 5 Glut</button>`}
-function calMove(step){let d=asDate(S.calAnchor);if(S.calView==='week')d.setDate(d.getDate()+step*7);if(S.calView==='month')d.setMonth(d.getMonth()+step);if(S.calView==='year')d.setFullYear(d.getFullYear()+step);if(S.calView==='multi')d.setFullYear(d.getFullYear()+step*4);S.calAnchor=iso(d)}
-function statsRange(){let d=S.statAnchor;if(S.statPeriod==='all'){let first=S.started||nowDay();for(let a of S.activities)first=(a.createdAt||'').slice(0,10)&&a.createdAt.slice(0,10)<first?a.createdAt.slice(0,10):first;return {start:first,end:dayAdd(nowDay(),1)}}const p=S.statPeriod;let start=calendarStart(p,d);return {start,end:calendarNext(p,start)}}
-function statViewData(){let {start,end}=statsRange(),ev=xpEvents().filter(x=>x.day>=start&&x.day<end&&(S.statGoal==='all'||x.goal===S.statGoal));let d={save:{minutes:0,count:0,xp:0},level:{minutes:0,count:0,xp:0}};
- for(let e of ev){d[e.kind][e.metric]+=e.amount;d[e.kind].xp+=e.xp}
- return d}
-function barChart(title,save,level,unit,dec=1){let max=Math.max(save,level,0.000001),gs=goalByKey(S.statGoal),chosen=gs?goalColor(gs):null;return `<section class="chart-card"><h3>${safe(title)}</h3><div class="bars"><div class="bar-col"><span>${num(save,dec)} ${unit}</span><div class="bar-bg"><div class="bar-fill" style="height:${100*save/max}%;background:${chosen&&gs.a.kind==='reduce'?chosen:'var(--save)'}"></div></div><small>Zaubern</small></div><div class="bar-col"><span>${num(level,dec)} ${unit}</span><div class="bar-bg"><div class="bar-fill" style="height:${100*level/max}%;background:${chosen&&gs.a.kind==='build'?chosen:'var(--level)'}"></div></div><small>Leveln</small></div></div></section>`}
-function statsView(){let {start,end}=statsRange(),d=statViewData(),all=xpStats(),selected=goalByKey(S.statGoal);return `<div class="page-heading"><span class="eyebrow">DEINE BILANZ</span><h1>Statistik</h1></div><div class="stats-filter"><label>Ziel<select id="statGoal"><option value="all">Alle Ziele</option>${allGoals().map(g=>`<option value="${safe(g.key)}" ${S.statGoal===g.key?'selected':''}>${safe(g.a.name)} · ${NAMES[g.r.period]}</option>`).join('')}</select></label><div class="stats-period">${['day','week','month','year','all'].map((p,i)=>`<button data-act="stat-period" data-period="${p}" class="${S.statPeriod===p?'selected':''}">${['Tag','Woche','Monat','Jahr','Gesamt'][i]}</button>`).join('')}</div><div class="stats-nav"><button class="icon-button" data-act="stat-prev">‹</button><span>${S.statPeriod==='all'?'Gesamte Historie':`${pretty(start)} – ${pretty(dayAdd(end,-1))}`}${end>dayAdd(nowDay(),1)?' · bisher':''}</span><button class="icon-button" data-act="stat-next" ${S.statPeriod==='all'?'disabled':''}>›</button></div></div>
- ${barChart('Zeit · tatsächlich gespart & gelevelt',d.save.minutes/60,d.level.minutes/60,'h')}${barChart('Anzahl · Einheiten',d.save.count,d.level.count,'×',0)}${barChart('Erfahrung · XP',d.save.xp,d.level.xp,'XP',1)}<div class="stat-total"><strong>${num(d.save.xp+d.level.xp,1)} XP</strong><span>im gewählten Zeitraum${S.statGoal==='all'?` · Lifetime: ${num(all.sum,1)} XP · lvl. ${all.levelN}`:''}</span></div><small class="muted note">Geschätzte Verbrauchswerte aus versäumten Tagen werden nicht als tatsächliche Zeit/Anzahl gezählt. Bei mehreren unterschiedlichen Zielen sind Anzahl-Einheiten nicht direkt vergleichbar.</small>`}
-function settingsView(){let w=S.wallet;return `<div class="page-heading"><span class="eyebrow">PERSONALISIEREN</span><h1>Optionen</h1></div><section class="settings-panel"><h3>Streaks & Glut</h3><div class="wallet"><div><small>Glut</small><strong>${ico('flame')} ${w.glut}</strong></div><div><small>Freezes</small><strong>${ico('snow')} ${w.inventory}/2</strong></div></div><p class="muted">1 Glut nach 10 erfolgreichen Streak-Schritten. Ein Freeze kostet 5 Glut, wird automatisch bei einem gesicherten Streakbruch verbraucht und zählt selbst nicht als Erfolg.</p><button class="primary" data-act="buy" ${w.glut<5||w.inventory>=2?'disabled':''}>${ico('bag')} Freeze kaufen · 5 Glut</button></section>
- <section class="settings-panel"><h3>Darstellung</h3><label>Hintergrund<select data-setting="theme"><option value="system" ${S.theme==='system'?'selected':''}>System</option><option value="light" ${S.theme==='light'?'selected':''}>Hell</option><option value="dark" ${S.theme==='dark'?'selected':''}>Dunkel</option></select></label><div class="color-row"><label>Zaubern <input type="color" data-setting="colorSave" value="${S.colors.save}"></label><label>Leveln <input type="color" data-setting="colorLevel" value="${S.colors.level}"></label></div></section>
- <section class="settings-panel"><h3>Spiel & Check-in</h3><label>Paket-Timeout · <b>${S.timeout} Sekunden</b><input type="range" min="1" max="10" step="1" value="${S.timeout}" data-setting="packetTimeout"></label><label>Erfolgssounds <input type="checkbox" data-setting="sound" ${S.sound?'checked':''}></label><label>Täglicher Check-in ab <input type="time" value="${S.checkTime}" data-setting="checkTime"></label><button class="thin-button" data-act="checkin">Offene Tage prüfen</button><p class="muted">Ohne Server sind keine automatischen Push-Mitteilungen außerhalb der App möglich. Eine tägliche iPhone-Kurzbefehle-Erinnerung kann Leveln öffnen.</p></section>
- <section class="settings-panel"><h3>Private Daten</h3><p class="muted">Alle Einträge liegen ausschließlich auf diesem Gerät. Sichere sie regelmäßig: iOS kann Website-Daten löschen.</p><button class="thin-button" data-act="export">JSON-Backup exportieren</button><button class="thin-button" data-act="import">JSON-Backup importieren</button><button class="danger-button" data-act="erase">Alle Daten löschen</button></section>`}
-function sheet(title,html,lock=false){$('#modalRoot').innerHTML=`<div class="shade" ${lock?'':'data-act="modal-close"'}><section class="sheet" role="dialog" aria-modal="true" aria-label="${safe(title)}"><div class="sheet-handle"></div><header><h2>${safe(title)}</h2>${lock?'':`<button class="icon-button" data-act="modal-close">${ico('close')}</button>`}</header>${html}</section></div>`;enhanceIconSelectors()}
-function renderModal05(){if(!S.modal){$('#modalRoot').innerHTML='';return}
- if(S.modal.type==='edit-goal')return editGoalModal();if(S.modal.type==='edit-day')return editDayModal();if(S.modal.type==='checkin')return checkinModal();if(S.modal.type==='menu')return cardMenuModal();}
-function closeModal(){S.modal=null;renderModal()}
-function goalFormData(g){let r=g?.r||{id:uid(),period:'day',mode:'calendar',minutes:30,count:null,standardMinutes:null,standardCount:null,color:''};return {r,a:g?.a}}
-function editGoalModal(){const g=goalByKey(S.modal.key),{a,r}=goalFormData(g),kind=a?.kind||S.modal.kind||'build',cat=a?.category||'personal';
- sheet(g?'Ziel bearbeiten':'Neues Ziel',`<form id="goalForm"><label>Name<input name="name" maxlength="70" required value="${safe(a?.name||'')}" placeholder="z. B. Sport"></label><div class="field-grid"><label>Typ<select name="kind" ${a?'disabled':''}><option value="build" ${kind==='build'?'selected':''}>Leveln</option><option value="reduce" ${kind==='reduce'?'selected':''}>Zaubern</option></select></label><label>Lebensbereich<select name="category">${Object.entries(CAT).map(([key,val])=>`<option value="${key}" ${cat===key?'selected':''}>${safe(val[0])}</option>`).join('')}</select></label></div><label>Icon aus der Bibliothek<select name="iconKey"><option value="">Kategorie-Icon verwenden</option>${Object.keys(PATH).slice(0,13).map(k=>`<option value="${k}" ${a?.iconKey===k?'selected':''}>${k}</option>`).join('')}</select></label><label>Eigenes Bild (optional)<input type="file" name="iconFile" accept="image/png,image/jpeg,image/webp"></label><div class="field-grid"><label>Zielzeitraum<select name="period"><option value="day" ${r.period==='day'?'selected':''}>Tag</option><option value="week" ${r.period==='week'?'selected':''}>Woche</option><option value="month" ${r.period==='month'?'selected':''}>Monat</option><option value="year" ${r.period==='year'?'selected':''}>Jahr</option></select></label><label>Berechnung<select name="mode"><option value="calendar" ${r.mode!=='restart'?'selected':''}>Kalender</option><option value="restart" ${r.mode==='restart'?'selected':''}>Neustart (7/30/365 Tage)</option></select></label></div><div class="field-grid"><label>Minuten (optional)<input name="minutes" type="number" min="0" step="1" value="${r.minutes??''}" placeholder="Ohne"></label><label>Anzahl (optional)<input name="count" type="number" min="0" step="1" value="${r.count??''}" placeholder="Ohne"></label></div><div class="field-grid"><label>Standard-Minuten bei Skip<input name="stdMinutes" type="number" min="0" step="1" value="${r.standardMinutes??''}" placeholder="Optional"></label><label>Standard-Anzahl bei Skip<input name="stdCount" type="number" min="0" step="1" value="${r.standardCount??''}" placeholder="Optional"></label></div><div class="field-grid"><label>XP je Anzahl<input name="countXp" type="number" min="0" max="100000" step="0.1" value="${a?num(rate(g,nowDay()),2).replace(',','.'):0}"></label><label>Zielfarbe (optional)<input type="color" name="goalColor" value="${hex(r.color,kind==='reduce'?S.colors.save:S.colors.level)}"></label></div><p class="muted form-help">Beim Überspringen bestätigt Leveln das tägliche Minimum oder deinen Standardwert. Mehrtagesziele brauchen einen eigenen Tagesstandard; andernfalls bleibt die Menge unbekannt. Die Zielfarbe färbt Kalenderflammen. Änderungen gelten ab heute.</p><div class="sheet-actions"><button class="thin-button" type="button" data-act="modal-close">Abbrechen</button><button class="primary" type="submit">Speichern</button></div></form>${g?`<button class="danger-button" data-act="archive-goal" data-key="${safe(g.key)}">Ziel archivieren</button>`:''}`)}
-function readNumber(raw,label){raw=String(raw||'').trim();if(!raw)return null;if(!/^\d+(?:\.\d+)?$/.test(raw)||+raw>1000000)throw Error(`Ungültige Angabe: ${label}`);return +raw}
-async function fileArt(file){if(!file)return null;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8e6)throw Error('Bitte PNG/JPG/WebP bis 8 MB wählen.');const bmp=await createImageBitmap(file),c=document.createElement('canvas');c.width=160;c.height=160;const ctx=c.getContext('2d'),scale=Math.max(160/bmp.width,160/bmp.height),w=bmp.width*scale,h=bmp.height*scale;ctx.drawImage(bmp,(160-w)/2,(160-h)/2,w,h);bmp.close?.();return c.toDataURL('image/png')}
-async function saveGoal(form){let f=form.elements,key=S.modal.key,g=goalByKey(key),a=g?structuredClone(g.a):null;let name=f.name.value.trim();if(!name)throw Error('Bitte einen Namen angeben.');let minutes=readNumber(f.minutes.value,'Minuten'),count=readNumber(f.count.value,'Anzahl');if(minutes===null&&count===null)throw Error('Mindestens Minuten oder Anzahl festlegen.');if(count!==null&&!Number.isInteger(count))throw Error('Anzahl-Ziele müssen ganze Zahlen sein.');let period=f.period.value,mode=period==='day'?'calendar':f.mode.value;
- let standardMinutes=readNumber(f.stdMinutes.value,'Standard-Minuten'),standardCount=readNumber(f.stdCount.value,'Standard-Anzahl');let countXp=readNumber(f.countXp.value,'XP je Einheit')??0;if(standardCount!==null&&!Number.isInteger(standardCount))throw Error('Standard-Anzahlen müssen ganze Zahlen sein.');
- let now=new Date().toISOString();if(!a)a={id:uid(),name,kind:f.kind.value,createdAt:now,category:f.category.value,order:S.activities.length,revisions:[]};a.name=name;a.category=f.category.value;a.iconKey=f.iconKey.value;a.updatedAt=now;let img=f.iconFile.files[0];if(img)a.iconData=await fileArt(img);
- let rev=structuredClone(revision(a,nowDay())),r=g?rev.rules.find(x=>x.id===g.r.id):null;if(!r){r={id:uid()};rev.rules=[r]}
- Object.assign(r,{period,mode,minutes,count,standardMinutes,standardCount,color:f.goalColor.value});rev.from=nowDay();rev.countXp=countXp;a.revisions=(a.revisions||[]).filter(x=>x.from!==nowDay());a.revisions.push(rev);a.revisions.sort((x,y)=>x.from.localeCompare(y.from));
- await dbPut('activities',a);S.modal=null;await sync();S.selectedGoal=`${a.id}|${r.id}`;S.card=Math.max(0,goals(S.day).findIndex(x=>x.key===S.selectedGoal));render();toast('Ziel gespeichert')}
-function canEdit(d){return d>=dayAdd(nowDay(),-1)&&d<=nowDay()}
-function editDayModal(){let d=S.modal.day,editable=canEdit(d),grouped=goals(d),all=grouped.filter(x=>x.a.kind==='build').concat(grouped.filter(x=>x.a.kind==='reduce'));
- let html=`<div class="edit-day-sub">${pretty(d)} · ${editable?'Bearbeitbar':'Nur ansehen – nach zwei Kalendertagen gesperrt'}</div><form id="dayForm" data-day="${d}">${all.map((g,i)=>{let e=entry(g,d),s=e?.mode||'',comment=e?.comment||'';let ck=metricKeys(g.r);return `<div class="day-edit-row" data-goal="${safe(g.key)}"><div class="day-edit-title"><strong>${safe(g.a.name)}</strong><small>${g.a.kind==='reduce'?'Zaubern':'Leveln'} · ${NAMES[g.r.period]}</small></div><div class="day-edit-field"><label>Status<select name="mode_${i}" ${editable?'':'disabled'}><option value="" ${!s?'selected':''}>Offen</option><option value="up" ${s==='up'?'selected':''}>${g.a.kind==='reduce'?'Verzichtet':'Etwas gemacht'}</option><option value="down" ${s==='down'?'selected':''}>${g.a.kind==='reduce'?'Verbraucht':'Nichts gemacht'}</option><option value="refused" ${e?.source==='refused'||e?.source==='auto'?'selected':''}>Nicht eingetragen / verweigert</option></select></label></div><div class="field-grid">${ck.includes('minutes')?`<label>Minuten<input name="minutes_${i}" type="number" min="0" step="0.01" ${editable?'':'disabled'} value="${e?.minutes??''}" placeholder="Unbekannt"></label>`:'<div></div>'}${ck.includes('count')?`<label>Anzahl<input name="count_${i}" type="number" min="0" step="1" ${editable?'':'disabled'} value="${e?.count??''}" placeholder="Unbekannt"></label>`:'<div></div>'}</div><label class="comment-label">Kommentar<input name="comment_${i}" maxlength="1000" value="${safe(comment)}" ${editable?'':'disabled'} placeholder="Optional"></label></div>`}).join('')}${editable?`<button class="primary save-day" type="submit">Tagesprotokoll speichern</button>`:''}</form>`;
- sheet('Tagesprotokoll',html)}
-function cardMenuModal(){let g=goalByKey(S.modal.key,S.day);if(!g){closeModal();return}sheet(g.a.name,`<div class="menu-actions"><button data-act="edit-goal" data-key="${safe(g.key)}">${ico('target')} Ziel bearbeiten</button><button data-act="edit-day" data-day="${S.day}">${ico('edit')} Tageswerte ansehen / korrigieren</button><button data-act="show-goal" data-key="${safe(g.key)}">${ico('calendar')} Im Kalender anzeigen</button></div>`)}
-function checkinItems(){const d=dayAdd(nowDay(),-1);return goals(d).filter(g=>!entry(g,d)).map(g=>({g,d}))}
-function checkinModal(){const items=checkinItems();if(!items.length){closeModal();return}sheet('Dein täglicher Check-in',`<p class="form-help">${items.length} offene Einträge. Bitte nachtragen oder bewusst als nicht erfasst abschließen. Das wird nach Ablauf des Folgetags automatisch konservativ angenommen.</p><div class="check-list">${items.map(({g,d})=>`<div class="check-row"><div><strong>${safe(g.a.name)}</strong><small>${pretty(d)} · ${g.a.kind==='reduce'?'Zaubern':'Leveln'}</small></div><button data-act="check-edit" data-day="${d}">Nachtragen</button><button data-act="refuse" data-day="${d}" data-key="${safe(g.key)}">Verweigern</button></div>`).join('')}</div><button class="thin-button" data-act="refuse-all">Alle bewusst verweigern</button>`,true)}
-function maybeCheckin(force=false){if(S.modal||S.packet)return;let items=checkinItems();if(items.length&&(force||!S.checkShown)){S.checkShown=true;S.modal={type:'checkin'};renderModal()}}
-async function saveDay(form){const d=S.modal.day;if(!canEdit(d))throw Error('Dieser Tag ist bereits gesperrt.');const all=goals(d).filter(x=>x.a.kind==='build').concat(goals(d).filter(x=>x.a.kind==='reduce'));let changes=[];
- for(let i=0;i<all.length;i++){let g=all[i],mode=form.elements['mode_'+i].value;if(!mode)continue;let refused=mode==='refused',fields=refused?{...assumed(g,d),source:'refused'}:{mode,status:mode==='up'?'yes':'no',source:'user',estimated:false};
- if(!refused){for(let k of metricKeys(g.r)){let el=form.elements[`${k}_${i}`];fields[k]=readNumber(el?.value,k);if(k==='count'&&fields[k]!==null&&!Number.isInteger(fields[k]))throw Error('Anzahlen müssen ganze Zahlen sein.');if(mode==='down'&&g.a.kind==='build'&&fields[k]===null)fields[k]=0;if(mode==='up'&&g.a.kind==='reduce'&&fields[k]===null)fields[k]=0;if(mode==='up'&&g.a.kind==='build'&&fields[k]===null)fields[k]=packetDefault(g,k)}}
- fields.comment=form.elements['comment_'+i]?.value?.slice(0,1000)||'';changes.push(makeEntry(g,d,fields))}
- await dbTx(['entries'],t=>changes.forEach(x=>t.objectStore('entries').put(x)));S.modal=null;await sync();await reconcileWallet();render();toast('Tageswerte aktualisiert');if(S.page==='today'&&d===S.day)S.card=0;maybeCheckin(true)}
-async function refuse(g,d){if(!canEdit(d))throw Error('Der Tag ist bereits gesperrt.');await dbPut('entries',makeEntry(g,d,{...assumed(g,d),source:'refused'}));await sync()}
-async function startCard05(g,up){if(!g||!canEdit(S.day)||S.packetBusy)return;let before=xpStats().sum,orig=entry(g,S.day),fields={mode:up?'up':'down',status:up?'yes':'no',source:'user',estimated:false,minutes:null,count:null};
- if((g.a.kind==='reduce'&&up)||(g.a.kind==='build'&&!up))for(let k of metricKeys(g.r))fields[k]=0;
- await dbPut('entries',makeEntry(g,S.day,fields));await sync();vibrate();if(Math.floor(xpStats().sum/1000)>Math.floor(before/1000))await celebrate(Math.floor(xpStats().sum/1000)+1);const hasPhases=(g.a.kind==='build'&&up)||(g.a.kind==='reduce'&&!up);if(hasPhases){const phases=metricKeys(g.r);if(phases.length){S.packet={key:g.key,day:S.day,phases,phase:phases[0],fired:{minutes:false,count:false}};render();return}}
- await advanceCard();}
-function packetDefault(g,metric){let base=ruleValue(g.r,metric);if(g.a.kind==='build')return g.r[metric==='minutes'?'standardMinutes':'standardCount']??(g.r.period==='day'?base:null);
- if(base===null)return null;return g.r.period==='day'?base:metric==='count'?Math.max(1,Math.ceil(base/limit(g.r))):Math.ceil(base/limit(g.r)*100)/100}
-async function finishPhase(){if(!S.packet||S.packetBusy)return;clearTimeout(timer);let previousXp=xpStats().sum;const q=S.packet,g=goalByKey(q.key,q.day);if(!g){S.packet=null;render();return}let k=q.phase,e=entry(g,q.day);if(!q.fired[k]&&!finite(e?.[k])){
-  await dbPut('entries',makeEntry(g,q.day,{[k]:packetDefault(g,k)}));await sync();}
- if(Math.floor(xpStats().sum/1000)>Math.floor(previousXp/1000))await celebrate(Math.floor(xpStats().sum/1000)+1);
- let idx=q.phases.indexOf(k);if(idx+1<q.phases.length){q.phase=q.phases[idx+1];render()}else{S.packet=null;await advanceCard()}}
-async function advanceCard(){let gs=goals(S.day),idx=gs.findIndex(x=>x.key===S.packet?.key);if(idx<0)idx=S.card;let next=gs.findIndex((g,i)=>i>idx&&initialState(g,S.day)==='open');if(next<0)next=gs.findIndex(g=>initialState(g,S.day)==='open');S.card=next>=0?next:Math.min(idx+1,gs.length-1);render();if(gs.length&&gs.every(g=>initialState(g,S.day)!=='open'))toast('Alle Karten heute erfasst ✨')}
-function armTimer(){clearTimeout(timer);if(!S.packet||S.packetBusy||S.modal)return;timer=setTimeout(()=>finishPhase().catch(showError),S.timeout*1000)}
-async function sendPacket(n,source){if(!S.packet||S.packetBusy)return;let q=S.packet,g=goalByKey(q.key,q.day);if(!g)return;S.packetBusy=true;clearTimeout(timer);try{
- const k=q.phase,e=entry(g,q.day),before=xpStats().sum,next=(finite(e?.[k])?e[k]:0)+n;if(k==='count'&&!Number.isInteger(next))throw Error('Anzahlen müssen ganze Zahlen sein.');if(next>1000000)throw Error('Zu große Menge.');await dbPut('entries',makeEntry(g,q.day,{[k]:next,source:'user'}));q.fired[k]=true;await sync();await flyChip(source);render();const after=xpStats().sum,gain=after-before;if(gain>0){sound(false);xpToast(gain);if(Math.floor(after/1000)>Math.floor(before/1000))await celebrate(Math.floor(after/1000)+1)}
- }finally{S.packetBusy=false;armTimer()}}
-function flyChip(el){return new Promise(resolve=>{let start=el?.getBoundingClientRect(),end=$('#xpTrack')?.getBoundingClientRect();if(!start||!end){resolve();return}let c=el.cloneNode(true);c.className='flying-package';c.style.left=start.left+'px';c.style.top=start.top+'px';c.style.width=start.width+'px';c.style.height=start.height+'px';document.body.append(c);requestAnimationFrame(()=>{c.style.transform=`translate(${end.left+end.width/2-start.left-start.width/2}px,${end.top+end.height/2-start.top-start.height/2}px) scale(.18)`;c.style.opacity='0'});setTimeout(()=>{c.remove();resolve()},460)})}
-function xpToast(v){const r=$('#xpTrack')?.getBoundingClientRect();if(!r)return;let el=document.createElement('div');el.className='xp-toast';el.style.left=Math.max(8,Math.min(innerWidth-120,r.left+r.width*.6))+'px';el.style.top=Math.max(8,r.top-38)+'px';el.textContent=`+${num(v,2)} XP`;document.body.append(el);setTimeout(()=>el.remove(),1100)}
-function vibrate(){try{navigator.vibrate?.([20,35,28])}catch{}}
-function celebrate(level){return new Promise(done=>{let root=$('#celebrateRoot');root.innerHTML=`<div class="levelup"><span>LEVEL UP!</span><strong>lvl. ${level}</strong><p>Dein Fortschritt wächst.</p></div>`;sound(true);vibrate();setTimeout(()=>{root.innerHTML='';done()},1350)})}
-function toast(text){let t=document.createElement('div');t.className='progress-toast';t.textContent=text;document.body.append(t);setTimeout(()=>t.remove(),2100)}
-function sound(big=false){if(!S.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;audioCtx??=new C;if(audioCtx.state==='suspended')audioCtx.resume();(big?[523,659,785,1047]:[659,880]).forEach((f,i)=>{let o=audioCtx.createOscillator(),v=audioCtx.createGain(),t=audioCtx.currentTime+i*.09;o.type='sine';o.frequency.setValueAtTime(f,t);v.gain.setValueAtTime(.0001,t);v.gain.exponentialRampToValueAtTime(.06,t+.025);v.gain.exponentialRampToValueAtTime(.0001,t+.2);o.connect(v);v.connect(audioCtx.destination);o.start(t);o.stop(t+.22)})}catch{}}
-function showError(err){console.error(err);S.busy=false;S.packetBusy=false;alert('Leveln: '+(err?.message||String(err)));render()}
-async function animateCard(direction,done){const el=$('#activeCard');if(!el){await done();return}S.busy=true;let dx=direction==='left'?-innerWidth:direction==='right'?innerWidth:0,dy=direction==='up'?-innerHeight:direction==='down'?innerHeight:0;el.style.transition='transform 260ms cubic-bezier(.2,.65,.2,1), opacity 260ms';el.style.transform=`translate(${dx}px,${dy}px) rotate(${dx*.012}deg)`;el.style.opacity='.15';await new Promise(resolve=>setTimeout(resolve,275));try{S.busy=false;await done()}finally{S.busy=false}}
-function rotate(step){let g=goals(S.day);S.card=(S.card+step+g.length)%Math.max(g.length,1);render()}
-function go(page){if(S.packet)return;S.page=page;S.modal=null;render();$('#app').scrollTop=0}
-async function storeSetting(k,v){await saveMeta(k,v);await sync();render()}
-async function exportBackup(){const data={activities:S.activities,entries:S.entries,overrides:S.overrides,meta:S.meta};const file=new Blob([JSON.stringify({format:'progress-local-backup',version:1,exportedAt:new Date().toISOString(),appVersion:'0.5',data},null,2)],{type:'application/json'});const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=`Leveln-Backup-${nowDay()}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
-async function importBackup(file){if(file.size>40*1024*1024)throw Error('Backup zu groß (40 MB).');const data=JSON.parse(await file.text());if(data.format!=='progress-local-backup'||data.version!==1||!data.data||!STORES.every(n=>Array.isArray(data.data[n])))throw Error('Kein gültiges Leveln-/Progress-Backup.');for(let n of STORES){if(data.data[n].length>50000)throw Error('Zu viele Datensätze.');for(let x of data.data[n])if(!x||typeof x!=='object'||typeof x[n==='meta'?'key':'id']!=='string')throw Error(`Ungültige Daten in ${n}`)}if(!confirm('Backup importieren? Alle Daten auf diesem Gerät werden dadurch ersetzt.'))return;
- await dbTx(STORES,t=>{for(let n of STORES){const store=t.objectStore(n);store.clear();data.data[n].forEach(x=>store.put(x))}});S.packet=null;S.modal=null;await sync();if(!S.started){await saveMeta('v04StartedOn',nowDay());S.started=nowDay()}await reconcile();S.day=nowDay();S.page='today';render();toast('Backup wiederhergestellt')}
-async function erase(){if(!confirm('Alle persönlichen Daten unwiderruflich löschen? Sichere vorher ein Backup.'))return;if(!confirm('Wirklich vollständig löschen?'))return;await dbTx(STORES,t=>STORES.forEach(n=>t.objectStore(n).clear()));S.packet=null;S.modal=null;await setup()}
-function handleAction05(act,el){return (async()=>{
- if(act==='tab'){go(el.dataset.page);return}
- if(act==='date'){if(canEdit(el.dataset.day)){S.day=el.dataset.day;S.card=0;S.packet=null;render()}return}
- if(act==='date-shift'){let d=dayAdd(S.day,Number(el.dataset.shift));if(canEdit(d)){S.day=d;S.card=0;S.packet=null;render()}return}
- if(act==='go-goals'){go('goals');return}
- if(act==='new'){S.modal={type:'edit-goal'};renderModal();return}
- if(act==='menu'){S.modal={type:'menu',key:el.dataset.key};renderModal();return}
- if(act==='edit-goal'){S.modal={type:'edit-goal',key:el.dataset.key};renderModal();return}
- if(act==='modal-close'){if(S.modal?.type==='checkin')return;S.modal=null;renderModal();if(checkinItems().length&&S.checkShown&&S.page==='today')maybeCheckin(true);return}
- if(act==='edit-day'||act==='check-edit'){S.modal={type:'edit-day',day:el.dataset.day,onlyKey:el.dataset.key||null};renderModal();return}
- if(act==='show-goal'){S.selectedGoal=el.dataset.key;S.page='goals';S.modal=null;render();return}
- if(act==='packet'){await sendPacket(Number(el.dataset.n),el);return}
- if(act==='packet-skip'){await finishPhase();return}
- if(act==='cal-toggle'){S.calendarOpen=!S.calendarOpen;render();return}
- if(act==='cal-view'){S.calView=el.dataset.view;render();return}
- if(act==='cal-prev'||act==='cal-next'){calMove(act==='cal-prev'?-1:1);render();return}
- if(act==='cal-day'){let d=el.dataset.day;if(d<=nowDay()){S.modal={type:'edit-day',day:d};renderModal()}return}
- if(act==='cal-jump'){S.calView='month';S.calAnchor=el.dataset.day;render();return}
- if(act==='cal-jump-year'){S.calView='year';S.calAnchor=el.dataset.day;render();return}
- if(act==='goal-select'){S.selectedGoal=el.dataset.key;render();return}
- if(act==='archive-goal'){await archiveRule(el.dataset.key);return}
- if(act==='goal-expand'){S.goalExpanded=S.goalExpanded===el.dataset.key?null:el.dataset.key;S.selectedGoal=el.dataset.key;render();return}
- if(act==='rescue'){if(!confirm('Streak jetzt für 5 Glut retten?'))return;await buyFreeze(el.dataset.key+'|'+el.dataset.start);return}
- if(act==='buy'){await buyFreeze(null);return}
- if(act==='refuse'){const g=goalByKey(el.dataset.key,el.dataset.day);if(g){await refuse(g,el.dataset.day);render();S.modal={type:'checkin'};renderModal()}return}
- if(act==='refuse-all'){if(!confirm('Alle offenen Einträge bewusst verweigern?'))return;for(let {g,d} of checkinItems())await refuse(g,d);S.modal=null;render();toast('Offene Einträge abgeschlossen');return}
- if(act==='checkin'){S.modal=null;maybeCheckin(true);return}
- if(act==='stat-metric'){S.statMetric=el.dataset.metric;render();return}
- if(act==='icon-variant'){await storeSetting('iconVariant',el.dataset.variant);toast('Icon-Auswahl übernommen');return}
- if(act==='background-remove'){await dbTx(['meta'],t=>{t.objectStore('meta').put({key:'backgroundMode',value:'system'});t.objectStore('meta').put({key:'backgroundImage',value:''})});await sync();render();return}
- if(act==='stat-period'){S.statPeriod=el.dataset.period;S.statAnchor=nowDay();render();return}
- if(act==='stat-prev'||act==='stat-next'){if(S.statPeriod==='all')return;let step=act==='stat-prev'?-1:1;let d=asDate(S.statAnchor);if(S.statPeriod==='day')d.setDate(d.getDate()+step);if(S.statPeriod==='week')d.setDate(d.getDate()+7*step);if(S.statPeriod==='month')d.setMonth(d.getMonth()+step);if(S.statPeriod==='year')d.setFullYear(d.getFullYear()+step);S.statAnchor=iso(d);render();return}
- if(act==='export'){await exportBackup();return}
- if(act==='import'){$('#importFile').click();return}
- if(act==='erase'){await erase();return}
+/*
+ * LEVELN 0.9 – BEREINIGTER QUELLCODE
+ *
+ * Nur technische Bereinigung der bestehenden Version 0.9.
+ * Keine Änderung an Regeln, UX, gespeicherten Daten oder Migrationsumfang.
+ *
+ * Hinweis für spätere Weiterentwicklung:
+ * - Die Originaldatei enthielt mehrfach deklarierte Funktionen. In JavaScript
+ *   gilt jeweils die letzte Deklaration. Alle überholten Fassungen wurden entfernt.
+ * - Original: Leveln-v0.9-iPhone-App.zip (2026-10-29).
+ * - Details, Abhängigkeiten und Testideen: WARTUNG.md.
+ */
 
- })().catch(showError)}
+'use strict';
+const DB_NAME = 'progress-private-v1', STORES = ['activities', 'entries', 'overrides', 'meta', 'skills'];
+const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
+const safe = x => String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => crypto.randomUUID?.() || 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+const pad = x => String(x).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const nowDay = () => iso(new Date());
+const asDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12); };
+const dayAdd = (s, n) => { let d = asDate(s); d.setDate(d.getDate() + n); return iso(d); };
+const dayDiff = (a, b) => Math.round((asDate(b) - asDate(a)) / 86400000);
+const dayName = s => asDate(s).toLocaleDateString('de-DE', { weekday: 'short' });
+const pretty = (s, options = { day: 'numeric', month: 'long', year: 'numeric' }) => asDate(s).toLocaleDateString('de-DE', options);
+const finite = n => typeof n === 'number' && Number.isFinite(n) && n >= 0;
+const num = (n, d = 1) => Number(n || 0).toLocaleString('de-DE', { maximumFractionDigits: d });
+const formatMin = m => m == null ? '—' : m >= 60 ? `${num(m / 60, 1)} h` : `${num(m, 1)} min`;
+const NAMES = { day: 'Täglich', week: 'Wöchentlich', month: 'Monatlich', year: 'Jährlich' };
+const CAT = { fitness: ['Fitness', 'dumbbell'], health: ['Gesundheit', 'heart'], learning: ['Lernen', 'book'], digital: ['Digitales', 'phone'], creative: ['Kreativität', 'palette'], productive: ['Produktivität', 'target'], finance: ['Finanzen', 'wallet'], leisure: ['Freizeit', 'game'], personal: ['Persönliches', 'star'], sleep: ['Schlaf', 'moon'], outdoors: ['Draußen', 'sun'], other: ['Sonstiges', 'spark'] };
+const PATH = { shield: '<path d="M12 2 20 6v6c0 5-3.5 8.4-8 10-4.5-1.6-8-5-8-10V6z"/>', scroll: '<path d="M6 3h12v15c0 4-5 4-5 1V6H4v13c0 3 3 3 5 3h7"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-8 16-8 16 0"/>', dumbbell: '<path d="M3 10v4m3-7v10M2 9h4m0 3h12M18 7v10m3-7v4m-3-2h4"/>', heart: '<path d="M20.8 8.1c0 5-8.8 11.2-8.8 11.2S3.2 13.1 3.2 8.1C3.2 3.9 9 2.5 12 6.7c3-4.2 8.8-2.8 8.8 1.4z"/>', book: '<path d="M12 5c-3-2-6-2-9-1v15c3-1 6-1 9 1m0-15c3-2 6-2 9-1v15c-3-1-6-1-9 1V5z"/>', phone: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>', palette: '<path d="M12 2a10 10 0 1 0 0 20h2a2 2 0 0 0 2-2c0-1.5-1-2 0-3 1-1 2 0 3.5-1.5A9 9 0 0 0 12 2z"/><path d="M7 9h.01M12 6h.01M17 9h.01M7 14h.01"/>', target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>', wallet: '<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 9V5a2 2 0 0 1 2-2h13m-1 10h4"/>', game: '<path d="M6 9h12a4 4 0 0 1 4 4l-1 5a3 3 0 0 1-5 2l-3-3h-2l-3 3a3 3 0 0 1-5-2l-1-5a4 4 0 0 1 4-4zM8 12v5m-2.5-2.5h5M16 13h.01M19 15h.01"/>', star: '<path d="m12 2 3.1 6.4 7 1-5 5 1.2 7-6.3-3.3-6.3 3.3 1.2-7-5-5 7-1z"/>', moon: '<path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11z"/>', sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/>', spark: '<path d="m12 2 2.7 7.3L22 12l-7.3 2.7L12 22l-2.7-7.3L2 12l7.3-2.7z"/>', flame: '<path d="M12 22c5 0 8-4 8-9 0-3-2-6-5-8 .4 3-1 4-2 5-1-4-3-6-4-8 0 6-5 9-5 13 0 4 3 7 8 7z"/>', snow: '<path d="M12 2v20M4 7l16 10M20 7 4 17M9 5l3 3 3-3M9 19l3-3 3 3"/>', back: '<path d="m15 5-7 7 7 7"/>', plus: '<path d="M12 4v16M4 12h16"/>', dots: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>', home: '<path d="m3 10 9-7 9 7v10H4V10zM9 20v-7h6v7"/>', goals: '<path d="M6 3h12v18l-6-4-6 4V3zM9 8h6m-6 4h6"/>', chart: '<path d="M4 20V9m6 11V4m6 16v-8m5 8V6"/>', settings: '<path d="M4 6h16M4 12h16M4 18h16M8 4v4M16 10v4M10 16v4"/>', close: '<path d="M5 5l14 14M19 5 5 19"/>', check: '<path d="m4 12 5 5L20 6"/>', lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>', calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', arrow: '<path d="M12 20V4m-6 6 6-6 6 6"/>', edit: '<path d="M4 17 16 5l3 3L7 20H4v-3z"/>', chevron: '<path d="m7 10 5 5 5-5"/>', bag: '<path d="M4 8h16l-1 13H5L4 8zM9 9V6a3 3 0 0 1 6 0v3"/>' };
+function ico(k, cl = '') { return `<svg class="ico ${cl}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATH[k] || PATH.spark}</svg>`; }
+function art(a) { if (a.iconData && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(a.iconData))
+    return `<img class="card-art" src="${a.iconData}" alt="">`; return ico(PATH[a.iconKey] ? a.iconKey : (CAT[a.category]?.[1] || 'spark'), 'card-art'); }
+let db;
+// Zentraler Laufzeitstatus der App. Der persistente Stand liegt in IndexedDB.
+// Nach Schreibvorgängen synchronisieren die bestehenden sync()/reconcile()-Wege die Ansichten.
+const S = { skills: [], activities: [], entries: [], overrides: [], meta: [], page: 'today', day: nowDay(), card: 0, packet: null, packetBusy: false, modal: null, editDay: null, editing: null, theme: 'system', colors: { save: '#168a70', level: '#9be948' }, timeout: 3, sound: true, checkTime: '21:00', calendarOpen: true, calView: 'month', calAnchor: nowDay(), selectedGoal: null, goalExpanded: null, statPeriod: 'month', statAnchor: nowDay(), statGoal: 'all', settingsDraft: null, wallet: null, started: null, busy: false, checkShown: false };
+let EM = new Map(), timer = 0, gesture = null, wheelGesture = null, packageGesture = null, audioCtx = null, periodCache = new Map();
+function dbAll(name) { return new Promise((resolve, reject) => { const q = db.transaction(name).objectStore(name).getAll(); q.onsuccess = () => resolve(q.result); q.onerror = () => reject(q.error); }); }
+function dbTx(names, fn) { return new Promise((resolve, reject) => { let t = db.transaction(names, 'readwrite'); try {
+    fn(t);
+}
+catch (e) {
+    t.abort();
+    reject(e);
+    return;
+} t.oncomplete = resolve; t.onerror = () => reject(t.error); t.onabort = () => reject(t.error || Error('Speicherung abgebrochen')); }); }
+const dbPut = (name, value) => dbTx([name], t => t.objectStore(name).put(value));
+const meta = (key, fallback) => S.meta.find(x => x.key === key)?.value ?? fallback;
+async function saveMeta(key, value) { await dbPut('meta', { key, value }); S.meta = S.meta.filter(x => x.key !== key); S.meta.push({ key, value }); }
+function revision(a, d) { const arr = [...(a.revisions || [])].sort((x, y) => x.from.localeCompare(y.from)); return [...arr].reverse().find(x => x.from <= d) || { rules: [], countXp: 0 }; }
+function rules(a, d) { return revision(a, d).rules || []; }
+function goalByKey(key, d = nowDay()) { return goals(d).find(g => g.key === key) || allGoals().find(g => g.key === key); }
+function entryKey(g, d) { return `${g.key}|${d}`; }
+function entry(g, d) {
+    const current = EM.get(entryKey(g, d));
+    if (current)
+        return current;
+    // 0.3 used one entry per activity, not per goal. Map it only onto the first rule.
+    if (g.index === 0) {
+        const old = EM.get(`${g.a.id}|${d}`);
+        if (old)
+            return { ...old, source: old.source || 'legacy', mode: old.status === 'yes' ? 'up' : old.status === 'no' ? 'down' : null };
+    }
+    return null;
+}
+function ruleValue(r, k) { return finite(Number(r[k])) && r[k] !== null && r[k] !== '' ? Number(r[k]) : null; }
+function metricKeys(r) { return ['minutes', 'count'].filter(k => ruleValue(r, k) !== null); }
+function rate(g, d) { return Math.max(0, Number(revision(g.a, d).countXp) || 0); }
+function limit(r) { return r.period === 'day' ? 1 : r.period === 'week' ? 7 : r.period === 'month' ? 30 : 365; }
+function isRestart(r) { return r.period !== 'day' && r.mode === 'restart'; }
+function calendarStart(p, d) { let t = asDate(d); if (p === 'week')
+    t.setDate(t.getDate() - (t.getDay() + 6) % 7); if (p === 'month')
+    t.setDate(1); if (p === 'year')
+    t.setMonth(0, 1); return iso(t); }
+function calendarNext(p, start) { let d = asDate(start); if (p === 'day')
+    d.setDate(d.getDate() + 1); if (p === 'week')
+    d.setDate(d.getDate() + 7); if (p === 'month')
+    d.setMonth(d.getMonth() + 1); if (p === 'year')
+    d.setFullYear(d.getFullYear() + 1); return iso(d); }
+function allDays(start, end, cap = 4000) { const a = []; for (let x = start; x < end && a.length < cap; x = dayAdd(x, 1))
+    a.push(x); return a; }
+function periods(g, end = nowDay()) {
+    const { a, r } = g;
+    let start = (a.createdAt || S.started || end).slice(0, 10), out = [];
+    if (a.archivedAt && end >= a.archivedAt.slice(0, 10))
+        end = dayAdd(a.archivedAt.slice(0, 10), -1);
+    if (start > end)
+        return out;
+    // Each rule's first day is the activity creation date; prevent updating pre-creation dates.
+    if (!isRestart(r)) {
+        let cursor = calendarStart(r.period, start);
+        for (let i = 0; cursor <= end && i < 2300; i++) {
+            const next = calendarNext(r.period, cursor);
+            out.push({ start: cursor, end: next, closed: next <= nowDay(), rule: rules(a, cursor).find(x => x.id === r.id) || r });
+            cursor = next;
+        }
+    }
+    else {
+        let cursor = start;
+        const span = limit(r);
+        for (let i = 0; cursor <= end && i < 2300; i++) {
+            let upper = dayAdd(cursor, span), cut = upper;
+            // An excessive saving budget ends a restart window on the overspend day.
+            if (a.kind === 'reduce') {
+                let sums = { minutes: 0, count: 0 };
+                for (let d = cursor; d < upper && d <= end; d = dayAdd(d, 1)) {
+                    let e = entry(g, d);
+                    for (let k of metricKeys(r))
+                        if (finite(e?.[k]))
+                            sums[k] += e[k];
+                    if (metricKeys(r).some(k => sums[k] > ruleValue(r, k) + 1e-9)) {
+                        cut = dayAdd(d, 1);
+                        break;
+                    }
+                }
+            }
+            out.push({ start: cursor, end: cut, closed: cut <= nowDay(), rule: rules(a, cursor).find(x => x.id === r.id) || r });
+            cursor = cut;
+        }
+    }
+    return out;
+}
+function currentPeriod(g, d) { return periods(g, d).find(p => p.start <= d && p.end > d) || null; }
+function finalLocked(p) { return dayAdd(p.end, 1) <= nowDay(); }
+function frozenKey(g, p) { return `${g.key}|${p.start}`; }
+function outcome(g, p) { const a = assessment(g, p); return { ...a, frozen: S.wallet?.frozen?.includes(frozenKey(g, p)) || false }; }
+function stData(g) {
+    let ps = periods(g), run = 0, best = 0;
+    for (let p of ps) {
+        const o = outcome(g, p);
+        if (o.state === 'success') {
+            run++;
+            best = Math.max(best, run);
+        }
+        else if (o.frozen) {
+            best = Math.max(best, run);
+        }
+        else if (o.state === 'fail' && (p.closed || g.a.kind === 'reduce')) {
+            run = 0;
+        }
+    }
+    // pending current period should not shorten the visible streak
+    return { current: run, best };
+}
+function assumed(g, d) {
+    let r = g.r, minutes = ruleValue(r, 'minutes'), count = ruleValue(r, 'count');
+    let span = limit(r);
+    return { mode: g.a.kind === 'build' ? 'down' : 'down', status: 'no', minutes: minutes === null ? null : g.a.kind === 'reduce' ? Math.ceil(minutes / span * 100) / 100 : 0, count: count === null ? null : g.a.kind === 'reduce' ? Math.max(1, Math.ceil(count / span)) : 0, source: 'auto', estimated: true };
+}
+function makeEntry(g, d, fields) { const old = entry(g, d) || {}; return { ...old, id: entryKey(g, d), activityId: g.a.id, ruleId: g.r.id, date: d, comment: old.comment || '', ...fields, updatedAt: new Date().toISOString() }; }
+async function sync05() {
+    [S.activities, S.entries, S.overrides, S.meta] = await Promise.all(STORES.map(dbAll));
+    S.activities.sort((a, b) => (a.order || 0) - (b.order || 0));
+    EM = new Map(S.entries.map(e => [e.id, e]));
+    periodCache.clear();
+    S.started = meta('v04StartedOn', null);
+    S.theme = meta('theme', 'system');
+    S.colors = { save: hex(meta('colorSave', '#168a70'), '#168a70'), level: hex(meta('colorLevel', '#9be948'), '#9be948') };
+    S.timeout = Math.min(10, Math.max(1, Number(meta('packetTimeout', 3)) || 3));
+    S.sound = meta('sound', true) !== false;
+    S.checkTime = meta('checkTime', '21:00');
+    S.wallet = meta('emberWallet', { glut: 0, inventory: 0, awarded: [], frozen: [], history: [] });
+    S.bgMode = meta('backgroundMode', 'system');
+    S.bgColor = hex(meta('backgroundColor', '#e6f8e9'), '#e6f8e9');
+    S.bgImage = meta('backgroundImage', '');
+    S.bgShade = Math.min(90, Math.max(0, Number(meta('backgroundShade', 35))));
+    S.iconVariant = meta('iconVariant', 'light');
+    applyTheme();
+}
+function hex(x, def) { return /^#[\da-f]{6}$/i.test(String(x)) ? x : def; }
+function streakBefore(g, at, w) { let run = 0; for (let previous of periods(g, dayAdd(at.start, -1))) {
+    if (previous.end > at.start)
+        continue;
+    let v = assessment(g, previous);
+    if (v.state === 'success')
+        run++;
+    else if (w.frozen.includes(frozenKey(g, previous))) { }
+    else if (v.state === 'fail')
+        run = 0;
+} return run; }
+async function reconcileWallet() {
+    let w = structuredClone(S.wallet), changed = false;
+    const items = [];
+    for (let g of goals().filter(g => !isOnce(g.a)))
+        for (let p of periods(g)) {
+            if (!finalLocked(p) || p.end <= S.started)
+                continue;
+            items.push({ g, p });
+        }
+    items.sort((x, y) => x.p.end.localeCompare(y.p.end) || x.g.key.localeCompare(y.g.key));
+    // Keep prior freeze decisions immutable; process each failed period once, even after offline gaps.
+    const processed = new Set((w.history || []).filter(x => x.type === 'settled').map(x => x.key));
+    for (let { g, p } of items) {
+        const key = frozenKey(g, p);
+        if (processed.has(key))
+            continue;
+        const v = assessment(g, p);
+        if (v.state === 'pending')
+            continue;
+        if (v.state === 'fail' && !v.hasUnknown && w.inventory > 0 && streakBefore(g, p, w) > 0) {
+            w.inventory--;
+            w.frozen.push(key);
+            w.history.push({ type: 'freeze-used', key, at: new Date().toISOString() });
+        }
+        w.history.push({ type: 'settled', key, status: v.state, at: new Date().toISOString() });
+        changed = true;
+    }
+    // Count streaks, including already frozen failed periods, and issue only unique 10th-step milestones.
+    for (let g of goals().filter(g => !isOnce(g.a))) {
+        let successCount = 0;
+        let chain = 0;
+        for (let p of periods(g)) {
+            if (!finalLocked(p))
+                continue;
+            const v = assessment(g, p), key = frozenKey(g, p);
+            if (v.state === 'success') {
+                chain++;
+                successCount++;
+                if (chain > 0 && chain % 10 === 0 && p.end > S.started) {
+                    let milestone = `${key}|milestone-${chain}`;
+                    if (!w.awarded.includes(milestone)) {
+                        w.awarded.push(milestone);
+                        w.glut++;
+                        w.history.push({ type: 'glut-earned', key: milestone, at: new Date().toISOString() });
+                        changed = true;
+                    }
+                }
+            }
+            else if (w.frozen.includes(key)) { /* protected without increment */ }
+            else if (v.state === 'fail')
+                chain = 0;
+        }
+    }
+    if (changed) {
+        await saveMeta('emberWallet', w);
+        S.wallet = w;
+    }
+}
+async function buyFreeze(useKey) { let w = structuredClone(S.wallet); if (w.glut < 5)
+    throw Error('Du brauchst 5 Glut.'); if (!useKey && w.inventory >= 2)
+    throw Error('Dein Inventar ist voll (maximal 2 Freezes).'); if (useKey && w.frozen.includes(useKey))
+    throw Error('Dieser Zeitraum ist bereits geschützt.'); w.glut -= 5; if (useKey) {
+    w.frozen.push(useKey);
+    w.history.push({ type: 'instant-freeze', key: useKey, at: new Date().toISOString() });
+}
+else {
+    w.inventory++;
+    w.history.push({ type: 'freeze-bought', at: new Date().toISOString() });
+} await saveMeta('emberWallet', w); S.wallet = w; render(); toast(useKey ? 'Streak gerettet!' : 'Freeze gekauft'); }
+// XP ledger: amounts and their dates are canonical; gestures never directly add XP to a counter.
+function metricOwner(g, k, d) { let rs = rules(g.a, d).filter(r => ruleValue(r, k) !== null).sort((a, b) => ({ day: 0, week: 1, month: 2, year: 3 }[a.period] - { day: 0, week: 1, month: 2, year: 3 }[b.period])); return rs[0]?.id === g.r.id; }
+function xpBar() { let x = xpStats(); return `<div class="xp-summary"><span class="level-small">lvl. ${x.levelN}</span><div class="xp-box"><div class="xp-track" id="xpTrack"><span style="width:${x.barSave / 10}%;background:var(--save)"></span><span style="width:${x.barLevel / 10}%;background:var(--level)"></span></div><small>${num(x.progress, 1)}/1000 XP</small></div></div>`; }
+function initialState(g, d) { const e = entry(g, d); return !e ? 'open' : e.mode === 'up' ? 'up' : 'down'; }
+function calRange() { let d = S.calAnchor; if (S.calView === 'week') {
+    let s = calendarStart('week', d);
+    return { start: s, end: dayAdd(s, 7) };
+} if (S.calView === 'month')
+    return { start: calendarStart('month', d), end: calendarNext('month', calendarStart('month', d)) }; if (S.calView === 'year') {
+    let s = calendarStart('year', d);
+    return { start: s, end: calendarNext('year', s) };
+} let start = String(Math.floor(+d.slice(0, 4) / 4) * 4) + '-01-01'; return { start, end: String(+start.slice(0, 4) + 4) + '-01-01' }; }
+function badgeFor(g, d) { if (!g)
+    return ''; const p = currentPeriod(g, d); if (!p)
+    return ''; let o = outcome(g, p); if (g.r.period !== 'day' && dayAdd(p.end, -1) !== d)
+    return ''; if (o.frozen)
+    return `<span class="cal-icon snow">${ico('snow')}</span>`; if (o.state === 'success')
+    return `<span class="cal-icon fire" style="color:${goalColor(g)}">${ico('flame')}</span>`; return ''; }
+function monthCalendar(anchor, g, mini = false) { let begin = calendarStart('month', anchor), end = calendarNext('month', begin); let offset = (asDate(begin).getDay() + 6) % 7; let cellCount = Math.ceil((offset + dayDiff(begin, end)) / 7) * 7; return `<div class="month-calendar ${mini ? 'mini' : ''}"><div class="cal-weekdays">${['M', 'D', 'M', 'D', 'F', 'S', 'S'].map(x => `<small>${x}</small>`).join('')}</div><div class="cal-days">${Array.from({ length: cellCount }, (_, i) => { let d = dayAdd(begin, i - offset), inside = d >= begin && d < end; return `<button data-act="cal-day" data-day="${d}" class="cal-day ${inside ? '' : 'outside'} ${d === nowDay() ? 'today' : ''}" ${d > nowDay() ? 'disabled' : ''}><b>${Number(d.slice(-2))}</b>${inside ? badgeFor(g, d) : ''}</button>`; }).join('')}</div></div>`; }
+function calendarHTML() {
+    if (!S.calendarOpen)
+        return `<button class="calendar-collapse" data-act="cal-toggle">${ico('calendar')} Kalender anzeigen ${ico('chevron')}</button>`;
+    let { start, end } = calRange(), g = goalByKey(S.selectedGoal), label = S.calView === 'week' ? `${pretty(start, { day: 'numeric', month: 'short' })} – ${pretty(dayAdd(end, -1), { day: 'numeric', month: 'short' })}` : S.calView === 'month' ? pretty(start, { month: 'long', year: 'numeric' }) : S.calView === 'year' ? start.slice(0, 4) : `${start.slice(0, 4)}–${+end.slice(0, 4) - 1}`;
+    let content = '';
+    if (S.calView === 'week')
+        content = `<div class="cal-week">${allDays(start, end).map(d => `<button data-act="cal-day" data-day="${d}" class="week-cell"><small>${dayName(d)}</small><b>${Number(d.slice(-2))}</b>${badgeFor(g, d)}</button>`).join('')}</div>`;
+    else if (S.calView === 'month')
+        content = monthCalendar(start, g);
+    else if (S.calView === 'year')
+        content = `<div class="year-grid">${Array.from({ length: 12 }, (_, i) => { let d = `${start.slice(0, 4)}-${pad(i + 1)}-01`; return `<button class="year-cell" data-act="cal-jump" data-day="${d}"><b>${pretty(d, { month: 'short' })}</b><span>${g ? allDays(d, calendarNext('month', d)).filter(x => badgeFor(g, x)).length + ' ✦' : 'Kalender'}</span></button>`; }).join('')}</div>`;
+    else
+        content = `<div class="year-grid">${Array.from({ length: 4 }, (_, i) => { let d = `${Number(start.slice(0, 4)) + i}-01-01`; return `<button class="year-cell" data-act="cal-jump-year" data-day="${d}"><b>${d.slice(0, 4)}</b><span>${g ? periods(g, d.slice(0, 4) + '-12-31').filter(p => p.start.startsWith(d.slice(0, 4)) && outcome(g, p).state === 'success').length + ' Erfolge' : 'Ansehen'}</span></button>`; }).join('')}</div>`;
+    return `<div class="calendar-top"><div class="calendar-tools"><button class="icon-button" data-act="cal-prev">‹</button><strong>${safe(label)}</strong><button class="icon-button" data-act="cal-next">›</button><button class="icon-button" data-act="cal-toggle">${ico('chevron')}</button></div><div class="cal-filter">${['week', 'month', 'year', 'multi'].map((x, i) => `<button class="${S.calView === x ? 'sel' : ''}" data-act="cal-view" data-view="${x}">${['Woche', 'Monat', 'Jahr', '4 Jahre'][i]}</button>`).join('')}</div>${content}</div>`;
+}
+function freezeAction(g) { let ps = periods(g).filter(p => p.closed && outcome(g, p).state === 'fail' && !outcome(g, p).frozen); let p = ps.at(-1); if (!p || !finalLocked(p) || dayDiff(p.end, nowDay()) > 2)
+    return ''; return `<button data-act="rescue" data-key="${safe(g.key)}" data-start="${p.start}" class="rescue">${ico('snow')} Streak für ${pretty(dayAdd(p.end, -1))} retten · 5 Glut</button>`; }
+function calMove(step) { let d = asDate(S.calAnchor); if (S.calView === 'week')
+    d.setDate(d.getDate() + step * 7); if (S.calView === 'month')
+    d.setMonth(d.getMonth() + step); if (S.calView === 'year')
+    d.setFullYear(d.getFullYear() + step); if (S.calView === 'multi')
+    d.setFullYear(d.getFullYear() + step * 4); S.calAnchor = iso(d); }
+function statsRange() { let d = S.statAnchor; if (S.statPeriod === 'all') {
+    let first = S.started || nowDay();
+    for (let a of S.activities)
+        first = (a.createdAt || '').slice(0, 10) && a.createdAt.slice(0, 10) < first ? a.createdAt.slice(0, 10) : first;
+    return { start: first, end: dayAdd(nowDay(), 1) };
+} const p = S.statPeriod; let start = calendarStart(p, d); return { start, end: calendarNext(p, start) }; }
+function sheet(title, html, lock = false) { $('#modalRoot').innerHTML = `<div class="shade" ${lock ? '' : 'data-act="modal-close"'}><section class="sheet" role="dialog" aria-modal="true" aria-label="${safe(title)}"><div class="sheet-handle"></div><header><h2>${safe(title)}</h2>${lock ? '' : `<button class="icon-button" data-act="modal-close">${ico('close')}</button>`}</header>${html}</section></div>`; enhanceIconSelectors(); }
+function renderModal05() {
+    if (!S.modal) {
+        $('#modalRoot').innerHTML = '';
+        return;
+    }
+    if (S.modal.type === 'edit-goal')
+        return editGoalModal();
+    if (S.modal.type === 'edit-day')
+        return editDayModal();
+    if (S.modal.type === 'checkin')
+        return checkinModal();
+    if (S.modal.type === 'menu')
+        return cardMenuModal();
+}
+function closeModal() { S.modal = null; renderModal(); }
+function readNumber(raw, label) { raw = String(raw || '').trim(); if (!raw)
+    return null; if (!/^\d+(?:\.\d+)?$/.test(raw) || +raw > 1000000)
+    throw Error(`Ungültige Angabe: ${label}`); return +raw; }
+async function fileArt(file) { if (!file)
+    return null; if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 8e6)
+    throw Error('Bitte PNG/JPG/WebP bis 8 MB wählen.'); const bmp = await createImageBitmap(file), c = document.createElement('canvas'); c.width = 160; c.height = 160; const ctx = c.getContext('2d'), scale = Math.max(160 / bmp.width, 160 / bmp.height), w = bmp.width * scale, h = bmp.height * scale; ctx.drawImage(bmp, (160 - w) / 2, (160 - h) / 2, w, h); bmp.close?.(); return c.toDataURL('image/png'); }
+function canEdit(d) { return d >= dayAdd(nowDay(), -1) && d <= nowDay(); }
+function cardMenuModal() { let g = goalByKey(S.modal.key, S.day); if (!g) {
+    closeModal();
+    return;
+} sheet(g.a.name, `<div class="menu-actions"><button data-act="edit-goal" data-key="${safe(g.key)}">${ico('target')} Ziel bearbeiten</button><button data-act="edit-day" data-day="${S.day}">${ico('edit')} Tageswerte ansehen / korrigieren</button><button data-act="show-goal" data-key="${safe(g.key)}">${ico('calendar')} Im Kalender anzeigen</button></div>`); }
+async function refuse(g, d) { if (!canEdit(d))
+    throw Error('Der Tag ist bereits gesperrt.'); await dbPut('entries', makeEntry(g, d, { ...assumed(g, d), source: 'refused' })); await sync(); }
+function packetDefault(g, metric) {
+    let base = ruleValue(g.r, metric);
+    if (g.a.kind === 'build')
+        return g.r[metric === 'minutes' ? 'standardMinutes' : 'standardCount'] ?? (g.r.period === 'day' ? base : null);
+    if (base === null)
+        return null;
+    return g.r.period === 'day' ? base : metric === 'count' ? Math.max(1, Math.ceil(base / limit(g.r))) : Math.ceil(base / limit(g.r) * 100) / 100;
+}
+async function finishPhase() {
+    if (!S.packet || S.packetBusy)
+        return;
+    clearTimeout(timer);
+    let previousXp = xpStats().sum;
+    const q = S.packet, g = goalByKey(q.key, q.day);
+    if (!g) {
+        S.packet = null;
+        render();
+        return;
+    }
+    let k = q.phase, e = entry(g, q.day);
+    if (!q.fired[k] && !finite(e?.[k])) {
+        await dbPut('entries', makeEntry(g, q.day, { [k]: packetDefault(g, k) }));
+        await sync();
+    }
+    if (Math.floor(xpStats().sum / 1000) > Math.floor(previousXp / 1000))
+        await celebrate(Math.floor(xpStats().sum / 1000) + 1);
+    let idx = q.phases.indexOf(k);
+    if (idx + 1 < q.phases.length) {
+        q.phase = q.phases[idx + 1];
+        render();
+    }
+    else {
+        S.packet = null;
+        await advanceCard();
+    }
+}
+async function advanceCard() { let gs = goals(S.day), idx = gs.findIndex(x => x.key === S.packet?.key); if (idx < 0)
+    idx = S.card; let next = gs.findIndex((g, i) => i > idx && initialState(g, S.day) === 'open'); if (next < 0)
+    next = gs.findIndex(g => initialState(g, S.day) === 'open'); S.card = next >= 0 ? next : Math.min(idx + 1, gs.length - 1); render(); if (gs.length && gs.every(g => initialState(g, S.day) !== 'open'))
+    toast('Alle Karten heute erfasst ✨'); }
+function armTimer() { clearTimeout(timer); if (!S.packet || S.packetBusy || S.modal)
+    return; timer = setTimeout(() => finishPhase().catch(showError), S.timeout * 1000); }
+async function sendPacket(n, source) {
+    if (!S.packet || S.packetBusy)
+        return;
+    let q = S.packet, g = goalByKey(q.key, q.day);
+    if (!g)
+        return;
+    S.packetBusy = true;
+    clearTimeout(timer);
+    try {
+        const k = q.phase, e = entry(g, q.day), before = xpStats().sum, next = (finite(e?.[k]) ? e[k] : 0) + n;
+        if (k === 'count' && !Number.isInteger(next))
+            throw Error('Anzahlen müssen ganze Zahlen sein.');
+        if (next > 1000000)
+            throw Error('Zu große Menge.');
+        await dbPut('entries', makeEntry(g, q.day, { [k]: next, source: 'user' }));
+        q.fired[k] = true;
+        await sync();
+        await flyChip(source);
+        render();
+        const after = xpStats().sum, gain = after - before;
+        if (gain > 0) {
+            sound(false);
+            xpToast(gain);
+            if (Math.floor(after / 1000) > Math.floor(before / 1000))
+                await celebrate(Math.floor(after / 1000) + 1);
+        }
+    }
+    finally {
+        S.packetBusy = false;
+        armTimer();
+    }
+}
+function flyChip(el) { return new Promise(resolve => { let start = el?.getBoundingClientRect(), end = $('#xpTrack')?.getBoundingClientRect(); if (!start || !end) {
+    resolve();
+    return;
+} let c = el.cloneNode(true); c.className = 'flying-package'; c.style.left = start.left + 'px'; c.style.top = start.top + 'px'; c.style.width = start.width + 'px'; c.style.height = start.height + 'px'; document.body.append(c); requestAnimationFrame(() => { c.style.transform = `translate(${end.left + end.width / 2 - start.left - start.width / 2}px,${end.top + end.height / 2 - start.top - start.height / 2}px) scale(.18)`; c.style.opacity = '0'; }); setTimeout(() => { c.remove(); resolve(); }, 460); }); }
+function xpToast(v) { const r = $('#xpTrack')?.getBoundingClientRect(); if (!r)
+    return; let el = document.createElement('div'); el.className = 'xp-toast'; el.style.left = Math.max(8, Math.min(innerWidth - 120, r.left + r.width * .6)) + 'px'; el.style.top = Math.max(8, r.top - 38) + 'px'; el.textContent = `+${num(v, 2)} XP`; document.body.append(el); setTimeout(() => el.remove(), 1100); }
+function vibrate() { try {
+    navigator.vibrate?.([20, 35, 28]);
+}
+catch { } }
+function celebrate(level) { return new Promise(done => { let root = $('#celebrateRoot'); root.innerHTML = `<div class="levelup"><span>LEVEL UP!</span><strong>lvl. ${level}</strong><p>Dein Fortschritt wächst.</p></div>`; sound(true); vibrate(); setTimeout(() => { root.innerHTML = ''; done(); }, 1350); }); }
+function toast(text) { let t = document.createElement('div'); t.className = 'progress-toast'; t.textContent = text; document.body.append(t); setTimeout(() => t.remove(), 2100); }
+function sound(big = false) { if (!S.sound)
+    return; try {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C)
+        return;
+    audioCtx ??= new C;
+    if (audioCtx.state === 'suspended')
+        audioCtx.resume();
+    (big ? [523, 659, 785, 1047] : [659, 880]).forEach((f, i) => { let o = audioCtx.createOscillator(), v = audioCtx.createGain(), t = audioCtx.currentTime + i * .09; o.type = 'sine'; o.frequency.setValueAtTime(f, t); v.gain.setValueAtTime(.0001, t); v.gain.exponentialRampToValueAtTime(.06, t + .025); v.gain.exponentialRampToValueAtTime(.0001, t + .2); o.connect(v); v.connect(audioCtx.destination); o.start(t); o.stop(t + .22); });
+}
+catch { } }
+function showError(err) { console.error(err); S.busy = false; S.packetBusy = false; alert('Leveln: ' + (err?.message || String(err))); render(); }
+async function animateCard(direction, done) { const el = $('#activeCard'); if (!el) {
+    await done();
+    return;
+} S.busy = true; let dx = direction === 'left' ? -innerWidth : direction === 'right' ? innerWidth : 0, dy = direction === 'up' ? -innerHeight : direction === 'down' ? innerHeight : 0; el.style.transition = 'transform 260ms cubic-bezier(.2,.65,.2,1), opacity 260ms'; el.style.transform = `translate(${dx}px,${dy}px) rotate(${dx * .012}deg)`; el.style.opacity = '.15'; await new Promise(resolve => setTimeout(resolve, 275)); try {
+    S.busy = false;
+    await done();
+}
+finally {
+    S.busy = false;
+} }
+function rotate(step) { let g = goals(S.day); S.card = (S.card + step + g.length) % Math.max(g.length, 1); render(); }
+function go(page) { if (S.packet)
+    return; S.page = page; S.modal = null; render(); $('#app').scrollTop = 0; }
+async function storeSetting(k, v) { await saveMeta(k, v); await sync(); render(); }
+async function erase() { if (!confirm('Alle persönlichen Daten unwiderruflich löschen? Sichere vorher ein Backup.'))
+    return; if (!confirm('Wirklich vollständig löschen?'))
+    return; await dbTx(STORES, t => STORES.forEach(n => t.objectStore(n).clear())); S.packet = null; S.modal = null; await setup(); }
+function handleAction05(act, el) {
+    return (async () => {
+        if (act === 'tab') {
+            go(el.dataset.page);
+            return;
+        }
+        if (act === 'date') {
+            if (canEdit(el.dataset.day)) {
+                S.day = el.dataset.day;
+                S.card = 0;
+                S.packet = null;
+                render();
+            }
+            return;
+        }
+        if (act === 'date-shift') {
+            let d = dayAdd(S.day, Number(el.dataset.shift));
+            if (canEdit(d)) {
+                S.day = d;
+                S.card = 0;
+                S.packet = null;
+                render();
+            }
+            return;
+        }
+        if (act === 'go-goals') {
+            go('goals');
+            return;
+        }
+        if (act === 'new') {
+            S.modal = { type: 'edit-goal' };
+            renderModal();
+            return;
+        }
+        if (act === 'menu') {
+            S.modal = { type: 'menu', key: el.dataset.key };
+            renderModal();
+            return;
+        }
+        if (act === 'edit-goal') {
+            S.modal = { type: 'edit-goal', key: el.dataset.key };
+            renderModal();
+            return;
+        }
+        if (act === 'modal-close') {
+            if (S.modal?.type === 'checkin')
+                return;
+            S.modal = null;
+            renderModal();
+            if (checkinItems().length && S.checkShown && S.page === 'today')
+                maybeCheckin(true);
+            return;
+        }
+        if (act === 'edit-day' || act === 'check-edit') {
+            S.modal = { type: 'edit-day', day: el.dataset.day, onlyKey: el.dataset.key || null };
+            renderModal();
+            return;
+        }
+        if (act === 'show-goal') {
+            S.selectedGoal = el.dataset.key;
+            S.page = 'goals';
+            S.modal = null;
+            render();
+            return;
+        }
+        if (act === 'packet') {
+            await sendPacket(Number(el.dataset.n), el);
+            return;
+        }
+        if (act === 'packet-skip') {
+            await finishPhase();
+            return;
+        }
+        if (act === 'cal-toggle') {
+            S.calendarOpen = !S.calendarOpen;
+            render();
+            return;
+        }
+        if (act === 'cal-view') {
+            S.calView = el.dataset.view;
+            render();
+            return;
+        }
+        if (act === 'cal-prev' || act === 'cal-next') {
+            calMove(act === 'cal-prev' ? -1 : 1);
+            render();
+            return;
+        }
+        if (act === 'cal-day') {
+            let d = el.dataset.day;
+            if (d <= nowDay()) {
+                S.modal = { type: 'edit-day', day: d };
+                renderModal();
+            }
+            return;
+        }
+        if (act === 'cal-jump') {
+            S.calView = 'month';
+            S.calAnchor = el.dataset.day;
+            render();
+            return;
+        }
+        if (act === 'cal-jump-year') {
+            S.calView = 'year';
+            S.calAnchor = el.dataset.day;
+            render();
+            return;
+        }
+        if (act === 'goal-select') {
+            S.selectedGoal = el.dataset.key;
+            render();
+            return;
+        }
+        if (act === 'archive-goal') {
+            await archiveRule(el.dataset.key);
+            return;
+        }
+        if (act === 'goal-expand') {
+            S.goalExpanded = S.goalExpanded === el.dataset.key ? null : el.dataset.key;
+            S.selectedGoal = el.dataset.key;
+            render();
+            return;
+        }
+        if (act === 'rescue') {
+            if (!confirm('Streak jetzt für 5 Glut retten?'))
+                return;
+            await buyFreeze(el.dataset.key + '|' + el.dataset.start);
+            return;
+        }
+        if (act === 'buy') {
+            await buyFreeze(null);
+            return;
+        }
+        if (act === 'refuse') {
+            const g = goalByKey(el.dataset.key, el.dataset.day);
+            if (g) {
+                await refuse(g, el.dataset.day);
+                render();
+                S.modal = { type: 'checkin' };
+                renderModal();
+            }
+            return;
+        }
+        if (act === 'refuse-all') {
+            if (!confirm('Alle offenen Einträge bewusst verweigern?'))
+                return;
+            for (let { g, d } of checkinItems())
+                await refuse(g, d);
+            S.modal = null;
+            render();
+            toast('Offene Einträge abgeschlossen');
+            return;
+        }
+        if (act === 'checkin') {
+            S.modal = null;
+            maybeCheckin(true);
+            return;
+        }
+        if (act === 'stat-metric') {
+            S.statMetric = el.dataset.metric;
+            render();
+            return;
+        }
+        if (act === 'icon-variant') {
+            await storeSetting('iconVariant', el.dataset.variant);
+            toast('Icon-Auswahl übernommen');
+            return;
+        }
+        if (act === 'background-remove') {
+            await dbTx(['meta'], t => { t.objectStore('meta').put({ key: 'backgroundMode', value: 'system' }); t.objectStore('meta').put({ key: 'backgroundImage', value: '' }); });
+            await sync();
+            render();
+            return;
+        }
+        if (act === 'stat-period') {
+            S.statPeriod = el.dataset.period;
+            S.statAnchor = nowDay();
+            render();
+            return;
+        }
+        if (act === 'stat-prev' || act === 'stat-next') {
+            if (S.statPeriod === 'all')
+                return;
+            let step = act === 'stat-prev' ? -1 : 1;
+            let d = asDate(S.statAnchor);
+            if (S.statPeriod === 'day')
+                d.setDate(d.getDate() + step);
+            if (S.statPeriod === 'week')
+                d.setDate(d.getDate() + 7 * step);
+            if (S.statPeriod === 'month')
+                d.setMonth(d.getMonth() + step);
+            if (S.statPeriod === 'year')
+                d.setFullYear(d.getFullYear() + step);
+            S.statAnchor = iso(d);
+            render();
+            return;
+        }
+        if (act === 'export') {
+            await exportBackup();
+            return;
+        }
+        if (act === 'import') {
+            $('#importFile').click();
+            return;
+        }
+        if (act === 'erase') {
+            await erase();
+            return;
+        }
+    })().catch(showError);
+}
 // ---- Leveln 0.5: canonical data and new screens ----
-S.statMetric='minutes';S.statStack=false;S.swipedGoal=null;
-function dayPair(){return [dayAdd(nowDay(),-1),nowDay()]}
-function todayView(){if(!canEdit(S.day))S.day=nowDay();const gs=goals(S.day);S.card=Math.max(0,Math.min(S.card,gs.length-1));const g=gs[S.card],edited=gs.filter(x=>initialState(x,S.day)!=='open').length;
- const wheel=`<button data-act="date" data-day="${dayPair()[0]}" class="wheel-date ${S.day===dayPair()[0]?'chosen':''}"><small>GESTERN</small><b>${pretty(dayPair()[0],{day:'numeric',month:'short'})}</b></button><button data-act="date" data-day="${dayPair()[1]}" class="wheel-date ${S.day===dayPair()[1]?'chosen':''}"><small>HEUTE</small><b>${pretty(dayPair()[1],{day:'numeric',month:'short'})}</b></button>`;
- return `<div class="today-head"><div class="today-topline"><span>LEVELN · PLAY YOUR DAY</span><span>${edited}/${gs.length} erfasst</span></div>${xpBar()}</div><div class="deck-area">${S.packet&&g?packetView(g):g?`<div class="deck-stack">${[2,1].map(i=>{const pg=gs[(S.card+i)%gs.length];return gs.length>i?`<div class="peek-wrap peek-${i}">${cardHtml(pg,true)}<span class="peek-name">${safe(pg.a.name)}</span></div>`:''}).join('')}${cardHtml(g)}</div>`:`<div class="empty-state">${ico('goals')}<h2>Noch keine Karten</h2><p>Lege deine Ziele im Bereich „Ziele“ an.</p><button class="primary" data-act="go-goals">Zu meinen Zielen</button></div>`}</div><div class="day-wheel"><div id="wheelTrack" class="wheel-track wheel-track-two">${wheel}</div></div><div class="deck-caption">${g?`${S.card+1} / ${gs.length} Karten · ${S.day===nowDay()?'Heute':'Gestern'}`:'Ziele verwalten unter „Ziele“'}</div>`}
-function cardHtml(g,behind=false){const done=initialState(g,S.day)!=='open',st=stData(g).current,color=goalColor(g);return `<div class="play-card ${behind?'peek':'face'} ${done?'played':''}" style="--card-accent:${color}" ${behind?'':'id="activeCard"'} data-goal="${safe(g.key)}"><div class="card-header"><span class="card-pill">${g.a.kind==='reduce'?'ZAUBERN':'LEVELN'}</span></div><div class="card-main">${art(g.a)}<h2>${safe(g.a.name)}</h2><p>${safe(detailGoal(g))}</p></div><div class="card-foot"><span class="streak">${ico('flame')} ${st}</span><span class="played-label">${done?'ERFASST':'BEREIT'}</span></div></div>`}
-function goalColor(g){return g.r.colorEnabled===false||!g.r.color? (g.a.kind==='reduce'?S.colors.save:S.colors.level):hex(g.r.color,g.a.kind==='reduce'?S.colors.save:S.colors.level)}
-function goalGroups(){return ['day','week','month','year'].map(p=>({p,items:goals().filter(g=>!isOnce(g.a)&&g.r.period===p)}))}
-function goalRow(g,archived=false){const k=safe(g.key),expanded=S.goalExpanded===g.key,selected=S.selectedGoal===g.key;
- return `<div class="goal-swipe" data-goal="${k}"><div class="goal-row-actions"><button data-act="edit-goal" data-key="${k}" aria-label="Bearbeiten">${ico('edit')}<small>Bearbeiten</small></button>${archived?'':`<button data-act="archive-goal" data-key="${k}" aria-label="Archivieren">${ico('bag')}<small>Archiv</small></button>`}</div><div class="goal-row ${selected?'active':''}" style="--goal-color:${goalColor(g)}"><button data-act="goal-select" data-key="${k}" class="goal-name"><span class="goal-dot"></span><strong>${safe(g.a.name)}</strong></button><span class="goal-streak">${ico('flame')} ${stData(g).current}</span><button class="icon-button" data-act="goal-expand" data-key="${k}">${ico('chevron')}</button>${expanded?`<div class="goal-details"><p>${safe(detailGoal(g))}</p><small>Beste Streak ${stData(g).best} · ${g.a.kind==='reduce'?'Zaubern':'Leveln'}</small><div><button data-act="edit-day" data-day="${nowDay()}" data-key="${k}">Heute korrigieren</button><button data-act="edit-day" data-day="${dayAdd(nowDay(),-1)}" data-key="${k}">Gestern korrigieren</button></div>${freezeAction(g)}</div>`:''}</div></div>`}
-function goalsView(){const archived=allGoals().filter(g=>!goals().some(x=>x.key===g.key));return `<div class="page-heading"><span class="eyebrow">DEINE ENTWICKLUNG</span><div class="heading-row"><h1>Ziele</h1><button class="circle-action" data-act="new" aria-label="Neues Ziel">${ico('plus')}</button></div></div><div class="goals-sticky">${calendarHTML()}</div><div class="goals-scroll"><div class="goals-actions goals-triple"><button class="thin-button" data-act="edit-day" data-day="${nowDay()}">${ico('edit')}<span>Heute bearb.</span></button><button class="thin-button" data-act="edit-day" data-day="${dayAdd(nowDay(),-1)}">${ico('edit')}<span>Gestern bearb.</span></button><button class="thin-button add-quest-button" data-act="new" aria-label="Neue Quest erstellen">${ico('plus')}<span>Neue Quest</span></button></div>${goalGroups().map(gr=>`<section class="goal-section"><h3>${({day:'TAGESZIELE',week:'WOCHENZIELE',month:'MONATSZIELE',year:'JAHRESZIELE'})[gr.p]}</h3>${gr.items.map(g=>goalRow(g)).join('')||'<p class="muted">Noch keine Ziele</p>'}</section>`).join('')}${archived.length?`<section class="goal-section archived-list"><h3>ARCHIV & NOCH NICHT GESTARTET</h3>${archived.map(g=>goalRow(g,true)).join('')}</section>`:''}</div>`}
-function editDayModal(){const d=S.modal.day,editable=canEdit(d),all=goals(d).filter(x=>!isOnce(x.a)&&(!S.modal.onlyKey||x.key===S.modal.onlyKey)).sort((x,y)=>(x.a.kind==='build'?0:1)-(y.a.kind==='build'?0:1));
- const html=`<div class="edit-day-sub">${pretty(d)} · ${editable?'Bearbeitbar':'Nur ansehen – gesperrt'}</div><form id="dayForm" data-day="${d}">${all.map((g,i)=>{let e=entry(g,d),s=e?.source==='refused'||e?.source==='auto'?'refused':e?.mode||'',ck=metricKeys(g.r);return `<div class="day-edit-row" data-goal="${safe(g.key)}"><div class="day-edit-title"><strong>${safe(g.a.name)}</strong><small>${g.a.kind==='reduce'?'Zaubern':'Leveln'} · ${NAMES[g.r.period]}</small></div><label>Status<select name="mode_${i}" ${editable?'':'disabled'}><option value="" ${!s?'selected':''}>Offen</option><option value="up" ${s==='up'?'selected':''}>${g.a.kind==='reduce'?'Mana verbraucht':'Etwas trainiert'}</option><option value="down" ${s==='down'?'selected':''}>${g.a.kind==='reduce'?'Kein Mana verbraucht':'Nichts trainiert'}</option><option value="refused" ${s==='refused'?'selected':''}>Bewusst nicht eingetragen</option></select></label><div class="field-grid">${ck.includes('minutes')?`<label>Minuten<input name="minutes_${i}" type="number" min="0" step="0.01" ${editable?'':'disabled'} value="${e?.minutes??''}" placeholder="Nicht angegeben"></label>`:'<div></div>'}${ck.includes('count')?`<label>Anzahl<input name="count_${i}" type="number" min="0" step="1" ${editable?'':'disabled'} value="${e?.count??''}" placeholder="Nicht angegeben"></label>`:'<div></div>'}</div><label>Kommentar<input name="comment_${i}" maxlength="1000" value="${safe(e?.comment||'')}" ${editable?'':'disabled'} placeholder="Optional"></label></div>`}).join('')||'<p class="muted">Für diesen Tag gibt es keine aktiven Ziele.</p>'}${editable&&all.length?`<button class="primary save-day" type="submit">Änderungen speichern</button>`:''}</form>`;
- sheet(S.modal.onlyKey?(all[0]?.a.name||'Ziel'):'Tagesprotokoll',html)}
-async function saveDay(form){const d=S.modal.day;if(!canEdit(d))throw Error('Dieser Tag ist gesperrt.');const gs=goals(d).filter(g=>!isOnce(g.a)&&(!S.modal.onlyKey||g.key===S.modal.onlyKey)).sort((x,y)=>(x.a.kind==='build'?0:1)-(y.a.kind==='build'?0:1));let changes=[];
- for(let i=0;i<gs.length;i++){const g=gs[i],m=form.elements['mode_'+i]?.value||'';if(!m){changes.push({delete:entryKey(g,d),g});continue}const fields=m==='refused'?unknownFields(g):{mode:m,status:m==='up'?'yes':'no',source:g.a.kind==='reduce'&&m==='down'&&d<nowDay()?'zero-confirmed':'user',estimated:false};if(m!=='refused')for(const k of metricKeys(g.r)){const field=form.elements[`${k}_${i}`],value=readNumber(field?.value,k);if(k==='count'&&value!==null&&!Number.isInteger(value))throw Error('Anzahl muss ganzzahlig sein.');fields[k]=value;if(value===null){if(m==='down'||g.a.kind==='build')fields[k]=0;else throw Error('Bitte den tatsächlichen Mana-Verbrauch angeben oder „Bewusst nicht eingetragen“ wählen.');}}fields.comment=form.elements['comment_'+i]?.value?.slice(0,1000)||'';changes.push({put:makeEntry(g,d,fields),g})}
- await dbTx(['entries'],t=>{const store=t.objectStore('entries');for(const c of changes){if(c.delete){store.delete(c.delete);if(c.g.index===0)store.delete(`${c.g.a.id}|${d}`)}else store.put(c.put)}});S.modal=null;S.cardDrafts.clear();await sync();await reconcileWallet();render();toast('Tagesdaten gespeichert');maybeCheckin(true)}
-function editGoalModal(){const g=goalByKey(S.modal.key),a=g?.a,r=g?.r||{id:uid(),period:'day',mode:'calendar',minutes:30,count:null,standardMinutes:null,standardCount:null,color:''},kind=a?.kind||'build',cat=a?.category||'personal',enabled=!!(r.color&&r.colorEnabled!==false);
- sheet(g?'Ziel bearbeiten':'Neues Ziel',`<form id="goalForm"><label>Name<input name="name" maxlength="70" value="${safe(a?.name||'')}" placeholder="z. B. Sport" required></label><label>Gültig ab (heute oder später)<input name="startDate" type="date" required min="${nowDay()}" value="${a?.createdAt?.slice(0,10)>nowDay()?a.createdAt.slice(0,10):nowDay()}"></label><div class="field-grid"><label>Typ<select name="kind" ${a?'disabled':''}><option value="build" ${kind==='build'?'selected':''}>Leveln</option><option value="reduce" ${kind==='reduce'?'selected':''}>Zaubern</option></select></label><label>Lebensbereich<select name="category">${Object.entries(CAT).map(([k,v])=>`<option value="${k}" ${cat===k?'selected':''}>${safe(v[0])}</option>`).join('')}</select></label></div><label>Symbol<select name="iconKey"><option value="">Kategorie-Symbol</option>${Object.keys(PATH).slice(0,13).map(k=>`<option value="${k}" ${a?.iconKey===k?'selected':''}>${k}</option>`).join('')}</select></label><label>Eigenes Bild<input type="file" name="iconFile" accept="image/png,image/jpeg,image/webp"></label><div class="field-grid"><label>Zielzeitraum<select name="period">${['day','week','month','year'].map(k=>`<option value="${k}" ${r.period===k?'selected':''}>${NAMES[k]}</option>`).join('')}</select></label><label>Berechnung<select name="mode"><option value="calendar" ${r.mode!=='restart'?'selected':''}>Kalender</option><option value="restart" ${r.mode==='restart'?'selected':''}>Neustart (7/30/365 Tage)</option></select></label></div><div class="field-grid"><label>Ziel: Minuten<input name="minutes" type="number" min="0" step="1" value="${r.minutes??''}" placeholder="Optional"></label><label>Ziel: Anzahl<input name="count" type="number" min="0" step="1" value="${r.count??''}" placeholder="Optional"></label></div><div class="field-grid"><label>Standard-Minuten beim Skip<input name="stdMinutes" type="number" min="0" step="1" value="${r.standardMinutes??''}"></label><label>Standard-Anzahl beim Skip<input name="stdCount" type="number" min="0" step="1" value="${r.standardCount??''}"></label></div><div class="field-grid"><label>XP je Anzahl<input name="countXp" type="number" min="0" max="100000" step="0.1" value="${a?rate(g,nowDay()):0}"></label><label>Zielfarbe<input type="color" name="goalColor" value="${goalColor({a:a||{kind},r})}"></label></div><label class="check-color"><input type="checkbox" name="colorEnabled" ${enabled?'checked':''}> Eigene Zielfarbe verwenden</label><p class="muted form-help">Ohne Häkchen übernimmt das Ziel automatisch die Farbe von Zaubern bzw. Leveln. Neue Regeln gelten frühestens ab heute. Bereits dokumentierte Tage bleiben erhalten.</p><div class="sheet-actions"><button class="thin-button" type="button" data-act="modal-close">Abbrechen</button><button class="primary" type="submit">Speichern</button></div></form>`)}
-async function saveGoal(form){const f=form.elements,g=goalByKey(S.modal.key),old=g?structuredClone(g.a):null,name=f.name.value.trim(),start=f.startDate.value;if(!name)throw Error('Bitte Namen angeben.');if(!/^\d{4}-\d\d-\d\d$/.test(start)||start<nowDay())throw Error('Start muss heute oder in Zukunft liegen.');const minutes=readNumber(f.minutes.value,'Minuten'),count=readNumber(f.count.value,'Anzahl');if(minutes===null&&count===null)throw Error('Bitte ein Zeit- oder Anzahlziel angeben.');if(count!==null&&!Number.isInteger(count))throw Error('Anzahlen müssen ganze Zahlen sein.');const stdM=readNumber(f.stdMinutes.value,'Standard-Minuten'),stdC=readNumber(f.stdCount.value,'Standard-Anzahl'),xp=readNumber(f.countXp.value,'Anzahl-XP')??0;if(stdC!==null&&!Number.isInteger(stdC))throw Error('Standard-Anzahl muss ganzzahlig sein.');let a=old||{id:uid(),kind:f.kind.value,createdAt:`${start}T12:00:00`,order:S.activities.length,revisions:[]};a.name=name;a.category=f.category.value;a.iconKey=f.iconKey.value;a.updatedAt=new Date().toISOString();const img=f.iconFile.files[0];if(img)a.iconData=await fileArt(img);
- // Preserve every older revision; replace exactly the revision scheduled for this date.
- const movedEarlier=!!(old&&start<old.createdAt.slice(0,10)),oldStart=old?.createdAt?.slice(0,10),base=structuredClone(revision(a,movedEarlier?oldStart:start)),newRules=[...(base.rules||[])],original=g?newRules.findIndex(r=>r.id===g.r.id):-1;if(movedEarlier)a.createdAt=`${start}T12:00:00`;const rule={...(original>=0?newRules[original]:{id:uid()}),period:f.period.value,mode:f.period.value==='day'?'calendar':f.mode.value,minutes,count,standardMinutes:stdM,standardCount:stdC,color:f.colorEnabled.checked?f.goalColor.value:'',colorEnabled:f.colorEnabled.checked};if(original>=0)newRules[original]=rule;else newRules.push(rule);
- a.revisions=(a.revisions||[]).filter(x=>x.from!==start&&(!movedEarlier||x.from!==oldStart));a.revisions.push({from:start,rules:newRules,countXp:xp});a.revisions.sort((x,y)=>x.from.localeCompare(y.from));await dbPut('activities',a);S.modal=null;await sync();S.selectedGoal=`${a.id}|${rule.id}`;S.page='goals';render();toast(start===nowDay()?'Ziel gespeichert':'Ziel für '+pretty(start)+' geplant')}
-async function archiveRule(key){if(!confirm('Dieses Ziel ab heute archivieren? Vergangene Einträge bleiben erhalten.'))return;const g=goalByKey(key);if(!g)return;const a=structuredClone(g.a),today=nowDay();const live=rules(a,today),remaining=live.filter(r=>r.id!==g.r.id);if(live.length===1){a.archivedAt=`${today}T12:00:00`}else{a.revisions=a.revisions.filter(x=>x.from!==today);a.revisions.push({...structuredClone(revision(a,today)),from:today,rules:remaining});a.revisions.sort((x,y)=>x.from.localeCompare(y.from))}await dbPut('activities',a);await sync();S.goalExpanded=null;S.swipedGoal=null;render();toast('Ziel archiviert; Historie bleibt erhalten')}
-function statEvents(){const {start,end}=statsRange();return xpEvents().filter(x=>x.day>=start&&x.day<end)}
-function statsView(){const ev=statEvents(),metric=S.statMetric||'minutes',unit=metric==='minutes'?'h':metric==='count'?'×':'XP',factor=metric==='minutes'?1/60:1;const total=ev.reduce((v,e)=>v+(metric==='xp'?e.xp:e.metric===metric?e.amount:0),0)*factor;const chosen=S.statGoal||'all';const filtered=ev.filter(e=>chosen==='all'||e.goal===chosen);const parts=[];
- if(chosen!=='all'){const g=goalByKey(chosen),v=filtered.reduce((sum,e)=>sum+(metric==='xp'?e.xp:e.metric===metric?e.amount:0),0)*factor;if(g&&v>0)parts.push({name:g.a.name,color:goalColor(g),value:v})}
- else if(S.statStack){const map=new Map();for(const e of ev){const g=goalByKey(e.goal);if(!g)continue;const v=(metric==='xp'?e.xp:e.metric===metric?e.amount:0)*factor;if(v<=0)continue;const o=map.get(e.goal)||{name:g.a.name,color:goalColor(g),value:0};o.value+=v;map.set(e.goal,o)}parts.push(...map.values())}
- else {for(const kind of ['save','level']){let value=ev.filter(e=>e.kind===kind).reduce((s,e)=>s+(metric==='xp'?e.xp:e.metric===metric?e.amount:0),0)*factor;if(value>0)parts.push({name:kind==='save'?'Zaubern':'Leveln',color:kind==='save'?S.colors.save:S.colors.level,value})}}
- const value=parts.reduce((s,e)=>s+e.value,0),scale=total>0?100*value/total:0,{start,end}=statsRange();return `<div class="stats-compact"><div class="page-heading"><span class="eyebrow">DEINE BILANZ</span><h1>Statistik</h1></div><div class="stats-controls"><div class="stats-two-filter"><label>Zeitraum<div class="stats-period">${['day','week','month','year','all'].map((p,i)=>`<button data-act="stat-period" data-period="${p}" class="${S.statPeriod===p?'selected':''}">${['Tag','Woche','Monat','Jahr','Gesamt'][i]}</button>`).join('')}</div></label><label>Ziel<select id="statGoal"><option value="all">Alle Ziele</option>${allGoals().map(g=>`<option value="${safe(g.key)}" ${chosen===g.key?'selected':''}>${safe(g.a.name)} · ${NAMES[g.r.period]}</option>`).join('')}</select></label></div><div class="stats-metric">${[['minutes','Zeit'],['count','Anzahl'],['xp','XP']].map(([k,v])=>`<button data-act="stat-metric" data-metric="${k}" class="${metric===k?'selected':''}">${v}</button>`).join('')}</div><div class="stats-nav"><button class="icon-button" data-act="stat-prev" ${S.statPeriod==='all'?'disabled':''}>‹</button><span>${S.statPeriod==='all'?'Gesamtzeitraum':`${pretty(start,{day:'numeric',month:'short',year:'numeric'})} – ${pretty(dayAdd(end,-1),{day:'numeric',month:'short',year:'numeric'})}`}</span><button class="icon-button" data-act="stat-next" ${S.statPeriod==='all'?'disabled':''}>›</button></div></div><div class="stats-single"><div class="stat-head"><small>Beitrag zum Gesamtwert</small><strong>${num(value,1)} / ${num(total,1)} ${unit}</strong><small>${total?num(value/total*100,1):0} %</small></div><div class="single-bar-track"><div class="single-bar-fill" style="height:${scale}%">${parts.map(p=>`<div class="single-bar-segment" style="flex:${p.value};background:${p.color}" title="${safe(p.name)} · ${num(p.value)} ${unit}"></div>`).join('')}</div></div><div class="bar-key">${parts.map(p=>`<span><i style="background:${p.color}"></i>${safe(p.name)} · ${num(p.value,1)} ${unit}</span>`).join('')||'<span>Keine Beiträge im gewählten Zeitraum</span>'}</div></div><label class="stat-checkbox"><input type="checkbox" id="statStack" ${S.statStack&&chosen==='all'?'checked':''} ${chosen==='all'?'':'disabled'}> Beiträge einzelner Ziele stapeln</label></div>`}
-async function saveBackgroundImage(file){if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>12*1024*1024)throw Error('Bitte ein Bild bis 12 MB wählen.');const bmp=await createImageBitmap(file),canvas=document.createElement('canvas'),maxSide=1100,scale=Math.min(1,maxSide/Math.max(bmp.width,bmp.height));canvas.width=Math.max(1,Math.round(bmp.width*scale));canvas.height=Math.max(1,Math.round(bmp.height*scale));canvas.getContext('2d').drawImage(bmp,0,0,canvas.width,canvas.height);bmp.close?.();const result=canvas.toDataURL('image/jpeg',.72);if(result.length>2500000)throw Error('Bild ist nach Verarbeitung zu groß.');await dbTx(['meta'],t=>{t.objectStore('meta').put({key:'backgroundImage',value:result});t.objectStore('meta').put({key:'backgroundMode',value:'image'})});await sync();render();toast('Hintergrundbild gespeichert')}
-function applyTheme(){const dark=S.theme==='dark'||(S.theme==='system'&&matchMedia('(prefers-color-scheme:dark)').matches);document.documentElement.dataset.theme=dark?'dark':'light';document.documentElement.style.setProperty('--save',S.colors.save);document.documentElement.style.setProperty('--level',S.colors.level);const mode=S.bgMode||'system',root=document.documentElement;root.style.setProperty('--background-layer',mode==='image'&&S.bgImage?`url("${S.bgImage}")`:mode==='color'?S.bgColor:'none');root.style.setProperty('--background-opacity',mode==='image'?String((S.bgShade||0)/100):'0');root.style.setProperty('--custom-bg',mode==='color'?S.bgColor:(dark?'#111520':'#f8fafc'));document.querySelector('#themeMeta').content=mode==='color'?S.bgColor:(dark?'#111520':'#f8fafc');const selected=['light','dark','mono'].includes(S.iconVariant)?S.iconVariant:'light';const apple=document.querySelector('link[rel="apple-touch-icon"]');if(apple)apple.href=`./icons/icon-${selected}-180.png`;const icoLink=document.querySelector('link[rel="icon"]');if(icoLink){icoLink.href=`./icons/icon-${selected}-192.png`;icoLink.type='image/png'}const manifest=document.querySelector('link[rel="manifest"]');if(manifest)manifest.href=`./manifest-${selected}.webmanifest`}
-function settingsView05(){const w=S.wallet;return `<div class="page-heading"><span class="eyebrow">LEVELN ANPASSEN</span><h1>Optionen</h1></div><section class="settings-panel"><h3>Streaks & Glut</h3><div class="wallet"><div><small>Glut</small><strong>${ico('flame')} ${w.glut}</strong></div><div><small>Freezes</small><strong>${ico('snow')} ${w.inventory}/2</strong></div></div><p class="muted">1 Glut je 10 erfolgreiche Streak-Schritte. 5 Glut für einen Freeze; maximal zwei im Inventar.</p><button class="primary" data-act="buy" ${w.glut<5||w.inventory>=2?'disabled':''}>${ico('bag')} Freeze kaufen · 5 Glut</button></section><section class="settings-panel"><h3>Darstellung</h3><label>Hell-/Dunkelmodus<select data-setting="theme"><option value="system" ${S.theme==='system'?'selected':''}>System</option><option value="light" ${S.theme==='light'?'selected':''}>Hell</option><option value="dark" ${S.theme==='dark'?'selected':''}>Dunkel</option></select></label><div class="color-row"><label>Zaubern<input type="color" data-setting="colorSave" value="${S.colors.save}"></label><label>Leveln<input type="color" data-setting="colorLevel" value="${S.colors.level}"></label></div><label>Hintergrund<select data-setting="backgroundMode"><option value="system" ${S.bgMode==='system'?'selected':''}>Hell/Dunkel übernehmen</option><option value="color" ${S.bgMode==='color'?'selected':''}>Eigene Farbe</option><option value="image" ${S.bgMode==='image'?'selected':''}>Eigenes Bild</option></select></label><div class="color-row"><label>Hintergrundfarbe<input type="color" data-setting="backgroundColor" value="${S.bgColor}"></label><label>Bild auswählen<input type="file" id="bgImagePicker" accept="image/png,image/jpeg,image/webp"></label></div><label>Bild-Abdunklung · ${S.bgShade}%<input type="range" min="0" max="90" step="1" data-setting="backgroundShade" value="${S.bgShade}"></label><button class="thin-button" data-act="background-remove">Hintergrundbild entfernen</button><h3>Homescreen-Icon</h3><div class="icon-choices">${['light','dark','mono'].map((v,i)=>`<button class="icon-choice ${S.iconVariant===v?'selected':''}" data-act="icon-variant" data-variant="${v}"><img src="./icons/icon-${v}-192.png" alt="Icon ${v}"><small>${['Weiß & Grün','Schwarz & Grün','Schwarz & Weiß'][i]}</small></button>`).join('')}</div><p class="muted">Für ein anderes Homescreen-Icon muss iOS möglicherweise die Web-App erneut hinzufügen. Erstelle vorher ein Backup und entferne die alte Installation nicht vorschnell.</p></section><section class="settings-panel"><h3>Spiel & Check-in</h3><label>Paket-Timeout · ${S.timeout} Sekunden<input type="range" min="1" max="10" step="1" data-setting="packetTimeout" value="${S.timeout}"></label><label>Erfolgssounds<input type="checkbox" data-setting="sound" ${S.sound?'checked':''}></label><label>Täglicher Check-in ab<input type="time" data-setting="checkTime" value="${S.checkTime}"></label><button class="thin-button" data-act="checkin">Offene Einträge prüfen</button></section><section class="settings-panel"><h3>Private Daten</h3><p class="muted">Alles bleibt lokal auf diesem Gerät. Sichere die Daten regelmäßig. JSON-Backups sind unverschlüsselt.</p><button class="thin-button" data-act="export">JSON-Backup exportieren</button><button class="thin-button" data-act="import">JSON-Backup importieren</button><button class="danger-button" data-act="erase">Alle Daten löschen</button></section>`}
+S.statMetric = 'minutes';
+S.statStack = false;
+S.swipedGoal = null;
+function goalColor(g) { return g.r.colorEnabled === false || !g.r.color ? (g.a.kind === 'reduce' ? S.colors.save : S.colors.level) : hex(g.r.color, g.a.kind === 'reduce' ? S.colors.save : S.colors.level); }
+function goalRow(g, archived = false) {
+    const k = safe(g.key), expanded = S.goalExpanded === g.key, selected = S.selectedGoal === g.key;
+    return `<div class="goal-swipe" data-goal="${k}"><div class="goal-row-actions"><button data-act="edit-goal" data-key="${k}" aria-label="Bearbeiten">${ico('edit')}<small>Bearbeiten</small></button>${archived ? '' : `<button data-act="archive-goal" data-key="${k}" aria-label="Archivieren">${ico('bag')}<small>Archiv</small></button>`}</div><div class="goal-row ${selected ? 'active' : ''}" style="--goal-color:${goalColor(g)}"><button data-act="goal-select" data-key="${k}" class="goal-name"><span class="goal-dot"></span><strong>${safe(g.a.name)}</strong></button><span class="goal-streak">${ico('flame')} ${stData(g).current}</span><button class="icon-button" data-act="goal-expand" data-key="${k}">${ico('chevron')}</button>${expanded ? `<div class="goal-details"><p>${safe(detailGoal(g))}</p><small>Beste Streak ${stData(g).best} · ${g.a.kind === 'reduce' ? 'Zaubern' : 'Leveln'}</small><div><button data-act="edit-day" data-day="${nowDay()}" data-key="${k}">Heute korrigieren</button><button data-act="edit-day" data-day="${dayAdd(nowDay(), -1)}" data-key="${k}">Gestern korrigieren</button></div>${freezeAction(g)}</div>` : ''}</div></div>`;
+}
+function editDayModal() {
+    const d = S.modal.day, editable = canEdit(d), all = goals(d).filter(x => !isOnce(x.a) && (!S.modal.onlyKey || x.key === S.modal.onlyKey)).sort((x, y) => (x.a.kind === 'build' ? 0 : 1) - (y.a.kind === 'build' ? 0 : 1));
+    const html = `<div class="edit-day-sub">${pretty(d)} · ${editable ? 'Bearbeitbar' : 'Nur ansehen – gesperrt'}</div><form id="dayForm" data-day="${d}">${all.map((g, i) => { let e = entry(g, d), s = e?.source === 'refused' || e?.source === 'auto' ? 'refused' : e?.mode || '', ck = metricKeys(g.r); return `<div class="day-edit-row" data-goal="${safe(g.key)}"><div class="day-edit-title"><strong>${safe(g.a.name)}</strong><small>${g.a.kind === 'reduce' ? 'Zaubern' : 'Leveln'} · ${NAMES[g.r.period]}</small></div><label>Status<select name="mode_${i}" ${editable ? '' : 'disabled'}><option value="" ${!s ? 'selected' : ''}>Offen</option><option value="up" ${s === 'up' ? 'selected' : ''}>${g.a.kind === 'reduce' ? 'Mana verbraucht' : 'Etwas trainiert'}</option><option value="down" ${s === 'down' ? 'selected' : ''}>${g.a.kind === 'reduce' ? 'Kein Mana verbraucht' : 'Nichts trainiert'}</option><option value="refused" ${s === 'refused' ? 'selected' : ''}>Bewusst nicht eingetragen</option></select></label><div class="field-grid">${ck.includes('minutes') ? `<label>Minuten<input name="minutes_${i}" type="number" min="0" step="0.01" ${editable ? '' : 'disabled'} value="${e?.minutes ?? ''}" placeholder="Nicht angegeben"></label>` : '<div></div>'}${ck.includes('count') ? `<label>Anzahl<input name="count_${i}" type="number" min="0" step="1" ${editable ? '' : 'disabled'} value="${e?.count ?? ''}" placeholder="Nicht angegeben"></label>` : '<div></div>'}</div><label>Kommentar<input name="comment_${i}" maxlength="1000" value="${safe(e?.comment || '')}" ${editable ? '' : 'disabled'} placeholder="Optional"></label></div>`; }).join('') || '<p class="muted">Für diesen Tag gibt es keine aktiven Ziele.</p>'}${editable && all.length ? `<button class="primary save-day" type="submit">Änderungen speichern</button>` : ''}</form>`;
+    sheet(S.modal.onlyKey ? (all[0]?.a.name || 'Ziel') : 'Tagesprotokoll', html);
+}
+async function saveDay(form) {
+    const d = S.modal.day;
+    if (!canEdit(d))
+        throw Error('Dieser Tag ist gesperrt.');
+    const gs = goals(d).filter(g => !isOnce(g.a) && (!S.modal.onlyKey || g.key === S.modal.onlyKey)).sort((x, y) => (x.a.kind === 'build' ? 0 : 1) - (y.a.kind === 'build' ? 0 : 1));
+    let changes = [];
+    for (let i = 0; i < gs.length; i++) {
+        const g = gs[i], m = form.elements['mode_' + i]?.value || '';
+        if (!m) {
+            changes.push({ delete: entryKey(g, d), g });
+            continue;
+        }
+        const fields = m === 'refused' ? unknownFields(g) : { mode: m, status: m === 'up' ? 'yes' : 'no', source: g.a.kind === 'reduce' && m === 'down' && d < nowDay() ? 'zero-confirmed' : 'user', estimated: false };
+        if (m !== 'refused')
+            for (const k of metricKeys(g.r)) {
+                const field = form.elements[`${k}_${i}`], value = readNumber(field?.value, k);
+                if (k === 'count' && value !== null && !Number.isInteger(value))
+                    throw Error('Anzahl muss ganzzahlig sein.');
+                fields[k] = value;
+                if (value === null) {
+                    if (m === 'down' || g.a.kind === 'build')
+                        fields[k] = 0;
+                    else
+                        throw Error('Bitte den tatsächlichen Mana-Verbrauch angeben oder „Bewusst nicht eingetragen“ wählen.');
+                }
+            }
+        fields.comment = form.elements['comment_' + i]?.value?.slice(0, 1000) || '';
+        changes.push({ put: makeEntry(g, d, fields), g });
+    }
+    await dbTx(['entries'], t => { const store = t.objectStore('entries'); for (const c of changes) {
+        if (c.delete) {
+            store.delete(c.delete);
+            if (c.g.index === 0)
+                store.delete(`${c.g.a.id}|${d}`);
+        }
+        else
+            store.put(c.put);
+    } });
+    S.modal = null;
+    S.cardDrafts.clear();
+    await sync();
+    await reconcileWallet();
+    render();
+    toast('Tagesdaten gespeichert');
+    maybeCheckin(true);
+}
+async function archiveRule(key) { if (!confirm('Dieses Ziel ab heute archivieren? Vergangene Einträge bleiben erhalten.'))
+    return; const g = goalByKey(key); if (!g)
+    return; const a = structuredClone(g.a), today = nowDay(); const live = rules(a, today), remaining = live.filter(r => r.id !== g.r.id); if (live.length === 1) {
+    a.archivedAt = `${today}T12:00:00`;
+}
+else {
+    a.revisions = a.revisions.filter(x => x.from !== today);
+    a.revisions.push({ ...structuredClone(revision(a, today)), from: today, rules: remaining });
+    a.revisions.sort((x, y) => x.from.localeCompare(y.from));
+} await dbPut('activities', a); await sync(); S.goalExpanded = null; S.swipedGoal = null; render(); toast('Ziel archiviert; Historie bleibt erhalten'); }
+function statEvents() { const { start, end } = statsRange(); return xpEvents().filter(x => x.day >= start && x.day < end); }
+function statsView() {
+    const ev = statEvents(), metric = S.statMetric || 'minutes', unit = metric === 'minutes' ? 'h' : metric === 'count' ? '×' : 'XP', factor = metric === 'minutes' ? 1 / 60 : 1;
+    const total = ev.reduce((v, e) => v + (metric === 'xp' ? e.xp : e.metric === metric ? e.amount : 0), 0) * factor;
+    const chosen = S.statGoal || 'all';
+    const filtered = ev.filter(e => chosen === 'all' || e.goal === chosen);
+    const parts = [];
+    if (chosen !== 'all') {
+        const g = goalByKey(chosen), v = filtered.reduce((sum, e) => sum + (metric === 'xp' ? e.xp : e.metric === metric ? e.amount : 0), 0) * factor;
+        if (g && v > 0)
+            parts.push({ name: g.a.name, color: goalColor(g), value: v });
+    }
+    else if (S.statStack) {
+        const map = new Map();
+        for (const e of ev) {
+            const g = goalByKey(e.goal);
+            if (!g)
+                continue;
+            const v = (metric === 'xp' ? e.xp : e.metric === metric ? e.amount : 0) * factor;
+            if (v <= 0)
+                continue;
+            const o = map.get(e.goal) || { name: g.a.name, color: goalColor(g), value: 0 };
+            o.value += v;
+            map.set(e.goal, o);
+        }
+        parts.push(...map.values());
+    }
+    else {
+        for (const kind of ['save', 'level']) {
+            let value = ev.filter(e => e.kind === kind).reduce((s, e) => s + (metric === 'xp' ? e.xp : e.metric === metric ? e.amount : 0), 0) * factor;
+            if (value > 0)
+                parts.push({ name: kind === 'save' ? 'Zaubern' : 'Leveln', color: kind === 'save' ? S.colors.save : S.colors.level, value });
+        }
+    }
+    const value = parts.reduce((s, e) => s + e.value, 0), scale = total > 0 ? 100 * value / total : 0, { start, end } = statsRange();
+    return `<div class="stats-compact"><div class="page-heading"><span class="eyebrow">DEINE BILANZ</span><h1>Statistik</h1></div><div class="stats-controls"><div class="stats-two-filter"><label>Zeitraum<div class="stats-period">${['day', 'week', 'month', 'year', 'all'].map((p, i) => `<button data-act="stat-period" data-period="${p}" class="${S.statPeriod === p ? 'selected' : ''}">${['Tag', 'Woche', 'Monat', 'Jahr', 'Gesamt'][i]}</button>`).join('')}</div></label><label>Ziel<select id="statGoal"><option value="all">Alle Ziele</option>${allGoals().map(g => `<option value="${safe(g.key)}" ${chosen === g.key ? 'selected' : ''}>${safe(g.a.name)} · ${NAMES[g.r.period]}</option>`).join('')}</select></label></div><div class="stats-metric">${[['minutes', 'Zeit'], ['count', 'Anzahl'], ['xp', 'XP']].map(([k, v]) => `<button data-act="stat-metric" data-metric="${k}" class="${metric === k ? 'selected' : ''}">${v}</button>`).join('')}</div><div class="stats-nav"><button class="icon-button" data-act="stat-prev" ${S.statPeriod === 'all' ? 'disabled' : ''}>‹</button><span>${S.statPeriod === 'all' ? 'Gesamtzeitraum' : `${pretty(start, { day: 'numeric', month: 'short', year: 'numeric' })} – ${pretty(dayAdd(end, -1), { day: 'numeric', month: 'short', year: 'numeric' })}`}</span><button class="icon-button" data-act="stat-next" ${S.statPeriod === 'all' ? 'disabled' : ''}>›</button></div></div><div class="stats-single"><div class="stat-head"><small>Beitrag zum Gesamtwert</small><strong>${num(value, 1)} / ${num(total, 1)} ${unit}</strong><small>${total ? num(value / total * 100, 1) : 0} %</small></div><div class="single-bar-track"><div class="single-bar-fill" style="height:${scale}%">${parts.map(p => `<div class="single-bar-segment" style="flex:${p.value};background:${p.color}" title="${safe(p.name)} · ${num(p.value)} ${unit}"></div>`).join('')}</div></div><div class="bar-key">${parts.map(p => `<span><i style="background:${p.color}"></i>${safe(p.name)} · ${num(p.value, 1)} ${unit}</span>`).join('') || '<span>Keine Beiträge im gewählten Zeitraum</span>'}</div></div><label class="stat-checkbox"><input type="checkbox" id="statStack" ${S.statStack && chosen === 'all' ? 'checked' : ''} ${chosen === 'all' ? '' : 'disabled'}> Beiträge einzelner Ziele stapeln</label></div>`;
+}
+async function saveBackgroundImage(file) { if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 12 * 1024 * 1024)
+    throw Error('Bitte ein Bild bis 12 MB wählen.'); const bmp = await createImageBitmap(file), canvas = document.createElement('canvas'), maxSide = 1100, scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height)); canvas.width = Math.max(1, Math.round(bmp.width * scale)); canvas.height = Math.max(1, Math.round(bmp.height * scale)); canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height); bmp.close?.(); const result = canvas.toDataURL('image/jpeg', .72); if (result.length > 2500000)
+    throw Error('Bild ist nach Verarbeitung zu groß.'); await dbTx(['meta'], t => { t.objectStore('meta').put({ key: 'backgroundImage', value: result }); t.objectStore('meta').put({ key: 'backgroundMode', value: 'image' }); }); await sync(); render(); toast('Hintergrundbild gespeichert'); }
+function applyTheme() { const dark = S.theme === 'dark' || (S.theme === 'system' && matchMedia('(prefers-color-scheme:dark)').matches); document.documentElement.dataset.theme = dark ? 'dark' : 'light'; document.documentElement.style.setProperty('--save', S.colors.save); document.documentElement.style.setProperty('--level', S.colors.level); const mode = S.bgMode || 'system', root = document.documentElement; root.style.setProperty('--background-layer', mode === 'image' && S.bgImage ? `url("${S.bgImage}")` : mode === 'color' ? S.bgColor : 'none'); root.style.setProperty('--background-opacity', mode === 'image' ? String((S.bgShade || 0) / 100) : '0'); root.style.setProperty('--custom-bg', mode === 'color' ? S.bgColor : (dark ? '#111520' : '#f8fafc')); document.querySelector('#themeMeta').content = mode === 'color' ? S.bgColor : (dark ? '#111520' : '#f8fafc'); const selected = ['light', 'dark', 'mono'].includes(S.iconVariant) ? S.iconVariant : 'light'; const apple = document.querySelector('link[rel="apple-touch-icon"]'); if (apple)
+    apple.href = `./icons/icon-${selected}-180.png`; const icoLink = document.querySelector('link[rel="icon"]'); if (icoLink) {
+    icoLink.href = `./icons/icon-${selected}-192.png`;
+    icoLink.type = 'image/png';
+} const manifest = document.querySelector('link[rel="manifest"]'); if (manifest)
+    manifest.href = `./manifest-${selected}.webmanifest`; }
+function settingsView05() { const w = S.wallet; return `<div class="page-heading"><span class="eyebrow">LEVELN ANPASSEN</span><h1>Optionen</h1></div><section class="settings-panel"><h3>Streaks & Glut</h3><div class="wallet"><div><small>Glut</small><strong>${ico('flame')} ${w.glut}</strong></div><div><small>Freezes</small><strong>${ico('snow')} ${w.inventory}/2</strong></div></div><p class="muted">1 Glut je 10 erfolgreiche Streak-Schritte. 5 Glut für einen Freeze; maximal zwei im Inventar.</p><button class="primary" data-act="buy" ${w.glut < 5 || w.inventory >= 2 ? 'disabled' : ''}>${ico('bag')} Freeze kaufen · 5 Glut</button></section><section class="settings-panel"><h3>Darstellung</h3><label>Hell-/Dunkelmodus<select data-setting="theme"><option value="system" ${S.theme === 'system' ? 'selected' : ''}>System</option><option value="light" ${S.theme === 'light' ? 'selected' : ''}>Hell</option><option value="dark" ${S.theme === 'dark' ? 'selected' : ''}>Dunkel</option></select></label><div class="color-row"><label>Zaubern<input type="color" data-setting="colorSave" value="${S.colors.save}"></label><label>Leveln<input type="color" data-setting="colorLevel" value="${S.colors.level}"></label></div><label>Hintergrund<select data-setting="backgroundMode"><option value="system" ${S.bgMode === 'system' ? 'selected' : ''}>Hell/Dunkel übernehmen</option><option value="color" ${S.bgMode === 'color' ? 'selected' : ''}>Eigene Farbe</option><option value="image" ${S.bgMode === 'image' ? 'selected' : ''}>Eigenes Bild</option></select></label><div class="color-row"><label>Hintergrundfarbe<input type="color" data-setting="backgroundColor" value="${S.bgColor}"></label><label>Bild auswählen<input type="file" id="bgImagePicker" accept="image/png,image/jpeg,image/webp"></label></div><label>Bild-Abdunklung · ${S.bgShade}%<input type="range" min="0" max="90" step="1" data-setting="backgroundShade" value="${S.bgShade}"></label><button class="thin-button" data-act="background-remove">Hintergrundbild entfernen</button><h3>Homescreen-Icon</h3><div class="icon-choices">${['light', 'dark', 'mono'].map((v, i) => `<button class="icon-choice ${S.iconVariant === v ? 'selected' : ''}" data-act="icon-variant" data-variant="${v}"><img src="./icons/icon-${v}-192.png" alt="Icon ${v}"><small>${['Weiß & Grün', 'Schwarz & Grün', 'Schwarz & Weiß'][i]}</small></button>`).join('')}</div><p class="muted">Für ein anderes Homescreen-Icon muss iOS möglicherweise die Web-App erneut hinzufügen. Erstelle vorher ein Backup und entferne die alte Installation nicht vorschnell.</p></section><section class="settings-panel"><h3>Spiel & Check-in</h3><label>Paket-Timeout · ${S.timeout} Sekunden<input type="range" min="1" max="10" step="1" data-setting="packetTimeout" value="${S.timeout}"></label><label>Erfolgssounds<input type="checkbox" data-setting="sound" ${S.sound ? 'checked' : ''}></label><label>Täglicher Check-in ab<input type="time" data-setting="checkTime" value="${S.checkTime}"></label><button class="thin-button" data-act="checkin">Offene Einträge prüfen</button></section><section class="settings-panel"><h3>Private Daten</h3><p class="muted">Alles bleibt lokal auf diesem Gerät. Sichere die Daten regelmäßig. JSON-Backups sind unverschlüsselt.</p><button class="thin-button" data-act="export">JSON-Backup exportieren</button><button class="thin-button" data-act="import">JSON-Backup importieren</button><button class="danger-button" data-act="erase">Alle Daten löschen</button></section>`; }
 // ---- end of Leveln 0.5 overrides ----
 /* Leveln 0.6 · Charakter-RPG · schema v2 · 2026-10-29
    All XP is computed from immutable historical quest revisions and completion snapshots.
    Existing v1 backups are converted in-memory, validated, then committed atomically. */
-PATH.settings='<path d="M10.6 2h2.8l.55 2.22 1.88.78 1.96-1.18 2 2-1.18 1.96.78 1.88L22 10.6v2.8l-2.22.55-.78 1.88 1.18 1.96-2 2-1.96-1.18-1.88.78L13.4 22h-2.8l-.55-2.22-1.88-.78-1.96 1.18-2-2 1.18-1.96-.78-1.88L2 13.4v-2.8l2.22-.55.78-1.88-1.18-1.96 2-2 1.96 1.18 1.88-.78z"/><circle cx="12" cy="12" r="3.2"/>';
-const PROFILE_DEFAULT={name:'Mein Charakter',description:'Jeden Tag ein Stück stärker.',color:'#67c65d',avatar:'shield',image:''};
-const EMBER_SVG=`<svg class="ico ember-icon" viewBox="0 0 24 24" aria-label="Glut" fill="none"><path d="M4.8 10.8 9 5l8-1.7 3.2 6.2-2 8.1-7.6 3.7-6.3-4.1z" fill="#67392d" stroke="#914a30" stroke-width=".7"/><path d="m8.4 9.3 4.2-2 4.2 3.2-1 5.6-5.3 2.1-3.1-4z" fill="#f47f37"/><path d="m12.5 7.3-1.1 5 4.3 3.8m-4.3-3.8-4 1.2" stroke="#ffe9a0" stroke-width="1.7" stroke-linecap="round"/><circle cx="19.7" cy="4" r="1.1" fill="#ffbb5e"/></svg>`;
-const profile=()=>({...PROFILE_DEFAULT,...meta('characterProfile',{})});
-const skillById=id=>S.skills.find(s=>s.id===id);
-const skillColor=s=>hex(s?.color,profile().color);
-const skillIcon=s=>ico(PATH[s?.icon]?s.icon:'spark');
-function avatarMarkup(p=profile(),cls='avatar-circle'){
- if(p.image&&/^data:image\/(png|jpeg|webp);base64,/.test(p.image))return `<img class="${cls}" src="${p.image}" alt="Charakterbild">`;
- const sign={shield:'shield',star:'star',spark:'spark',target:'target',book:'book',game:'game',moon:'moon',sun:'sun'}[p.avatar]||'shield';
- return `<span class="${cls} avatar-sigil" style="--avatar-color:${hex(p.color,'#67c65d')}">${ico(sign)}</span>`;
+PATH.settings = '<path d="M10.6 2h2.8l.55 2.22 1.88.78 1.96-1.18 2 2-1.18 1.96.78 1.88L22 10.6v2.8l-2.22.55-.78 1.88 1.18 1.96-2 2-1.96-1.18-1.88.78L13.4 22h-2.8l-.55-2.22-1.88-.78-1.96 1.18-2-2 1.18-1.96-.78-1.88L2 13.4v-2.8l2.22-.55.78-1.88-1.18-1.96 2-2 1.96 1.18 1.88-.78z"/><circle cx="12" cy="12" r="3.2"/>';
+const PROFILE_DEFAULT = { name: 'Mein Charakter', description: 'Jeden Tag ein Stück stärker.', color: '#67c65d', avatar: 'shield', image: '' };
+const EMBER_SVG = `<svg class="ico ember-icon" viewBox="0 0 24 24" aria-label="Glut" fill="none"><path d="M4.8 10.8 9 5l8-1.7 3.2 6.2-2 8.1-7.6 3.7-6.3-4.1z" fill="#67392d" stroke="#914a30" stroke-width=".7"/><path d="m8.4 9.3 4.2-2 4.2 3.2-1 5.6-5.3 2.1-3.1-4z" fill="#f47f37"/><path d="m12.5 7.3-1.1 5 4.3 3.8m-4.3-3.8-4 1.2" stroke="#ffe9a0" stroke-width="1.7" stroke-linecap="round"/><circle cx="19.7" cy="4" r="1.1" fill="#ffbb5e"/></svg>`;
+const profile = () => ({ ...PROFILE_DEFAULT, ...meta('characterProfile', {}) });
+const skillById = id => S.skills.find(s => s.id === id);
+const skillColor = s => hex(s?.color, profile().color);
+const skillIcon = s => ico(PATH[s?.icon] ? s.icon : 'spark');
+const isOnce = a => a?.questType === 'once';
+const onceKey = a => `${a.id}|once`;
+function goals(d = nowDay()) {
+    return S.activities.flatMap(a => { if (isOnce(a))
+        return []; const started = (a.createdAt || S.started || d).slice(0, 10); if (started > d || a.archivedAt?.slice(0, 10) <= d)
+        return []; return rules(a, d).map((r, i) => ({ a, r, index: i, key: `${a.id}|${r.id}` })); })
+        .concat(oneTimeGoals(d)).sort((g, h) => (g.a.order ?? 0) - (h.a.order ?? 0) || g.index - h.index);
 }
-const isOnce=a=>a?.questType==='once';
-const onceKey=a=>`${a.id}|once`;
-function oneTimeGoals(d){return S.activities.filter(a=>d===nowDay()&&isOnce(a)&&a.pinned&&a.availableFrom<=d&&a.availableUntil>=d&&!a.completedAt&&!a.archivedAt).map(a=>({a,r:{id:'once',period:'day',minutes:null,count:null},index:0,key:onceKey(a)}));}
-function goals(d=nowDay()){
- return S.activities.flatMap(a=>{if(isOnce(a))return [];const started=(a.createdAt||S.started||d).slice(0,10);if(started>d||a.archivedAt?.slice(0,10)<=d)return [];return rules(a,d).map((r,i)=>({a,r,index:i,key:`${a.id}|${r.id}`}))})
- .concat(oneTimeGoals(d)).sort((g,h)=>(g.a.order??0)-(h.a.order??0)||g.index-h.index);
-}
-function allGoals(){const result=[];for(const a of S.activities){if(isOnce(a)){result.push({a,r:{id:'once',period:'day',minutes:null,count:null},index:0,key:onceKey(a)});continue}let ids=new Map();for(const rev of a.revisions||[])for(let i=0;i<(rev.rules||[]).length;i++)ids.set(rev.rules[i].id,{r:rev.rules[i],index:i});for(const [ruleId,x] of ids)result.push({a,r:x.r,index:x.index,key:`${a.id}|${ruleId}`})}return result}
-function rateBundles(a,d){return revision(a,d).skillRates||{minutes:[],count:[]}}
-function effectiveFate(id){const f=meta('skillFates',{});const seen=new Set();while(f[id]!==undefined&&!seen.has(id)){seen.add(id);id=f[id];if(id===null)return null}return id}
-function eventFor(g,day,kind,metric,amount,bundles){const units=metric==='minutes'?amount/60:amount;const allocations=(bundles?.[metric]||[]).filter(x=>finite(x.rate)).map(x=>({skillId:x.skillId,amount:units*x.rate})).filter(x=>x.amount>0);const xp=allocations.reduce((s,x)=>s+x.amount,0);return xp>0?{goal:g.key,day,kind,metric,amount,xp,allocations}:null}
-function xpEvents(){const ev=[];
- for(const a of S.activities){
-  if(isOnce(a)){
-   if(a.completedAt){const day=a.completedAt.slice(0,10),g={key:onceKey(a)},bindings=a.rewardSnapshot||a.rewardBindings||[];
-    const allocations=bindings.filter(x=>finite(x.xp)&&x.xp>0).map(x=>({skillId:x.skillId,amount:x.xp}));
-    if(allocations.length)ev.push({goal:g.key,day,kind:a.kind==='reduce'?'save':'level',metric:'once',amount:1,xp:allocations.reduce((s,x)=>s+x.amount,0),allocations});}
-   continue;
-  }
-  for(const g of allGoals().filter(g=>g.a.id===a.id)){
-   if(a.kind==='build'){
-    for(const e of S.entries){if(e.date>nowDay()||a.archivedAt?.slice(0,10)<=e.date||e.ruleId&&e.ruleId!==g.r.id||e.activityId!==a.id)continue;
-     if(!e.ruleId&&(g.index!==0||EM.has(entryKey(g,e.date))))continue;
-     const historical=rules(a,e.date).find(x=>x.id===g.r.id);if(!historical)continue;
-     for(const k of metricKeys(historical))if(metricOwner(g,k,e.date)&&finite(e[k])&&e.source!=='auto'&&e.source!=='refused'){
-      const event=eventFor(g,e.date,'level',k,e[k],rateBundles(a,e.date));if(event)ev.push(event);
-     }
+function allGoals() { const result = []; for (const a of S.activities) {
+    if (isOnce(a)) {
+        result.push({ a, r: { id: 'once', period: 'day', minutes: null, count: null }, index: 0, key: onceKey(a) });
+        continue;
     }
-   }else{
-    for(const p of periods(g)){
-     if(p.end>nowDay()||a.archivedAt&&p.end>a.archivedAt.slice(0,10))continue;
-     const assess=assessment(g,p),historical=p.rule||g.r;if(!assess.complete||assess.hasEstimated)continue;
-     for(const k of metricKeys(historical))if(metricOwner(g,k,p.start)){
-      const amount=Math.max(0,ruleValue(historical,k)-assess.totals[k]);
-      const event=eventFor(g,dayAdd(p.end,-1),'save',k,amount,rateBundles(a,p.start));if(event)ev.push(event);
-     }
+    let ids = new Map();
+    for (const rev of a.revisions || [])
+        for (let i = 0; i < (rev.rules || []).length; i++)
+            ids.set(rev.rules[i].id, { r: rev.rules[i], index: i });
+    for (const [ruleId, x] of ids)
+        result.push({ a, r: x.r, index: x.index, key: `${a.id}|${ruleId}` });
+} return result; }
+function rateBundles(a, d) { return revision(a, d).skillRates || { minutes: [], count: [] }; }
+function effectiveFate(id) { const f = meta('skillFates', {}); const seen = new Set(); while (f[id] !== undefined && !seen.has(id)) {
+    seen.add(id);
+    id = f[id];
+    if (id === null)
+        return null;
+} return id; }
+function eventFor(g, day, kind, metric, amount, bundles) { const units = metric === 'minutes' ? amount / 60 : amount; const allocations = (bundles?.[metric] || []).filter(x => finite(x.rate)).map(x => ({ skillId: x.skillId, amount: units * x.rate })).filter(x => x.amount > 0); const xp = allocations.reduce((s, x) => s + x.amount, 0); return xp > 0 ? { goal: g.key, day, kind, metric, amount, xp, allocations } : null; }
+// XP-QUELLE: Charakter und Skills aggregieren aus denselben Quest-Ereignissen.
+// Zauber-XP erst nach Ende des entsprechenden Bewertungszeitraums vergeben.
+function xpEvents() {
+    const ev = [];
+    for (const a of S.activities) {
+        if (isOnce(a)) {
+            if (a.completedAt) {
+                const day = a.completedAt.slice(0, 10), g = { key: onceKey(a) }, bindings = a.rewardSnapshot || a.rewardBindings || [];
+                const allocations = bindings.filter(x => finite(x.xp) && x.xp > 0).map(x => ({ skillId: x.skillId, amount: x.xp }));
+                if (allocations.length)
+                    ev.push({ goal: g.key, day, kind: a.kind === 'reduce' ? 'save' : 'level', metric: 'once', amount: 1, xp: allocations.reduce((s, x) => s + x.amount, 0), allocations });
+            }
+            continue;
+        }
+        for (const g of allGoals().filter(g => g.a.id === a.id)) {
+            if (a.kind === 'build') {
+                for (const e of S.entries) {
+                    if (e.date > nowDay() || a.archivedAt?.slice(0, 10) <= e.date || e.ruleId && e.ruleId !== g.r.id || e.activityId !== a.id)
+                        continue;
+                    if (!e.ruleId && (g.index !== 0 || EM.has(entryKey(g, e.date))))
+                        continue;
+                    const historical = rules(a, e.date).find(x => x.id === g.r.id);
+                    if (!historical)
+                        continue;
+                    for (const k of metricKeys(historical))
+                        if (metricOwner(g, k, e.date) && finite(e[k]) && e.source !== 'auto' && e.source !== 'refused') {
+                            const event = eventFor(g, e.date, 'level', k, e[k], rateBundles(a, e.date));
+                            if (event)
+                                ev.push(event);
+                        }
+                }
+            }
+            else {
+                for (const p of periods(g)) {
+                    if (p.end > nowDay() || a.archivedAt && p.end > a.archivedAt.slice(0, 10))
+                        continue;
+                    const assess = assessment(g, p), historical = p.rule || g.r;
+                    if (!assess.complete || assess.hasEstimated)
+                        continue;
+                    for (const k of metricKeys(historical))
+                        if (metricOwner(g, k, p.start)) {
+                            const amount = Math.max(0, ruleValue(historical, k) - assess.totals[k]);
+                            const event = eventFor(g, dayAdd(p.end, -1), 'save', k, amount, rateBundles(a, p.start));
+                            if (event)
+                                ev.push(event);
+                        }
+                }
+            }
+        }
     }
-   }
-  }
- }
- return ev.sort((x,y)=>x.day.localeCompare(y.day)||x.goal.localeCompare(y.goal));
+    return ev.sort((x, y) => x.day.localeCompare(y.day) || x.goal.localeCompare(y.goal));
 }
-function skillXp(id){let total=0;for(const e of xpEvents())for(const a of e.allocations||[])if(effectiveFate(a.skillId)===id)total+=a.amount;return total}
-function xpStats(){const events=xpEvents();let sum=0,save=0,level=0,barSave=0,barLevel=0;for(const e of events){sum+=e.xp;if(e.kind==='save')save+=e.xp;else level+=e.xp}const levelN=1+Math.floor((sum+1e-7)/1000),from=(levelN-1)*1000;let cursor=0;for(const e of events){const amount=Math.max(0,Math.min(sum,cursor+e.xp)-Math.max(from,cursor));if(e.kind==='save')barSave+=amount;else barLevel+=amount;cursor+=e.xp}return {sum,save,level,barSave,barLevel,progress:Math.max(0,sum-from),levelN,events}}
-function characterView(){const p=profile(),x=xpStats();return `<div class="character-page rpg-screen"><div class="page-heading"><span class="eyebrow">DEIN HELDENBOGEN</span><h1>Charakter</h1></div><section class="hero-panel" style="--hero-accent:${hex(p.color,'#67c65d')}"><button class="hero-edit icon-button" data-act="profile-edit" aria-label="Charakter bearbeiten">${ico('edit')}</button><div class="hero-intro">${avatarMarkup(p,'avatar-hero')}<div><small>ABENTEURERPROFIL</small><h2>${safe(p.name)}</h2><p>${safe(p.description)}</p></div></div><div class="hero-lvl"><strong>lvl. ${x.levelN}</strong><small>${num(x.sum,1)} Gesamt-XP</small></div><div class="hero-meter"><div style="width:${Math.min(100,x.progress/10)}%;background:${hex(p.color,'#67c65d')}"></div></div><small>${num(x.progress,1)} / 1.000 XP bis zum nächsten Level</small></section><div class="skills-heading"><h2>Skills <span>${S.skills.length}</span></h2><button class="circle-action" data-act="skill-new" aria-label="Skill hinzufügen">${ico('plus')}</button></div>${S.skills.length?S.skills.map(s=>{const xp=skillXp(s.id),st=1+Math.floor((xp+1e-8)/100),progress=xp%100;return `<button class="skill-card" data-act="skill-edit" data-id="${safe(s.id)}" style="--skill-accent:${skillColor(s)}"><span class="skill-glyph">${skillIcon(s)}</span><span class="skill-info"><strong>${safe(s.name)}</strong><small>St. ${st} · ${num(xp,1)} XP</small><span class="skill-meter"><i style="width:${progress}%;background:${skillColor(s)}"></i></span><small>${num(progress,1)}/100 XP</small></span><span class="skill-arrow">›</span></button>`}).join(''):'<div class="empty-skill">Noch keine Skills. Erstelle einen Skill oder lege eine Quest an.</div>'}</div>`}
-function nav(){const tabs=[['today','home','Heute'],['goals','goals','Quests'],['character','user','Charakter'],['stats','chart','Statistik']];$('#bottomNav').innerHTML=`<nav class="tabs">${tabs.map(([p,i,t])=>`<button class="tab ${S.page===p?'on':''}" data-act="tab" data-page="${p}">${p==='character'?avatarMarkup(profile(),'nav-avatar'):ico(i)}<small>${t}</small></button>`).join('')}</nav>`;
- const h=$('#settingsShortcut');if(h)h.innerHTML=`<button class="settings-shortcut" data-act="settings-toggle" aria-label="Einstellungen">${ico(S.page==='settings'?'back':'settings')}</button>`;
+function skillXp(id) { let total = 0; for (const e of xpEvents())
+    for (const a of e.allocations || [])
+        if (effectiveFate(a.skillId) === id)
+            total += a.amount; return total; }
+function xpStats() { const events = xpEvents(); let sum = 0, save = 0, level = 0, barSave = 0, barLevel = 0; for (const e of events) {
+    sum += e.xp;
+    if (e.kind === 'save')
+        save += e.xp;
+    else
+        level += e.xp;
+} const levelN = 1 + Math.floor((sum + 1e-7) / 1000), from = (levelN - 1) * 1000; let cursor = 0; for (const e of events) {
+    const amount = Math.max(0, Math.min(sum, cursor + e.xp) - Math.max(from, cursor));
+    if (e.kind === 'save')
+        barSave += amount;
+    else
+        barLevel += amount;
+    cursor += e.xp;
+} return { sum, save, level, barSave, barLevel, progress: Math.max(0, sum - from), levelN, events }; }
+function characterView() { const p = profile(), x = xpStats(); return `<div class="character-page rpg-screen"><div class="page-heading"><span class="eyebrow">DEIN HELDENBOGEN</span><h1>Charakter</h1></div><section class="hero-panel" style="--hero-accent:${hex(p.color, '#67c65d')}"><button class="hero-edit icon-button" data-act="profile-edit" aria-label="Charakter bearbeiten">${ico('edit')}</button><div class="hero-intro">${avatarMarkup(p, 'avatar-hero')}<div><small>ABENTEURERPROFIL</small><h2>${safe(p.name)}</h2><p>${safe(p.description)}</p></div></div><div class="hero-lvl"><strong>lvl. ${x.levelN}</strong><small>${num(x.sum, 1)} Gesamt-XP</small></div><div class="hero-meter"><div style="width:${Math.min(100, x.progress / 10)}%;background:${hex(p.color, '#67c65d')}"></div></div><small>${num(x.progress, 1)} / 1.000 XP bis zum nächsten Level</small></section><div class="skills-heading"><h2>Skills <span>${S.skills.length}</span></h2><button class="circle-action" data-act="skill-new" aria-label="Skill hinzufügen">${ico('plus')}</button></div>${S.skills.length ? S.skills.map(s => { const xp = skillXp(s.id), st = 1 + Math.floor((xp + 1e-8) / 100), progress = xp % 100; return `<button class="skill-card" data-act="skill-edit" data-id="${safe(s.id)}" style="--skill-accent:${skillColor(s)}"><span class="skill-glyph">${skillIcon(s)}</span><span class="skill-info"><strong>${safe(s.name)}</strong><small>St. ${st} · ${num(xp, 1)} XP</small><span class="skill-meter"><i style="width:${progress}%;background:${skillColor(s)}"></i></span><small>${num(progress, 1)}/100 XP</small></span><span class="skill-arrow">›</span></button>`; }).join('') : '<div class="empty-skill">Noch keine Skills. Erstelle einen Skill oder lege eine Quest an.</div>'}</div>`; }
+// HAUPTNAVIGATION: Heute, Quests, Charakter und Statistik.
+function render() { clearTimeout(timer); const todayMode = S.page === 'today'; $('#app').className = 'app ' + (todayMode ? 'today-app' : S.page === 'stats' ? 'stats-app' : '') + (S.page === 'character' ? ' character-app' : ''); $('#app').innerHTML = todayMode ? todayView() : S.page === 'goals' ? goalsView() : S.page === 'character' ? characterView() : S.page === 'stats' ? statsView() : settingsView(); nav(); renderModal(); if (S.packet)
+    armTimer(); }
+function cardStatus(g, d) { return isOnce(g.a) ? 'open' : initialState(g, d); }
+function skillOptions(selected = '', allowNew = true) { return `<option value="">Skill wählen</option>${S.skills.map(s => `<option value="${safe(s.id)}" ${selected === s.id ? 'selected' : ''}>${safe(s.name)}</option>`).join('')}${allowNew ? '<option value="__new__">＋ Neuen Skill erstellen …</option>' : ''}`; }
+function rateRows(a, rev) { let rows = []; for (const [metric, list] of Object.entries(rev?.skillRates || {}))
+    for (const item of list)
+        rows.push({ metric, ...item }); if (!rows.length && !a)
+    rows = [{ metric: 'minutes', skillId: S.skills[0]?.id || '__new__', rate: 10 }]; return rows; }
+function rateRowHTML(row) { return `<div class="binding-row"><select class="binding-metric" aria-label="XP-Art"><option value="minutes" ${row.metric === 'minutes' ? 'selected' : ''}>XP pro Stunde</option><option value="count" ${row.metric === 'count' ? 'selected' : ''}>XP pro Anzahl</option></select><select class="binding-skill" aria-label="Skill">${skillOptions(row.skillId)}</select><input class="binding-rate" type="number" min="0" max="100000" step="0.1" value="${row.rate ?? 0}" aria-label="XP pro Einheit"><button type="button" class="binding-remove" data-act="binding-remove" aria-label="Zuordnung entfernen">×</button></div>`; }
+function rewardRowHTML(row) { return `<div class="binding-row reward-row"><select class="reward-skill">${skillOptions(row.skillId)}</select><input class="reward-xp" type="number" min="0" max="100000" step="0.1" value="${row.xp ?? 0}" aria-label="XP bei Abschluss"><button type="button" data-act="binding-remove" class="binding-remove" aria-label="Entfernen">×</button></div>`; }
+function editGoalModal() {
+    const a = S.activities.find(x => x.id === S.modal.activityId) || (S.modal.key ? goalByKey(S.modal.key)?.a : null), g = S.modal.key ? goalByKey(S.modal.key) : null, once = isOnce(a) || S.modal.questType === 'once', r = g?.r || { id: uid(), period: 'day', mode: 'calendar', minutes: 30, count: null }, rev = a && !once ? revision(a, nowDay()) : null, kind = a?.kind || 'build';
+    sheet(a ? 'Quest bearbeiten' : 'Neue Quest', `<form id="goalForm" class="quest-form"><div class="quest-type-banner" style="--type-color:${kind === 'reduce' ? S.colors.save : S.colors.level}">${once ? 'EINMALIGE MISSION' : kind === 'reduce' ? 'ZAUBER-QUEST' : 'LEVELN-QUEST'}</div><label>Quest-Name<input name="name" maxlength="70" required value="${safe(a?.name || '')}"></label><label>Kürzel auf der Karte (max. 5 Zeichen)<input name="shortName" maxlength="5" value="${safe(a?.shortName || shortCode(a?.name || ''))}" placeholder="z. B. SPORT"></label>${!a ? `<label>Questart<select name="questType" id="questTypeSelect"><option value="repeat" ${once ? '' : 'selected'}>Wiederkehrend</option><option value="once" ${once ? 'selected' : ''}>Einmalig</option></select></label><label>Typ<select name="kind"><option value="build">Leveln</option><option value="reduce">Zaubern</option></select></label>` : `<input name="questType" type="hidden" value="${once ? 'once' : 'repeat'}"><input name="kind" type="hidden" value="${kind}">`}<label>Lebensbereich<select name="category">${Object.entries(CAT).map(([k, v]) => `<option value="${k}" ${a?.category === k ? 'selected' : ''}>${safe(v[0])}</option>`).join('')}</select></label><label>Icon<select name="iconKey"><option value="">Kategorie-Icon</option>${iconChoices(a?.iconKey)}</select></label><div id="recurringFields" ${once ? 'hidden' : ''}><label>Gültig ab<input name="startDate" type="date" min="${nowDay()}" value="${a?.createdAt?.slice(0, 10) > nowDay() ? a.createdAt.slice(0, 10) : nowDay()}"></label><div class="field-grid"><label>Zeitraum<select name="period">${['day', 'week', 'month', 'year'].map(k => `<option value="${k}" ${r.period === k ? 'selected' : ''}>${NAMES[k]}</option>`).join('')}</select></label><label>Auswertung<select name="mode"><option value="calendar" ${r.mode !== 'restart' ? 'selected' : ''}>Kalender</option><option value="restart" ${r.mode === 'restart' ? 'selected' : ''}>Neustart</option></select></label></div><div class="field-grid"><label>Ziel-Minuten (Mana / Trainingszeit)<input name="minutes" type="number" min="0" step="1" value="${r.minutes ?? ''}"></label><label>Ziel-Anzahl (Mana / Training)<input name="count" type="number" min="0" step="1" value="${r.count ?? ''}"></label></div><div class="field-grid"><label>Ausspielmenge · Minuten<input name="stdMinutes" type="number" min="0" step="0.01" value="${a ? r.standardMinutes ?? '' : suggestStandard(r.period, r.minutes, 'minutes', a?.createdAt?.slice(0, 10) || nowDay(), r.mode)}"></label><label>Ausspielmenge · Anzahl<input name="stdCount" type="number" min="0" step="1" value="${a ? r.standardCount ?? '' : suggestStandard(r.period, r.count, 'count', a?.createdAt?.slice(0, 10) || nowDay(), r.mode)}"></label></div></div><div id="oneTimeFields" ${once ? '' : 'hidden'}><div class="field-grid"><label>Verfügbar ab<input type="date" name="availableFrom" value="${a?.availableFrom || nowDay()}" min="${nowDay()}"></label><label>Verfügbar bis<input type="date" name="availableUntil" value="${a?.availableUntil || dayAdd(nowDay(), 30)}" ${a?.availableUntil === null ? 'disabled' : ''}></label></div><label class="check-color"><input type="checkbox" name="unlimited" ${a?.availableUntil === null ? 'checked' : ''}> Unbegrenzt verfügbar (kein Ablaufdatum)</label><label class="check-color"><input type="checkbox" name="pinned" ${a?.pinned ? 'checked' : ''}> Als Karte ins Tagesdeck aufnehmen</label></div><div class="quest-bindings"><h3>Skillbelohnungen</h3><p class="form-help">Die Summe der Skillanteile ist zugleich deine Charakter-XP. Historische Belohnungen bleiben erhalten.</p><div id="recurringRates" ${once ? 'hidden' : ''}>${rateRows(a, rev).map(rateRowHTML).join('')}</div><div id="onceRewards" ${once ? '' : 'hidden'}>${(a ? a.rewardBindings || [] : [{ skillId: S.skills[0]?.id || '__new__', xp: 50 }]).map(rewardRowHTML).join('')}</div><div class="binding-buttons"><button type="button" class="thin-button" data-act="binding-add">＋ Skillanteil</button></div><label>Neuer Skill (optional; für Auswahl „Neuen Skill erstellen“)<input name="newSkillName" maxlength="60" placeholder="z. B. Organisation"></label></div><label class="check-color"><input type="checkbox" name="colorEnabled" ${g?.r?.colorEnabled !== false && g?.r?.color ? 'checked' : ''}> Eigene Questfarbe</label><input type="color" name="goalColor" value="${hex(g?.r?.color, kind === 'reduce' ? S.colors.save : S.colors.level)}"><div class="sheet-actions"><button class="thin-button" type="button" data-act="modal-close">Abbrechen</button><button class="primary" type="submit">Quest speichern</button></div></form>`);
 }
-function render(){clearTimeout(timer);const todayMode=S.page==='today';$('#app').className='app '+(todayMode?'today-app':S.page==='stats'?'stats-app':'')+(S.page==='character'?' character-app':'');$('#app').innerHTML=todayMode?todayView():S.page==='goals'?goalsView():S.page==='character'?characterView():S.page==='stats'?statsView():settingsView();nav();renderModal();if(S.packet)armTimer()}
-function cardHtml(g,behind=false){if(isOnce(g.a)){
- const a=g.a;return `<div class="play-card once-card ${behind?'peek':'face'}" style="--card-accent:${hex(a.color,S.colors.level)}" ${behind?'':'id="activeCard"'} data-goal="${safe(g.key)}"><div class="card-header"><span class="card-pill">EINMALIGE QUEST</span></div><div class="card-main">${art(a)}<h2>${safe(a.name)}</h2><p>Verfügbar bis ${pretty(a.availableUntil)} · einmalige Belohnung</p></div><div class="card-foot"><span class="streak">${ico('scroll')} ${num((a.rewardBindings||[]).reduce((s,b)=>s+b.xp,0),1)} XP</span><span class="played-label">MISSION</span></div></div>`}
- const done=initialState(g,S.day)!=='open',st=stData(g).current,color=goalColor(g);return `<div class="play-card ${behind?'peek':'face'} ${done?'played':''}" style="--card-accent:${color}" ${behind?'':'id="activeCard"'} data-goal="${safe(g.key)}"><div class="card-header"><span class="card-pill">${g.a.kind==='reduce'?'ZAUBERN':'LEVELN'}</span></div><div class="card-main">${art(g.a)}<h2>${safe(g.a.name)}</h2><p>${safe(detailGoal(g))}</p></div><div class="card-foot"><span class="streak">${ico('flame')} ${st}</span><span class="played-label">${done?'ERFASST':'BEREIT'}</span></div></div>`}
-function cardStatus(g,d){return isOnce(g.a)?'open':initialState(g,d)}
-function todayView(){if(!canEdit(S.day))S.day=nowDay();const gs=goals(S.day);S.card=Math.max(0,Math.min(S.card,gs.length-1));const g=gs[S.card],edited=gs.filter(x=>cardStatus(x,S.day)!=='open').length;const dates=[dayAdd(nowDay(),-1),nowDay()];const wheel=dates.map(d=>`<button data-act="date" data-day="${d}" class="wheel-date ${S.day===d?'chosen':''}"><small>${d===nowDay()?'HEUTE':'GESTERN'}</small><b>${pretty(d,{day:'numeric',month:'short'})}</b></button>`).join('');return `<div class="today-head"><div class="today-topline"><span>LEVELN · QUESTKARTEN</span><span>${edited}/${gs.length} erfasst</span></div>${xpBar()}</div><div class="deck-area">${S.packet&&g?packetView(g):g?`<div class="deck-stack">${[2,1].map(i=>{const pg=gs[(S.card+i)%gs.length];return gs.length>i?`<div class="peek-wrap peek-${i}">${cardHtml(pg,true)}<span class="peek-name">${safe(pg.a.name)}</span></div>`:''}).join('')}${cardHtml(g)}</div>`:`<div class="empty-state">${ico('goals')}<h2>Dein Questboard wartet</h2><p>Erstelle wiederkehrende oder einmalige Quests.</p><button class="primary" data-act="go-goals">Questboard öffnen</button></div>`}</div><div class="day-wheel"><div id="wheelTrack" class="wheel-track wheel-track-two">${wheel}</div></div><div class="deck-caption">${g?`${S.card+1} / ${gs.length} Karten · ${S.day===nowDay()?'Heute':'Gestern'}`:'Quests verwalten im Questboard'}</div>`}
-function skillOptions(selected='',allowNew=true){return `<option value="">Skill wählen</option>${S.skills.map(s=>`<option value="${safe(s.id)}" ${selected===s.id?'selected':''}>${safe(s.name)}</option>`).join('')}${allowNew?'<option value="__new__">＋ Neuen Skill erstellen …</option>':''}`}
-function rateRows(a,rev){let rows=[];for(const [metric,list] of Object.entries(rev?.skillRates||{}))for(const item of list)rows.push({metric,...item});if(!rows.length&&!a)rows=[{metric:'minutes',skillId:S.skills[0]?.id||'__new__',rate:10}];return rows}
-function rateRowHTML(row){return `<div class="binding-row"><select class="binding-metric" aria-label="XP-Art"><option value="minutes" ${row.metric==='minutes'?'selected':''}>XP pro Stunde</option><option value="count" ${row.metric==='count'?'selected':''}>XP pro Anzahl</option></select><select class="binding-skill" aria-label="Skill">${skillOptions(row.skillId)}</select><input class="binding-rate" type="number" min="0" max="100000" step="0.1" value="${row.rate??0}" aria-label="XP pro Einheit"><button type="button" class="binding-remove" data-act="binding-remove" aria-label="Zuordnung entfernen">×</button></div>`}
-function rewardRowHTML(row){return `<div class="binding-row reward-row"><select class="reward-skill">${skillOptions(row.skillId)}</select><input class="reward-xp" type="number" min="0" max="100000" step="0.1" value="${row.xp??0}" aria-label="XP bei Abschluss"><button type="button" data-act="binding-remove" class="binding-remove" aria-label="Entfernen">×</button></div>`}
-function editGoalModal(){const a=S.activities.find(x=>x.id===S.modal.activityId)||(S.modal.key?goalByKey(S.modal.key)?.a:null),g=S.modal.key?goalByKey(S.modal.key):null,once=isOnce(a)||S.modal.questType==='once',r=g?.r||{id:uid(),period:'day',mode:'calendar',minutes:30,count:null},rev=a&&!once?revision(a,nowDay()):null,kind=a?.kind||'build';
- sheet(a?'Quest bearbeiten':'Neue Quest',`<form id="goalForm" class="quest-form"><div class="quest-type-banner" style="--type-color:${kind==='reduce'?S.colors.save:S.colors.level}">${once?'EINMALIGE MISSION':kind==='reduce'?'ZAUBER-QUEST':'LEVELN-QUEST'}</div><label>Quest-Name<input name="name" maxlength="70" required value="${safe(a?.name||'')}"></label><label>Kürzel auf der Karte (max. 5 Zeichen)<input name="shortName" maxlength="5" value="${safe(a?.shortName||shortCode(a?.name||''))}" placeholder="z. B. SPORT"></label>${!a?`<label>Questart<select name="questType" id="questTypeSelect"><option value="repeat" ${once?'':'selected'}>Wiederkehrend</option><option value="once" ${once?'selected':''}>Einmalig</option></select></label><label>Typ<select name="kind"><option value="build">Leveln</option><option value="reduce">Zaubern</option></select></label>`:`<input name="questType" type="hidden" value="${once?'once':'repeat'}"><input name="kind" type="hidden" value="${kind}">`}<label>Lebensbereich<select name="category">${Object.entries(CAT).map(([k,v])=>`<option value="${k}" ${a?.category===k?'selected':''}>${safe(v[0])}</option>`).join('')}</select></label><label>Icon<select name="iconKey"><option value="">Kategorie-Icon</option>${iconChoices(a?.iconKey)}</select></label><div id="recurringFields" ${once?'hidden':''}><label>Gültig ab<input name="startDate" type="date" min="${nowDay()}" value="${a?.createdAt?.slice(0,10)>nowDay()?a.createdAt.slice(0,10):nowDay()}"></label><div class="field-grid"><label>Zeitraum<select name="period">${['day','week','month','year'].map(k=>`<option value="${k}" ${r.period===k?'selected':''}>${NAMES[k]}</option>`).join('')}</select></label><label>Auswertung<select name="mode"><option value="calendar" ${r.mode!=='restart'?'selected':''}>Kalender</option><option value="restart" ${r.mode==='restart'?'selected':''}>Neustart</option></select></label></div><div class="field-grid"><label>Ziel-Minuten (Mana / Trainingszeit)<input name="minutes" type="number" min="0" step="1" value="${r.minutes??''}"></label><label>Ziel-Anzahl (Mana / Training)<input name="count" type="number" min="0" step="1" value="${r.count??''}"></label></div><div class="field-grid"><label>Ausspielmenge · Minuten<input name="stdMinutes" type="number" min="0" step="0.01" value="${a?r.standardMinutes??'':suggestStandard(r.period,r.minutes,'minutes',a?.createdAt?.slice(0,10)||nowDay(),r.mode)}"></label><label>Ausspielmenge · Anzahl<input name="stdCount" type="number" min="0" step="1" value="${a?r.standardCount??'':suggestStandard(r.period,r.count,'count',a?.createdAt?.slice(0,10)||nowDay(),r.mode)}"></label></div></div><div id="oneTimeFields" ${once?'':'hidden'}><div class="field-grid"><label>Verfügbar ab<input type="date" name="availableFrom" value="${a?.availableFrom||nowDay()}" min="${nowDay()}"></label><label>Verfügbar bis<input type="date" name="availableUntil" value="${a?.availableUntil||dayAdd(nowDay(),30)}" ${a?.availableUntil===null?'disabled':''}></label></div><label class="check-color"><input type="checkbox" name="unlimited" ${a?.availableUntil===null?'checked':''}> Unbegrenzt verfügbar (kein Ablaufdatum)</label><label class="check-color"><input type="checkbox" name="pinned" ${a?.pinned?'checked':''}> Als Karte ins Tagesdeck aufnehmen</label></div><div class="quest-bindings"><h3>Skillbelohnungen</h3><p class="form-help">Die Summe der Skillanteile ist zugleich deine Charakter-XP. Historische Belohnungen bleiben erhalten.</p><div id="recurringRates" ${once?'hidden':''}>${rateRows(a,rev).map(rateRowHTML).join('')}</div><div id="onceRewards" ${once?'':'hidden'}>${(a?a.rewardBindings||[]:[{skillId:S.skills[0]?.id||'__new__',xp:50}]).map(rewardRowHTML).join('')}</div><div class="binding-buttons"><button type="button" class="thin-button" data-act="binding-add">＋ Skillanteil</button></div><label>Neuer Skill (optional; für Auswahl „Neuen Skill erstellen“)<input name="newSkillName" maxlength="60" placeholder="z. B. Organisation"></label></div><label class="check-color"><input type="checkbox" name="colorEnabled" ${g?.r?.colorEnabled!==false&&g?.r?.color?'checked':''}> Eigene Questfarbe</label><input type="color" name="goalColor" value="${hex(g?.r?.color,kind==='reduce'?S.colors.save:S.colors.level)}"><div class="sheet-actions"><button class="thin-button" type="button" data-act="modal-close">Abbrechen</button><button class="primary" type="submit">Quest speichern</button></div></form>`);
+function parseBindings(form, once, newSkillId) {
+    const wrap = form.querySelector(once ? '#onceRewards' : '#recurringRates'), list = [];
+    for (const row of wrap.querySelectorAll('.binding-row')) {
+        let metric = once ? 'once' : row.querySelector('.binding-metric').value, id = row.querySelector(once ? '.reward-skill' : '.binding-skill').value;
+        if (id === '__new__')
+            id = newSkillId;
+        if (!id || !skillById(id) && id !== newSkillId)
+            throw Error('Bitte einen gültigen Skill auswählen.');
+        let raw = row.querySelector(once ? '.reward-xp' : '.binding-rate').value.trim(), amount = readNumber(raw, 'Skill-XP');
+        if (amount === null || amount <= 0)
+            continue;
+        list.push(once ? { skillId: id, xp: amount } : { metric, skillId: id, rate: amount });
+    }
+    return list;
 }
-function parseBindings(form,once,newSkillId){const wrap=form.querySelector(once?'#onceRewards':'#recurringRates'),list=[];
- for(const row of wrap.querySelectorAll('.binding-row')){let metric=once?'once':row.querySelector('.binding-metric').value,id=row.querySelector(once?'.reward-skill':'.binding-skill').value;if(id==='__new__')id=newSkillId;if(!id||!skillById(id)&&id!==newSkillId)throw Error('Bitte einen gültigen Skill auswählen.');let raw=row.querySelector(once?'.reward-xp':'.binding-rate').value.trim(),amount=readNumber(raw,'Skill-XP');if(amount===null||amount<=0)continue;list.push(once?{skillId:id,xp:amount}:{metric,skillId:id,rate:amount})}
- return list;
+async function saveGoal(form) {
+    const f = form.elements, old = S.activities.find(a => a.id === S.modal.activityId) || (S.modal.key ? goalByKey(S.modal.key)?.a : null), a = old ? structuredClone(old) : null, once = (f.questType.value === 'once'), name = f.name.value.trim();
+    if (!name)
+        throw Error('Questname fehlt.');
+    if (a && isOnce(a) !== once)
+        throw Error('Die Questart lässt sich nicht nachträglich ändern.');
+    if (a?.completedAt)
+        throw Error('Abgeschlossene Missionen sind unveränderlich.');
+    let newSkill = null;
+    const newName = f.newSkillName.value.trim();
+    if (newName) {
+        newSkill = { id: uid(), name: newName.slice(0, 60), description: '', color: profile().color, icon: 'spark', createdAt: new Date().toISOString() };
+    }
+    const bindings = parseBindings(form, once, newSkill?.id);
+    if (!a && !bindings.length)
+        throw Error('Neue Quests benötigen mindestens einen trainierten Skill.');
+    const now = new Date().toISOString(), out = a || { id: uid(), kind: f.kind.value, createdAt: now, order: S.activities.length, revisions: [] };
+    out.name = name;
+    out.shortName = shortCode(f.shortName.value || name);
+    out.category = f.category.value;
+    out.iconKey = f.iconKey.value;
+    out.updatedAt = now;
+    out.questType = once ? 'once' : 'repeat';
+    const tasks = ['activities', ...(newSkill ? ['skills'] : [])];
+    if (once) {
+        const from = f.availableFrom.value, to = f.unlimited.checked ? null : f.availableUntil.value;
+        if (!/^\d{4}-\d\d-\d\d$/.test(from) || (!a && from < nowDay()) || (to !== null && to < from))
+            throw Error('Ungültiger Verfügbarkeitszeitraum.');
+        out.availableFrom = from;
+        out.availableUntil = to;
+        out.pinned = f.pinned.checked;
+        out.rewardBindings = bindings;
+        out.revisions = [];
+        out.createdAt = out.createdAt || now;
+    }
+    else {
+        const start = f.startDate.value;
+        if (!/^\d{4}-\d\d-\d\d$/.test(start) || start < nowDay())
+            throw Error('Startdatum muss heute oder zukünftig sein.');
+        const minutes = readNumber(f.minutes.value, 'Minuten'), count = readNumber(f.count.value, 'Anzahl');
+        if (minutes === null && count === null)
+            throw Error('Minuten oder Anzahl festlegen.');
+        if (count !== null && !Number.isInteger(count))
+            throw Error('Anzahl muss ganzzahlig sein.');
+        const stdMinutes = readNumber(f.stdMinutes.value, 'Ausspielmenge (Minuten)'), stdCount = readNumber(f.stdCount.value, 'Ausspielmenge (Anzahl)');
+        if (stdCount !== null && !Number.isInteger(stdCount))
+            throw Error('Standard-Anzahl muss ganzzahlig sein.');
+        const current = old ? structuredClone(revision(out, start)) : { rules: [], countXp: 0 }, oldRule = S.modal.key ? current.rules.find(r => `${out.id}|${r.id}` === S.modal.key) : null;
+        const r = { ...(oldRule || { id: uid() }), period: f.period.value, mode: f.period.value === 'day' ? 'calendar' : f.mode.value, minutes, count, standardMinutes: stdMinutes, standardCount: stdCount, color: f.colorEnabled.checked ? f.goalColor.value : '', colorEnabled: f.colorEnabled.checked };
+        current.from = start;
+        current.rules = oldRule ? current.rules.map(v => v.id === r.id ? r : v) : [r];
+        current.skillRates = { minutes: bindings.filter(b => b.metric === 'minutes').map(({ skillId, rate }) => ({ skillId, rate })), count: bindings.filter(b => b.metric === 'count').map(({ skillId, rate }) => ({ skillId, rate })) };
+        current.countXp = current.skillRates.count.reduce((s, x) => s + x.rate, 0);
+        out.revisions = (out.revisions || []).filter(v => v.from !== start);
+        out.revisions.push(current);
+        out.revisions.sort((x, y) => x.from.localeCompare(y.from));
+        if (!a || start < out.createdAt.slice(0, 10))
+            out.createdAt = `${start}T12:00:00`;
+    }
+    const img = f.iconFile?.files?.[0];
+    if (img)
+        out.iconData = await fileArt(img);
+    await dbTx(tasks, t => { t.objectStore('activities').put(out); if (newSkill)
+        t.objectStore('skills').put(newSkill); });
+    S.modal = null;
+    S.cardDrafts.clear();
+    await sync();
+    S.page = 'goals';
+    render();
+    toast('Quest gespeichert');
 }
-async function saveGoal(form){const f=form.elements,old=S.activities.find(a=>a.id===S.modal.activityId)||(S.modal.key?goalByKey(S.modal.key)?.a:null),a=old?structuredClone(old):null,once=(f.questType.value==='once'),name=f.name.value.trim();if(!name)throw Error('Questname fehlt.');if(a&&isOnce(a)!==once)throw Error('Die Questart lässt sich nicht nachträglich ändern.');if(a?.completedAt)throw Error('Abgeschlossene Missionen sind unveränderlich.');let newSkill=null;const newName=f.newSkillName.value.trim();if(newName){newSkill={id:uid(),name:newName.slice(0,60),description:'',color:profile().color,icon:'spark',createdAt:new Date().toISOString()}}
- const bindings=parseBindings(form,once,newSkill?.id);if(!a&&!bindings.length)throw Error('Neue Quests benötigen mindestens einen trainierten Skill.');const now=new Date().toISOString(),out=a||{id:uid(),kind:f.kind.value,createdAt:now,order:S.activities.length,revisions:[]};out.name=name;out.shortName=shortCode(f.shortName.value||name);out.category=f.category.value;out.iconKey=f.iconKey.value;out.updatedAt=now;out.questType=once?'once':'repeat';const tasks=['activities',...(newSkill?['skills']:[])];
- if(once){const from=f.availableFrom.value,to=f.unlimited.checked?null:f.availableUntil.value;if(!/^\d{4}-\d\d-\d\d$/.test(from)||(!a&&from<nowDay())||(to!==null&&to<from))throw Error('Ungültiger Verfügbarkeitszeitraum.');out.availableFrom=from;out.availableUntil=to;out.pinned=f.pinned.checked;out.rewardBindings=bindings;out.revisions=[];out.createdAt=out.createdAt||now}
- else{const start=f.startDate.value;if(!/^\d{4}-\d\d-\d\d$/.test(start)||start<nowDay())throw Error('Startdatum muss heute oder zukünftig sein.');const minutes=readNumber(f.minutes.value,'Minuten'),count=readNumber(f.count.value,'Anzahl');if(minutes===null&&count===null)throw Error('Minuten oder Anzahl festlegen.');if(count!==null&&!Number.isInteger(count))throw Error('Anzahl muss ganzzahlig sein.');const stdMinutes=readNumber(f.stdMinutes.value,'Ausspielmenge (Minuten)'),stdCount=readNumber(f.stdCount.value,'Ausspielmenge (Anzahl)');if(stdCount!==null&&!Number.isInteger(stdCount))throw Error('Standard-Anzahl muss ganzzahlig sein.');const current=old?structuredClone(revision(out,start)):{rules:[],countXp:0},oldRule=S.modal.key?current.rules.find(r=>`${out.id}|${r.id}`===S.modal.key):null;const r={...(oldRule||{id:uid()}),period:f.period.value,mode:f.period.value==='day'?'calendar':f.mode.value,minutes,count,standardMinutes:stdMinutes,standardCount:stdCount,color:f.colorEnabled.checked?f.goalColor.value:'',colorEnabled:f.colorEnabled.checked};current.from=start;current.rules=oldRule?current.rules.map(v=>v.id===r.id?r:v):[r];current.skillRates={minutes:bindings.filter(b=>b.metric==='minutes').map(({skillId,rate})=>({skillId,rate})),count:bindings.filter(b=>b.metric==='count').map(({skillId,rate})=>({skillId,rate}))};current.countXp=current.skillRates.count.reduce((s,x)=>s+x.rate,0);out.revisions=(out.revisions||[]).filter(v=>v.from!==start);out.revisions.push(current);out.revisions.sort((x,y)=>x.from.localeCompare(y.from));if(!a||start<out.createdAt.slice(0,10))out.createdAt=`${start}T12:00:00`;}
- const img=f.iconFile?.files?.[0];if(img)out.iconData=await fileArt(img);
- await dbTx(tasks,t=>{t.objectStore('activities').put(out);if(newSkill)t.objectStore('skills').put(newSkill)});S.modal=null;S.cardDrafts.clear();await sync();S.page='goals';render();toast('Quest gespeichert');}
-function onceQuestState(a){return a.completedAt?'completed':a.archivedAt?'archived':nowDay()<a.availableFrom?'planned':(a.availableUntil&&nowDay()>a.availableUntil)?'expired':'available'}
-function onceQuestRow(a){const state=onceQuestState(a),st={completed:'Abgeschlossen',archived:'Archiviert',planned:'Geplant',expired:'Abgelaufen',available:'Verfügbar'}[state],reward=(a.rewardSnapshot||a.rewardBindings||[]).reduce((sum,b)=>sum+b.xp,0);return `<div class="quest-one-time"><div class="quest-one-icon">${ico('scroll')}</div><div class="quest-one-text"><strong>${safe(a.name)}</strong><small>${st} · ${num(reward,1)} XP · ${a.availableUntil?'bis '+pretty(a.availableUntil):'ohne Zeitlimit'}</small><small>${(a.rewardBindings||[]).map(b=>safe(skillById(b.skillId)?.name||'Historischer Skill')).join(' · ')}</small></div><div class="quest-one-actions">${state==='available'?`<button data-act="once-complete" data-id="${safe(a.id)}" class="primary tiny">Abschließen</button>`:''}${!a.completedAt&&!a.archivedAt?`<button data-act="once-edit" data-id="${safe(a.id)}" class="tiny thin-button">Bearbeiten</button>`:''}${!a.completedAt&&!a.archivedAt?`<button data-act="once-archive" data-id="${safe(a.id)}" class="tiny thin-button">Archivieren</button>`:''}</div></div>`}
-function goalsView(){const archived=allGoals().filter(g=>!isOnce(g.a)&&!goals().some(x=>x.key===g.key));const once=S.activities.filter(isOnce);return `<div class="page-heading"><span class="eyebrow">DEIN ABENTEUER</span><div class="heading-row"><h1>Quests</h1></div></div><div class="goals-sticky">${calendarHTML()}</div><div class="goals-scroll"><div class="goals-actions goals-dual"><button class="thin-button" data-act="edit-day" data-day="${nowDay()}">${ico('edit')} Heute korrigieren</button><button class="thin-button" data-act="edit-day" data-day="${dayAdd(nowDay(),-1)}">${ico('edit')} Gestern korrigieren</button></div><section class="goal-section"><h3>${ico('scroll')} EINMALIGE QUESTS</h3>${once.map(onceQuestRow).join('')||'<p class="muted">Keine besonderen Missionen</p>'}</section>${goalGroups().map(gr=>`<section class="goal-section"><h3>${({day:'TÄGLICHE',week:'WÖCHENTLICHE',month:'MONATLICHE',year:'JÄHRLICHE'})[gr.p]} QUESTS</h3>${gr.items.map(g=>goalRow(g)).join('')||'<p class="muted">Keine aktiven Quests</p>'}</section>`).join('')}${archived.length?`<section class="goal-section archived-list"><h3>ARCHIV & NOCH NICHT GESTARTET</h3>${archived.map(g=>goalRow(g,true)).join('')}</section>`:''}</div>`}
-function settingsView(){return settingsView05().replace('<h1>Optionen</h1>','<h1>Einstellungen</h1>').replaceAll(ico('flame'),EMBER_SVG).replace('</section><section class="settings-panel"><h3>Private Daten','</section><section class="settings-panel"><h3>Private Daten')+'<details class="settings-panel mini-doc"><summary>So funktioniert Leveln</summary><p>Quests trainieren einen oder mehrere Skills. Die Summe aller Skill-XP erhöht dein Charakterlevel (1.000 XP je Level), jeder Skill steigt alle 100 XP um eine Stufe. Streakflammen zeigen erfolgreiche Serien, eine Schneeflocke markiert einen Streak-Freeze. Glut wird bei Streak-Meilensteinen verdient und für Freezes verwendet. Einmalige Missionen zahlen nur einmal XP.</p></details>'}
-function renderModal(){if(!S.modal){$('#modalRoot').innerHTML='';return}if(S.modal.type==='profile')return profileModal();if(S.modal.type==='skill')return skillModal();return renderModal05()}
-function profileModal(){const p=profile();sheet('Charakter gestalten',`<form id="profileForm" class="rpg-form"><label>Name<input name="name" maxlength="60" required value="${safe(p.name)}"></label><label>Beschreibung<textarea name="description" maxlength="350" rows="3">${safe(p.description)}</textarea></label><label>Themenfarbe<input type="color" name="color" value="${hex(p.color,'#67c65d')}"></label><label>Standard-Avatar<select name="avatar">${[['shield','Schild'],['star','Stern'],['spark','Magie'],['target','Ziel'],['book','Buch'],['game','Gaming'],['moon','Mond'],['sun','Sonne']].map(([id,name])=>`<option value="${id}" ${p.avatar===id?'selected':''}>${name}</option>`).join('')}</select></label><label>Eigenes Charakterbild<input name="image" type="file" accept="image/jpeg,image/png,image/webp"></label><label class="check-color"><input type="checkbox" name="removeImage"> Eigenes Bild entfernen</label><div class="sheet-actions"><button class="thin-button" type="button" data-act="modal-close">Abbrechen</button><button type="submit" class="primary">Charakter speichern</button></div></form>`)}
-function skillModal(){const s=skillById(S.modal.id);sheet(s?'Skill bearbeiten':'Neuen Skill erstellen',`<form id="skillForm" class="rpg-form"><label>Skillname<input name="name" maxlength="60" required value="${safe(s?.name||'')}"></label><label>Beschreibung<textarea name="description" maxlength="350" rows="3">${safe(s?.description||'')}</textarea></label><div class="field-grid"><label>Farbe<input type="color" name="color" value="${skillColor(s)}"></label><label>Symbol<select name="icon">${['spark','dumbbell','book','target','heart','game','wallet','star','moon','sun','shield'].map(k=>`<option value="${k}" ${s?.icon===k?'selected':''}>${k}</option>`).join('')}</select></label></div><div class="sheet-actions"><button type="button" data-act="modal-close" class="thin-button">Abbrechen</button><button type="submit" class="primary">Skill speichern</button></div></form>${s?`<button class="danger-button" data-act="skill-delete" data-id="${safe(s.id)}">Skill unwiderruflich entfernen</button>`:''}`)}
-async function saveProfile(form){const p=profile();p.name=form.elements.name.value.trim()||PROFILE_DEFAULT.name;p.description=form.elements.description.value.slice(0,350);p.color=hex(form.elements.color.value,PROFILE_DEFAULT.color);p.avatar=form.elements.avatar.value;if(form.elements.removeImage.checked)p.image='';if(form.elements.image.files[0])p.image=await fileArt(form.elements.image.files[0]);await saveMeta('characterProfile',p);S.modal=null;render();toast('Charakter aktualisiert')}
-async function saveSkill(form){const original=skillById(S.modal.id);const s=original?structuredClone(original):{id:uid(),createdAt:new Date().toISOString()};s.name=form.elements.name.value.trim();if(!s.name)throw Error('Bitte einen Skillnamen angeben.');s.description=form.elements.description.value.slice(0,350);s.color=hex(form.elements.color.value,profile().color);s.icon=form.elements.icon.value;s.updatedAt=new Date().toISOString();await dbPut('skills',s);S.modal=null;await sync();render();toast('Skill gespeichert')}
-async function deleteSkill(id){const skill=skillById(id);if(!skill)return;const total=skillXp(id);const other=S.skills.filter(s=>s.id!==id);const response=prompt(`Skill „${skill.name}“ löschen? (${num(total,1)} historische XP)\n\nA = XP nur beim Charakter lassen\nB = XP einem anderen Skill übertragen\n\nBitte A oder B eingeben.`,'A');if(!response)return;const pick=response.trim().toUpperCase();if(!['A','B'].includes(pick))return;let target=null;if(pick==='B'){if(!other.length)throw Error('Kein anderer Skill für die Übertragung vorhanden.');const names=other.map((s,i)=>`${i+1}: ${s.name}`).join('\n');const index=Number(prompt(`Wähle die Nummer des Zielskills:\n${names}`));if(!Number.isInteger(index)||index<1||index>other.length)return;target=other[index-1].id}
- if(!confirm(`Dieser Schritt ist unwiderruflich innerhalb der App. Historische Charakter-XP bleiben erhalten. Skill „${skill.name}“ endgültig entfernen?`))return;
- const fate={...meta('skillFates',{})};fate[id]=target;const nextActivities=S.activities.map(a=>{const x=structuredClone(a);if(isOnce(x)){
-  if(!x.completedAt)x.rewardBindings=(x.rewardBindings||[]).filter(b=>b.skillId!==id);
- }else{
-  // Preserve historical revisions, but create a new future version with deleted allocations omitted.
-  const today=dayAdd(nowDay(),1),base=structuredClone(revision(x,today));base.from=today;base.skillRates={minutes:(base.skillRates?.minutes||[]).filter(b=>b.skillId!==id),count:(base.skillRates?.count||[]).filter(b=>b.skillId!==id)};
-  x.revisions=(x.revisions||[]).filter(r=>r.from<today);x.revisions.push(base);x.revisions.sort((a,b)=>a.from.localeCompare(b.from));
- }return x});
- await dbTx(['activities','skills','meta'],tx=>{tx.objectStore('skills').delete(id);for(const a of nextActivities)tx.objectStore('activities').put(a);tx.objectStore('meta').put({key:'skillFates',value:fate})});S.modal=null;await sync();render();toast('Skill entfernt · vergangene XP bleiben erhalten')}
-async function completeOnce(id){const original=S.activities.find(a=>a.id===id&&isOnce(a));if(!original||onceQuestState(original)!=='available')throw Error('Die Mission ist nicht verfügbar.');if(!confirm(`„${original.name}“ einmalig abschließen und ${num((original.rewardBindings||[]).reduce((s,x)=>s+x.xp,0),1)} XP sammeln?`))return;const before=xpStats().sum,a=structuredClone(original);a.completedAt=new Date().toISOString();a.rewardSnapshot=structuredClone(a.rewardBindings||[]);await dbPut('activities',a);await sync();S.packet=null;S.card=0;render();sound(true);toast('Mission abgeschlossen!');if(Math.floor(xpStats().sum/1000)>Math.floor(before/1000))await celebrate(Math.floor(xpStats().sum/1000)+1)}
-async function archiveOnce(id){const original=S.activities.find(a=>a.id===id&&isOnce(a));if(!original||original.completedAt)return;if(!confirm('Einmalige Quest archivieren? Sie bleibt in der Historie.'))return;const a=structuredClone(original);a.archivedAt=new Date().toISOString();await dbPut('activities',a);await sync();render();toast('Quest archiviert')}
-async function startCard(g,up){if(!isOnce(g?.a))return startCard05(g,up);if(up){await completeOnce(g.a.id)}else{S.card=(S.card+1)%Math.max(1,goals(S.day).length);render();toast('Mission bleibt verfügbar')}}
-function checkinItems(){const d=dayAdd(nowDay(),-1);if(new Date().toTimeString().slice(0,5)<S.checkTime)return [];return goals(d).filter(g=>!isOnce(g.a)&&!entry(g,d)).map(g=>({g,d}))}
-function checkinModal(){const items=checkinItems();if(!items.length){S.modal=null;renderModal();return}sheet('Gestriger Check-in',`<p class="form-help">Gestern sind ${items.length} Questkarten offen geblieben. Du kannst sie jetzt im Protokoll nachtragen oder die Erinnerung schließen und selbst zum Kartendeck wechseln. Nach Ablauf des Folgetags werden Ersatzwerte eingetragen.</p><div class="check-list">${items.map(({g})=>`<div class="check-row"><div><strong>${safe(g.a.name)}</strong><small>${g.a.kind==='reduce'?'Zaubern':'Leveln'}</small></div><span>Offen</span></div>`).join('')}</div><div class="check-actions"><button class="primary" data-act="check-now">Jetzt nachtragen</button><button class="thin-button" data-act="check-later">Später</button><button class="thin-button" data-act="refuse-all">Verzichten</button></div>`,true)}
-function maybeCheckin(force=false){if(S.modal||S.packet)return;const items=checkinItems();if(items.length&&(force||!S.checkShown)){S.checkShown=true;S.modal={type:'checkin'};renderModal()}}
-function dbOpen(){return new Promise((resolve,reject)=>{const q=indexedDB.open(DB_NAME,2);q.onupgradeneeded=()=>{for(const n of STORES)if(!q.result.objectStoreNames.contains(n))q.result.createObjectStore(n,{keyPath:n==='meta'?'key':'id'})};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
-async function sync(){await sync05();S.skills=await dbAll('skills')}
-function migrateV1Data(input){const data=structuredClone(input);if(!Array.isArray(data.activities)||!Array.isArray(data.entries)||!Array.isArray(data.meta)||!Array.isArray(data.overrides))throw Error('Unvollständige Sicherung.');data.skills=data.skills||[];if(data.meta.some(x=>x.key==='schemaVersion'&&x.value>=2))return data;
- const originals=data.activities.filter(a=>!isOnce(a));for(const a of originals){const skillId='skill-legacy-'+a.id;if(!data.skills.some(s=>s.id===skillId))data.skills.push({id:skillId,name:a.name,description:'Aus früherem Ziel übernommen',color:a.kind==='reduce'?'#168a70':'#9be948',icon:CAT[a.category]?.[1]||'spark',createdAt:a.createdAt||new Date().toISOString(),migratedFrom:a.id});for(const r of a.revisions||[]){if(!r.skillRates)r.skillRates={minutes:[{skillId,rate:10}],count:r.countXp>0?[{skillId,rate:r.countXp}]:[]}}}
- const keys={schemaVersion:2,characterProfile:PROFILE_DEFAULT,skillFates:{}};for(const [key,value] of Object.entries(keys))if(!data.meta.some(x=>x.key===key))data.meta.push({key,value});return data;
+function renderModal() { if (!S.modal) {
+    $('#modalRoot').innerHTML = '';
+    return;
+} if (S.modal.type === 'profile')
+    return profileModal(); if (S.modal.type === 'skill')
+    return skillModal(); return renderModal05(); }
+async function saveProfile(form) { const p = profile(); p.name = form.elements.name.value.trim() || PROFILE_DEFAULT.name; p.description = form.elements.description.value.slice(0, 350); p.color = hex(form.elements.color.value, PROFILE_DEFAULT.color); p.avatar = form.elements.avatar.value; if (form.elements.removeImage.checked)
+    p.image = ''; if (form.elements.image.files[0])
+    p.image = await fileArt(form.elements.image.files[0]); await saveMeta('characterProfile', p); S.modal = null; render(); toast('Charakter aktualisiert'); }
+async function saveSkill(form) { const original = skillById(S.modal.id); const s = original ? structuredClone(original) : { id: uid(), createdAt: new Date().toISOString() }; s.name = form.elements.name.value.trim(); if (!s.name)
+    throw Error('Bitte einen Skillnamen angeben.'); s.description = form.elements.description.value.slice(0, 350); s.color = hex(form.elements.color.value, profile().color); s.icon = form.elements.icon.value; s.updatedAt = new Date().toISOString(); await dbPut('skills', s); S.modal = null; await sync(); render(); toast('Skill gespeichert'); }
+async function deleteSkill(id) {
+    const skill = skillById(id);
+    if (!skill)
+        return;
+    const total = skillXp(id);
+    const other = S.skills.filter(s => s.id !== id);
+    const response = prompt(`Skill „${skill.name}“ löschen? (${num(total, 1)} historische XP)\n\nA = XP nur beim Charakter lassen\nB = XP einem anderen Skill übertragen\n\nBitte A oder B eingeben.`, 'A');
+    if (!response)
+        return;
+    const pick = response.trim().toUpperCase();
+    if (!['A', 'B'].includes(pick))
+        return;
+    let target = null;
+    if (pick === 'B') {
+        if (!other.length)
+            throw Error('Kein anderer Skill für die Übertragung vorhanden.');
+        const names = other.map((s, i) => `${i + 1}: ${s.name}`).join('\n');
+        const index = Number(prompt(`Wähle die Nummer des Zielskills:\n${names}`));
+        if (!Number.isInteger(index) || index < 1 || index > other.length)
+            return;
+        target = other[index - 1].id;
+    }
+    if (!confirm(`Dieser Schritt ist unwiderruflich innerhalb der App. Historische Charakter-XP bleiben erhalten. Skill „${skill.name}“ endgültig entfernen?`))
+        return;
+    const fate = { ...meta('skillFates', {}) };
+    fate[id] = target;
+    const nextActivities = S.activities.map(a => {
+        const x = structuredClone(a);
+        if (isOnce(x)) {
+            if (!x.completedAt)
+                x.rewardBindings = (x.rewardBindings || []).filter(b => b.skillId !== id);
+        }
+        else {
+            // Preserve historical revisions, but create a new future version with deleted allocations omitted.
+            const today = dayAdd(nowDay(), 1), base = structuredClone(revision(x, today));
+            base.from = today;
+            base.skillRates = { minutes: (base.skillRates?.minutes || []).filter(b => b.skillId !== id), count: (base.skillRates?.count || []).filter(b => b.skillId !== id) };
+            x.revisions = (x.revisions || []).filter(r => r.from < today);
+            x.revisions.push(base);
+            x.revisions.sort((a, b) => a.from.localeCompare(b.from));
+        }
+        return x;
+    });
+    await dbTx(['activities', 'skills', 'meta'], tx => { tx.objectStore('skills').delete(id); for (const a of nextActivities)
+        tx.objectStore('activities').put(a); tx.objectStore('meta').put({ key: 'skillFates', value: fate }); });
+    S.modal = null;
+    await sync();
+    render();
+    toast('Skill entfernt · vergangene XP bleiben erhalten');
 }
-async function migrateInstalled(){const ver=meta('schemaVersion',1);if(ver>=2)return;const converted=migrateV1Data({activities:S.activities,entries:S.entries,overrides:S.overrides,meta:S.meta});validateBackup(converted);await dbTx(STORES,t=>{for(const a of converted.activities)t.objectStore('activities').put(a);for(const s of converted.skills)t.objectStore('skills').put(s);for(const m of converted.meta)t.objectStore('meta').put(m)});await sync()}
-function validateBackup(data){for(const n of STORES){if(!Array.isArray(data[n])||data[n].length>50000)throw Error('Ungültige Daten im Bereich '+n);let seen=new Set();for(const x of data[n]){const k=n==='meta'?'key':'id';if(!x||typeof x!=='object'||typeof x[k]!=='string'||seen.has(x[k]))throw Error(`Ungültige oder doppelte ID in ${n}`);seen.add(x[k]);}}
- const ids=new Set(data.skills.map(s=>s.id));if(data.activities.some(a=>!a.id||!Array.isArray(a.revisions)))throw Error('Ungültige Quest');for(const a of data.activities)for(const r of a.revisions||[])for(const k of ['minutes','count'])for(const b of r.skillRates?.[k]||[])if(!ids.has(b.skillId)&&!(data.meta.find(x=>x.key==='skillFates')?.value||{}).hasOwnProperty(b.skillId))throw Error('XP-Verknüpfung ohne Skill');return true;}
-async function setup(){db=await dbOpen();await sync();if(!meta('schemaVersion'))await migrateInstalled();if(!meta('initialized',false))await saveMeta('initialized',true);if(!S.started){await saveMeta('v04StartedOn',nowDay());S.started=nowDay()}
- S.skills=await dbAll('skills');await reconcile();render();maybeCheckin();if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(console.warn)}
-async function exportBackup(){const data={activities:S.activities,entries:S.entries,overrides:S.overrides,meta:S.meta,skills:S.skills};const backup={format:'progress-local-backup',version:2,exportedAt:new Date().toISOString(),appVersion:'0.6',data};const url=URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`Leveln-Backup-v2-${nowDay()}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
-async function importBackup(file){if(file.size>60*1024*1024)throw Error('Backup größer als 60 MB.');const json=JSON.parse(await file.text());if(json.format!=='progress-local-backup'||![1,2].includes(json.version))throw Error('Unbekanntes Backupformat.');const data=json.version===1?migrateV1Data(json.data):json.data;validateBackup(data);if(!confirm(`Backupformat ${json.version} erkannt. ${data.activities.length} Quests und ${data.entries.length} Einträge importieren? Die lokale Datenbank wird vollständig ersetzt.`))return;
- await dbTx(STORES,t=>{for(const n of STORES){const st=t.objectStore(n);st.clear();for(const r of data[n])st.put(r)}});S.packet=null;S.modal=null;await sync();S.day=nowDay();S.page='today';S.card=0;await reconcile();render();toast(json.version===1?'Backup 0.5 migriert und importiert':'Backup erfolgreich importiert')}
-async function handleRPGAction(act,el){
- if(act==='quest-filter'){S.questFilter=el.dataset.filter;render();return true}
- if(act==='card-toggle'){S.cardExpanded=!S.cardExpanded;render();return true}
- if(act==='tab'){S.moreOpen=false;const p=el.dataset.page;if(p==='today'&&S.page==='today'){S.day=S.day===nowDay()?dayAdd(nowDay(),-1):nowDay();S.card=0;S.cardExpanded=false;S.cardDrafts.clear();render();return true}S.cardExpanded=false;go(p);return true}
- if(act==='settings-toggle'){S.moreOpen=false;if(S.page==='settings')go(S.previousPage||'today');else{S.previousPage=S.page;go('settings')}return true}
- if(act==='profile-edit'){S.modal={type:'profile'};renderModal();return true}
- if(act==='skill-new'){S.modal={type:'skill'};renderModal();return true}
- if(act==='skill-edit'){S.modal={type:'skill',id:el.dataset.id};renderModal();return true}
- if(act==='skill-delete'){await deleteSkill(el.dataset.id);return true}
- if(act==='mana-confirm'){await answerManaCheckin('confirmed');return true}
- if(act==='mana-correct'){S.modal={type:'edit-day',day:dayAdd(nowDay(),-1),onlyKey:S.checkinQueue?.[0]?.key||null};renderModal();return true}
- if(act==='mana-unknown'){await answerManaCheckin('unknown');return true}
- if(act==='once-complete'){await completeOnce(el.dataset.id);return true}
- if(act==='once-edit'){S.modal={type:'edit-goal',activityId:el.dataset.id};renderModal();return true}
- if(act==='once-archive'){await archiveOnce(el.dataset.id);return true}
- if(act==='check-later'){S.modal=null;S.checkShown=true;renderModal();return true}
- if(act==='check-now'){S.modal={type:'edit-day',day:dayAdd(nowDay(),-1)};renderModal();return true}
- if(act==='refuse-all'){if(!confirm('Alle gestrigen offenen Einträge bewusst nicht erfassen?'))return true;for(const {g,d} of checkinItems())await refuse(g,d);S.modal=null;await reconcileWallet();render();toast('Gestrige Einträge abgeschlossen');return true}
- if(act==='binding-add'){const form=el.closest('form'),once=form.elements.questType.value==='once';const target=form.querySelector(once?'#onceRewards':'#recurringRates');target.insertAdjacentHTML('beforeend',once?rewardRowHTML({skillId:S.skills[0]?.id||'__new__',xp:10}):rateRowHTML({metric:'minutes',skillId:S.skills[0]?.id||'__new__',rate:0}));return true}
- if(act==='binding-remove'){el.closest('.binding-row')?.remove();return true}
- return false;
+async function completeOnce(id) { const original = S.activities.find(a => a.id === id && isOnce(a)); if (!original || onceQuestState(original) !== 'available')
+    throw Error('Die Mission ist nicht verfügbar.'); if (!confirm(`„${original.name}“ einmalig abschließen und ${num((original.rewardBindings || []).reduce((s, x) => s + x.xp, 0), 1)} XP sammeln?`))
+    return; const before = xpStats().sum, a = structuredClone(original); a.completedAt = new Date().toISOString(); a.rewardSnapshot = structuredClone(a.rewardBindings || []); await dbPut('activities', a); await sync(); S.packet = null; S.card = 0; render(); sound(true); toast('Mission abgeschlossen!'); if (Math.floor(xpStats().sum / 1000) > Math.floor(before / 1000))
+    await celebrate(Math.floor(xpStats().sum / 1000) + 1); }
+async function archiveOnce(id) { const original = S.activities.find(a => a.id === id && isOnce(a)); if (!original || original.completedAt)
+    return; if (!confirm('Einmalige Quest archivieren? Sie bleibt in der Historie.'))
+    return; const a = structuredClone(original); a.archivedAt = new Date().toISOString(); await dbPut('activities', a); await sync(); render(); toast('Quest archiviert'); }
+// DATENBANK: Bestehenden IndexedDB-Namen und Object Stores unverändert lassen.
+// Ein Wechsel der DB-Kennung würde vorhandene iPhone-Daten unsichtbar machen.
+function dbOpen() { return new Promise((resolve, reject) => { const q = indexedDB.open(DB_NAME, 2); q.onupgradeneeded = () => { for (const n of STORES)
+    if (!q.result.objectStoreNames.contains(n))
+        q.result.createObjectStore(n, { keyPath: n === 'meta' ? 'key' : 'id' }); }; q.onsuccess = () => resolve(q.result); q.onerror = () => reject(q.error); }); }
+async function sync() { await sync05(); S.skills = await dbAll('skills'); }
+function validateBackup(data) {
+    for (const n of STORES) {
+        if (!Array.isArray(data[n]) || data[n].length > 50000)
+            throw Error('Ungültige Daten im Bereich ' + n);
+        let seen = new Set();
+        for (const x of data[n]) {
+            const k = n === 'meta' ? 'key' : 'id';
+            if (!x || typeof x !== 'object' || typeof x[k] !== 'string' || seen.has(x[k]))
+                throw Error(`Ungültige oder doppelte ID in ${n}`);
+            seen.add(x[k]);
+        }
+    }
+    const ids = new Set(data.skills.map(s => s.id));
+    if (data.activities.some(a => !a.id || !Array.isArray(a.revisions)))
+        throw Error('Ungültige Quest');
+    for (const a of data.activities)
+        for (const r of a.revisions || [])
+            for (const k of ['minutes', 'count'])
+                for (const b of r.skillRates?.[k] || [])
+                    if (!ids.has(b.skillId) && !(data.meta.find(x => x.key === 'skillFates')?.value || {}).hasOwnProperty(b.skillId))
+                        throw Error('XP-Verknüpfung ohne Skill');
+    return true;
 }
-function handleAction(act,el){
- // Safari requires a live user activation to open its native share dialog.
- // Do not insert an awaited promise before exportBackup() is invoked.
- if(act==='export'){S.moreOpen=false;nav();exportBackup().catch(showError);return}
- if(act==='more-toggle'){S.moreOpen=!S.moreOpen;nav();return}
- if(act==='icon-open'){openIconGallery(el);return}
- if(act==='icon-choice'){chooseIcon(el.dataset.value);return}
- if(act==='icon-category'){S.iconCategory=el.dataset.category;renderIconGallery();return}
- if(act==='icon-close'){closeIconGallery();return}
- (async()=>{if(await handleRPGAction(act,el))return;await handleAction05(act,el)})().catch(showError)
+async function handleRPGAction(act, el) {
+    if (act === 'quest-filter') {
+        S.questFilter = el.dataset.filter;
+        render();
+        return true;
+    }
+    if (act === 'card-toggle') {
+        S.cardExpanded = !S.cardExpanded;
+        render();
+        return true;
+    }
+    if (act === 'tab') {
+        S.moreOpen = false;
+        const p = el.dataset.page;
+        if (p === 'today' && S.page === 'today') {
+            S.day = S.day === nowDay() ? dayAdd(nowDay(), -1) : nowDay();
+            S.card = 0;
+            S.cardExpanded = false;
+            S.cardDrafts.clear();
+            render();
+            return true;
+        }
+        S.cardExpanded = false;
+        go(p);
+        return true;
+    }
+    if (act === 'settings-toggle') {
+        S.moreOpen = false;
+        if (S.page === 'settings')
+            go(S.previousPage || 'today');
+        else {
+            S.previousPage = S.page;
+            go('settings');
+        }
+        return true;
+    }
+    if (act === 'profile-edit') {
+        S.modal = { type: 'profile' };
+        renderModal();
+        return true;
+    }
+    if (act === 'skill-new') {
+        S.modal = { type: 'skill' };
+        renderModal();
+        return true;
+    }
+    if (act === 'skill-edit') {
+        S.modal = { type: 'skill', id: el.dataset.id };
+        renderModal();
+        return true;
+    }
+    if (act === 'skill-delete') {
+        await deleteSkill(el.dataset.id);
+        return true;
+    }
+    if (act === 'mana-confirm') {
+        await answerManaCheckin('confirmed');
+        return true;
+    }
+    if (act === 'mana-correct') {
+        S.modal = { type: 'edit-day', day: dayAdd(nowDay(), -1), onlyKey: S.checkinQueue?.[0]?.key || null };
+        renderModal();
+        return true;
+    }
+    if (act === 'mana-unknown') {
+        await answerManaCheckin('unknown');
+        return true;
+    }
+    if (act === 'once-complete') {
+        await completeOnce(el.dataset.id);
+        return true;
+    }
+    if (act === 'once-edit') {
+        S.modal = { type: 'edit-goal', activityId: el.dataset.id };
+        renderModal();
+        return true;
+    }
+    if (act === 'once-archive') {
+        await archiveOnce(el.dataset.id);
+        return true;
+    }
+    if (act === 'check-later') {
+        S.modal = null;
+        S.checkShown = true;
+        renderModal();
+        return true;
+    }
+    if (act === 'check-now') {
+        S.modal = { type: 'edit-day', day: dayAdd(nowDay(), -1) };
+        renderModal();
+        return true;
+    }
+    if (act === 'refuse-all') {
+        if (!confirm('Alle gestrigen offenen Einträge bewusst nicht erfassen?'))
+            return true;
+        for (const { g, d } of checkinItems())
+            await refuse(g, d);
+        S.modal = null;
+        await reconcileWallet();
+        render();
+        toast('Gestrige Einträge abgeschlossen');
+        return true;
+    }
+    if (act === 'binding-add') {
+        const form = el.closest('form'), once = form.elements.questType.value === 'once';
+        const target = form.querySelector(once ? '#onceRewards' : '#recurringRates');
+        target.insertAdjacentHTML('beforeend', once ? rewardRowHTML({ skillId: S.skills[0]?.id || '__new__', xp: 10 }) : rateRowHTML({ metric: 'minutes', skillId: S.skills[0]?.id || '__new__', rate: 0 }));
+        return true;
+    }
+    if (act === 'binding-remove') {
+        el.closest('.binding-row')?.remove();
+        return true;
+    }
+    return false;
 }
-
-
+// ZENTRALER AKTIONSROUTER: data-act in gerenderten HTML-Komponenten.
+// Legacy-Routen können weiterhin über handleAction05 erreichbar sein.
+function handleAction(act, el) {
+    // Safari requires a live user activation to open its native share dialog.
+    // Do not insert an awaited promise before exportBackup() is invoked.
+    if (act === 'export') {
+        S.moreOpen = false;
+        nav();
+        exportBackup().catch(showError);
+        return;
+    }
+    if (act === 'more-toggle') {
+        S.moreOpen = !S.moreOpen;
+        nav();
+        return;
+    }
+    if (act === 'icon-open') {
+        openIconGallery(el);
+        return;
+    }
+    if (act === 'icon-choice') {
+        chooseIcon(el.dataset.value);
+        return;
+    }
+    if (act === 'icon-category') {
+        S.iconCategory = el.dataset.category;
+        renderIconGallery();
+        return;
+    }
+    if (act === 'icon-close') {
+        closeIconGallery();
+        return;
+    }
+    (async () => { if (await handleRPGAction(act, el))
+        return; await handleAction05(act, el); })().catch(showError);
+}
 /* Leveln 0.7 · UI overrides — stable legacy data keys retained (reduce/save = Zaubern). */
-const MANA_CRYSTAL='<svg class="mana-crystal" viewBox="0 0 44 56" role="img" aria-label="Mana-Kristall"><path d="M21 2 38 19 34 40 21 54 7 40 4 19Z" fill="#071b53" stroke="#7ccfff" stroke-width="1.5"/><path d="M21 2 21 54 4 19Z" fill="#357bd3"/><path d="M21 2 38 19 34 40 21 54Z" fill="#10418f"/><path d="M4 19 21 25 38 19 34 40 21 54 7 40Z" fill="none" stroke="#83d4ff" stroke-width="1.4"/><path d="M21 2V25L13 38 21 54" fill="none" stroke="#d1f4ff" stroke-width="1.5"/><path d="m4 19 17 6 17-6" stroke="#c4f3ff" fill="none" stroke-width="1.2"/></svg>';
-const ICON_EXTRA={person:'<circle cx="12" cy="6" r="3"/><path d="M6 22v-5q0-5 6-5t6 5v5M9 18h6"/>',mage:'<path d="m5 17 7-15 7 15zM5 17l-2 4h18l-2-4M12 8v5m-2-2h4"/>',knight:'<path d="M5 21V9l7-7 7 7v12M8 14h8m-6 7v-5h4v5M5 9h14"/>',robot:'<rect x="4" y="7" width="16" height="14" rx="3"/><path d="M12 7V3m-4 9h1m6 0h1M8 17h8M2 12h2m16 0h2"/>',cat:'<path d="M4 11 3 3l6 4h6l6-4-1 8q3 10-8 10T4 11Z"/><path d="M8 13h.01M16 13h.01m-6 4h4m-2-2v2"/>',wolf:'<path d="M3 3 9 8 12 6l3 2 6-5-1 12-8 7-8-7Z"/><path d="M8 13h.01m8 0h.01M10 17h4"/>',fox:'<path d="M3 5 9 9l3-2 3 2 6-4-2 11-7 6-7-6Z"/><path d="M8 14h.01m8 0h.01m-4 3 2-1-2-1-2 1z"/>',owl:'<path d="M3 4 8 7 12 5l4 2 5-3v12l-9 6-9-6Z"/><circle cx="8.5" cy="12.5" r="2"/><circle cx="15.5" cy="12.5" r="2"/><path d="m12 15-2 2h4z"/>',dragon:'<path d="M6 20 3 12l4-6 4 2 7-6 3 5-6 2 3 6-5 7-3-5Z"/><path d="m12 8-2 6 4 3M17 6h.01"/>',unicorn:'<path d="m11 3 3 6 5 2 1 10H5l2-8-3-4 5 1zM11 3l-2 7m7 4h.01"/>',phoenix:'<path d="M12 22C2 21 3 11 6 7c0 5 3 7 5 8-1-6 4-10 6-13-1 6 5 11 4 14-1 4-4 6-9 6Z"/><path d="M12 21c-4-4 2-7 1-11 5 4 4 8-1 11Z"/>',paw:'<path d="M7 13c-7 6 4 11 5 6 1 5 12 0 5-6-3-4-7-4-10 0z"/><circle cx="5" cy="8" r="1"/><circle cx="10" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="20" cy="8" r="1"/>'};
-Object.assign(PATH,ICON_EXTRA);
-function iconChoices(current){const recommended=['spark','shield','user','person','mage','knight','robot','cat','wolf','fox','owl','dragon','unicorn','phoenix','paw','star','moon','sun','heart','book','game','dumbbell','target','palette','wallet','phone'];return recommended.map(k=>`<option value="${k}" ${k===current?'selected':''}>${({person:'Mensch',mage:'Magier',knight:'Ritter',robot:'Roboter',cat:'Katze',wolf:'Wolf',fox:'Fuchs',owl:'Eule',dragon:'Drache',unicorn:'Einhorn',phoenix:'Phönix',paw:'Tierpfote'})[k]||k}</option>`).join('')}
-function shortCode(name){return String(name||'QUEST').trim().replace(/[^a-zA-ZäöüÄÖÜß0-9]/g,'').toUpperCase().slice(0,5)||'QUEST'}
-function suggestStandard(period,value,metric,startDate=nowDay(),mode='calendar'){if(value===null||value===''||value===undefined)return '';const total=Number(value);if(metric==='count')return period==='day'?total:1;let days=({day:1,week:7,month:30,year:365}[period]||1);if(mode!=='restart'&&(period==='month'||period==='year')){const anchor=calendarStart(period,startDate);days=dayDiff(anchor,calendarNext(period,anchor))}return Number((total/days).toFixed(2));}
-S.questFilter='all';S.cardExpanded=false;S.cardDrafts=new Map();
-function cardDraft(g){const key=entryKey(g,S.day),stored=S.cardDrafts.get(key);if(stored)return stored;const e=entry(g,S.day);const values={};for(const k of metricKeys(g.r)){const configured=g.r[k==='minutes'?'standardMinutes':'standardCount'];values[k]=e&&finite(e[k])?String(e[k]):configured!==null&&configured!==undefined?String(configured):''}S.cardDrafts.set(key,values);return values}
-function manaInPeriod(g){if(g.a.kind!=='reduce')return null;const p=currentPeriod(g,S.day);if(!p)return null;let used={minutes:0,count:0};for(const d of allDays(p.start,dayAdd(S.day,1))){const e=entry(g,d);if(e)for(const k of metricKeys(g.r))if(finite(e[k]))used[k]+=e[k]}return {p,used};}
-function manaPanel(g){const d=manaInPeriod(g);if(!d)return '';const r=g.r,parts=metricKeys(r).map(k=>{let all=ruleValue(r,k),used=d.used[k],left=Math.max(0,all-used);return `<div class="mana-row">${MANA_CRYSTAL}<span><b>${num(left,1)} / ${num(all,1)} ${k==='minutes'?'min':'×'}</b><small>Mana übrig ${k==='minutes'?'(Zeit)':'(Anzahl)'}</small></span></div>`});return `<div class="mana-budget">${parts.join('')}</div>`}
-function cardHtml(g,behind=false){
- const a=g.a,once=isOnce(a),color=once?hex(a.color,S.colors.level):goalColor(g),k=safe(g.key),abbr=shortCode(a.shortName||a.name),r=g.r,expanded=S.cardExpanded&&!behind,draft=once?{}:cardDraft(g),e=once?null:entry(g,S.day),keys=once?[]:metricKeys(r);
- const meters=once?'':keys.map(metric=>`<label>${metric==='minutes'?'Minuten buchen':'Anzahl buchen'}<input class="card-entry-input" data-metric="${metric}" data-goal="${k}" type="number" inputmode="decimal" min="0" step="${metric==='minutes'?'0.01':'1'}" value="${safe(draft[metric]??'')}" placeholder="Ausspielmenge"></label>`).join('');
- const st=once?'':stData(g).current, assess=once?null:currentPeriod(g,S.day),evaluation=assess?assessment(g,assess):null;
- const remaining=once?false:a.kind==='reduce'&&manaInPeriod(g)&&keys.some(m=>{const x=manaInPeriod(g);return ruleValue(r,m)-x.used[m]>0;});
- const success=!once&&a.kind==='build'&&evaluation?.state==='success';
- const glow=success?'level-glow':remaining?'mana-glow':'';
- const current=once?'':keys.map(m=>`${m==='minutes'?num(e?.minutes??0,1)+' min':num(e?.count??0,0)+' ×'}`).join(' · ');
- const subtext=once?'':e?`${a.kind==='reduce'?'Heute verbraucht':'Heute trainiert'}: ${current}`:'Noch keine Buchung heute';
- return `<div class="play-card ${behind?'peek':'face'} ${glow} ${once?'once-card':''}" style="--card-accent:${color}" ${behind?'':'id="activeCard"'} data-goal="${k}"><div class="card-header"><span class="card-pill">${once?'EINMALIG':a.kind==='reduce'?'ZAUBERN':'LEVELN'}</span><span class="card-head-icon">${once?ico('scroll'):a.kind==='reduce'?ico('rune'):ico('pixel')}</span></div><div class="card-main">${art(a)}<h2>${safe(a.name)}</h2><p>${once?(a.availableUntil?'Bis '+pretty(a.availableUntil):'Ohne Zeitlimit')+' · einmalige Quest':safe(detailGoal(g))}</p>${!once&&a.kind==='reduce'?manaPanel(g):''}${!once?`<small class="card-daily-tally">${safe(subtext)}</small>`:''}</div>${!behind&&!once&&meters?`<div class="card-collapsible"><button class="card-entry-toggle" data-act="card-toggle" aria-expanded="${expanded}">${ico(expanded?'chevron':'edit')} Neue Menge ${expanded?'schließen':'eintragen'}</button>${expanded?`<div class="card-entry-fields">${meters}</div>`:''}</div>`:''}<div class="card-foot"><span class="streak">${once?ico('check')+' '+num((a.rewardBindings||[]).reduce((sum,x)=>sum+x.xp,0),1)+' XP':ico('flame')+' '+st}</span><b class="card-short">${safe(abbr)}</b><span class="played-label">${once?'QUEST':e?'BUCHUNG':'BEREIT'}</span></div></div>`;
+const MANA_CRYSTAL = '<svg class="mana-crystal" viewBox="0 0 44 56" role="img" aria-label="Mana-Kristall"><path d="M21 2 38 19 34 40 21 54 7 40 4 19Z" fill="#071b53" stroke="#7ccfff" stroke-width="1.5"/><path d="M21 2 21 54 4 19Z" fill="#357bd3"/><path d="M21 2 38 19 34 40 21 54Z" fill="#10418f"/><path d="M4 19 21 25 38 19 34 40 21 54 7 40Z" fill="none" stroke="#83d4ff" stroke-width="1.4"/><path d="M21 2V25L13 38 21 54" fill="none" stroke="#d1f4ff" stroke-width="1.5"/><path d="m4 19 17 6 17-6" stroke="#c4f3ff" fill="none" stroke-width="1.2"/></svg>';
+const ICON_EXTRA = { person: '<circle cx="12" cy="6" r="3"/><path d="M6 22v-5q0-5 6-5t6 5v5M9 18h6"/>', mage: '<path d="m5 17 7-15 7 15zM5 17l-2 4h18l-2-4M12 8v5m-2-2h4"/>', knight: '<path d="M5 21V9l7-7 7 7v12M8 14h8m-6 7v-5h4v5M5 9h14"/>', robot: '<rect x="4" y="7" width="16" height="14" rx="3"/><path d="M12 7V3m-4 9h1m6 0h1M8 17h8M2 12h2m16 0h2"/>', cat: '<path d="M4 11 3 3l6 4h6l6-4-1 8q3 10-8 10T4 11Z"/><path d="M8 13h.01M16 13h.01m-6 4h4m-2-2v2"/>', wolf: '<path d="M3 3 9 8 12 6l3 2 6-5-1 12-8 7-8-7Z"/><path d="M8 13h.01m8 0h.01M10 17h4"/>', fox: '<path d="M3 5 9 9l3-2 3 2 6-4-2 11-7 6-7-6Z"/><path d="M8 14h.01m8 0h.01m-4 3 2-1-2-1-2 1z"/>', owl: '<path d="M3 4 8 7 12 5l4 2 5-3v12l-9 6-9-6Z"/><circle cx="8.5" cy="12.5" r="2"/><circle cx="15.5" cy="12.5" r="2"/><path d="m12 15-2 2h4z"/>', dragon: '<path d="M6 20 3 12l4-6 4 2 7-6 3 5-6 2 3 6-5 7-3-5Z"/><path d="m12 8-2 6 4 3M17 6h.01"/>', unicorn: '<path d="m11 3 3 6 5 2 1 10H5l2-8-3-4 5 1zM11 3l-2 7m7 4h.01"/>', phoenix: '<path d="M12 22C2 21 3 11 6 7c0 5 3 7 5 8-1-6 4-10 6-13-1 6 5 11 4 14-1 4-4 6-9 6Z"/><path d="M12 21c-4-4 2-7 1-11 5 4 4 8-1 11Z"/>', paw: '<path d="M7 13c-7 6 4 11 5 6 1 5 12 0 5-6-3-4-7-4-10 0z"/><circle cx="5" cy="8" r="1"/><circle cx="10" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="20" cy="8" r="1"/>' };
+Object.assign(PATH, ICON_EXTRA);
+function shortCode(name) { return String(name || 'QUEST').trim().replace(/[^a-zA-ZäöüÄÖÜß0-9]/g, '').toUpperCase().slice(0, 5) || 'QUEST'; }
+function suggestStandard(period, value, metric, startDate = nowDay(), mode = 'calendar') { if (value === null || value === '' || value === undefined)
+    return ''; const total = Number(value); if (metric === 'count')
+    return period === 'day' ? total : 1; let days = ({ day: 1, week: 7, month: 30, year: 365 }[period] || 1); if (mode !== 'restart' && (period === 'month' || period === 'year')) {
+    const anchor = calendarStart(period, startDate);
+    days = dayDiff(anchor, calendarNext(period, anchor));
+} return Number((total / days).toFixed(2)); }
+S.questFilter = 'all';
+S.cardExpanded = false;
+S.cardDrafts = new Map();
+// KARTEN-DARSTELLUNG: Darstellung vom separat berechneten Datenstatus trennen.
+function cardHtml(g, behind = false) {
+    const a = g.a, once = isOnce(a), color = once ? hex(a.color, S.colors.level) : goalColor(g), k = safe(g.key), abbr = shortCode(a.shortName || a.name), r = g.r, expanded = S.cardExpanded && !behind, draft = once ? {} : cardDraft(g), e = once ? null : entry(g, S.day), keys = once ? [] : metricKeys(r);
+    const meters = once ? '' : keys.map(metric => `<label>${metric === 'minutes' ? 'Minuten buchen' : 'Anzahl buchen'}<input class="card-entry-input" data-metric="${metric}" data-goal="${k}" type="number" inputmode="decimal" min="0" step="${metric === 'minutes' ? '0.01' : '1'}" value="${safe(draft[metric] ?? '')}" placeholder="Ausspielmenge"></label>`).join('');
+    const st = once ? '' : stData(g).current, assess = once ? null : currentPeriod(g, S.day), evaluation = assess ? assessment(g, assess) : null;
+    const remaining = once ? false : a.kind === 'reduce' && manaInPeriod(g) && keys.some(m => { const x = manaInPeriod(g); return ruleValue(r, m) - x.used[m] > 0; });
+    const success = !once && a.kind === 'build' && evaluation?.state === 'success';
+    const glow = success ? 'level-glow' : remaining ? 'mana-glow' : '';
+    const current = once ? '' : keys.map(m => `${m === 'minutes' ? num(e?.minutes ?? 0, 1) + ' min' : num(e?.count ?? 0, 0) + ' ×'}`).join(' · ');
+    const subtext = once ? '' : e ? `${a.kind === 'reduce' ? 'Heute verbraucht' : 'Heute trainiert'}: ${current}` : 'Noch keine Buchung heute';
+    return `<div class="play-card ${behind ? 'peek' : 'face'} ${glow} ${once ? 'once-card' : ''}" style="--card-accent:${color}" ${behind ? '' : 'id="activeCard"'} data-goal="${k}"><div class="card-header"><span class="card-pill">${once ? 'EINMALIG' : a.kind === 'reduce' ? 'ZAUBERN' : 'LEVELN'}</span><span class="card-head-icon">${once ? ico('scroll') : a.kind === 'reduce' ? ico('rune') : ico('pixel')}</span></div><div class="card-main">${art(a)}<h2>${safe(a.name)}</h2><p>${once ? (a.availableUntil ? 'Bis ' + pretty(a.availableUntil) : 'Ohne Zeitlimit') + ' · einmalige Quest' : safe(detailGoal(g))}</p>${!once && a.kind === 'reduce' ? manaPanel(g) : ''}${!once ? `<small class="card-daily-tally">${safe(subtext)}</small>` : ''}</div>${!behind && !once && meters ? `<div class="card-collapsible"><button class="card-entry-toggle" data-act="card-toggle" aria-expanded="${expanded}">${ico(expanded ? 'chevron' : 'edit')} Neue Menge ${expanded ? 'schließen' : 'eintragen'}</button>${expanded ? `<div class="card-entry-fields">${meters}</div>` : ''}</div>` : ''}<div class="card-foot"><span class="streak">${once ? ico('check') + ' ' + num((a.rewardBindings || []).reduce((sum, x) => sum + x.xp, 0), 1) + ' XP' : ico('flame') + ' ' + st}</span><b class="card-short">${safe(abbr)}</b><span class="played-label">${once ? 'QUEST' : e ? 'BUCHUNG' : 'BEREIT'}</span></div></div>`;
 }
-function todayView(){if(!canEdit(S.day))S.day=nowDay();const gs=goals(S.day);S.card=Math.min(Math.max(0,S.card),Math.max(0,gs.length-1));const g=gs[S.card],edited=gs.filter(x=>cardStatus(x,S.day)!=='open').length;
- return `<div class="today-head"><div class="today-topline"><span>LEVELN · PLAY YOUR DAY</span><span>${edited}/${gs.length} erfasst</span></div>${xpBar()}</div><div class="deck-area">${g?`<div class="deck-stack">${[2,1].map(i=>{if(gs.length<=i)return '';const pg=gs[(S.card+i)%gs.length];return `<div class="peek-wrap peek-${i}">${cardHtml(pg,true)}</div>`}).join('')}${cardHtml(g)}<div class="deck-gesture-tail" role="presentation" aria-hidden="true"></div></div>`:`<div class="empty-state">${ico('scroll')}<h2>Keine Questkarten</h2><p>Lege im Questboard deine erste Quest an.</p><button class="primary" data-act="go-goals">Questboard öffnen</button></div>`}</div><div class="deck-caption">${gs.length?`${S.card+1}/${gs.length} Karten · ${pretty(S.day,{day:'numeric',month:'short'})}`:pretty(S.day,{day:'numeric',month:'short'})}</div>`}
-function nav(){
- const tabs=[['today','home',S.day===nowDay()?'Heute':'Gestern'],['goals','goals','Quests'],['character','user','Charakter'],['stats','chart','Statistik']];
- $('#bottomNav').innerHTML=`<nav class="tabs tabs-five">${tabs.map(([p,i,t])=>`<button class="tab ${S.page===p?'on':''}" data-act="tab" data-page="${p}">${p==='character'?avatarMarkup(profile(),'nav-avatar'):ico(i)}<small>${t}</small></button>`).join('')}<div class="nav-more-wrap"><button class="tab nav-more ${S.moreOpen?'on':''}" data-act="more-toggle" aria-label="Mehr Optionen" aria-expanded="${!!S.moreOpen}">${ico('dots')}<small>Mehr</small></button>${S.moreOpen?`<div class="nav-more-pop"><button data-act="export">${ico('save')} Backup sichern</button><button data-act="settings-toggle">${ico('settings')} ${S.page==='settings'?'Zurück':'Einstellungen'}</button></div>`:''}</div></nav>`;
- if($('#settingsShortcut'))$('#settingsShortcut').innerHTML='';
- if($('#backupShortcut'))$('#backupShortcut').innerHTML='';
+function todayView() {
+    if (!canEdit(S.day))
+        S.day = nowDay();
+    const gs = goals(S.day);
+    S.card = Math.min(Math.max(0, S.card), Math.max(0, gs.length - 1));
+    const g = gs[S.card], edited = gs.filter(x => cardStatus(x, S.day) !== 'open').length;
+    return `<div class="today-head"><div class="today-topline"><span>LEVELN · PLAY YOUR DAY</span><span>${edited}/${gs.length} erfasst</span></div>${xpBar()}</div><div class="deck-area">${g ? `<div class="deck-stack">${[2, 1].map(i => { if (gs.length <= i)
+        return ''; const pg = gs[(S.card + i) % gs.length]; return `<div class="peek-wrap peek-${i}">${cardHtml(pg, true)}</div>`; }).join('')}${cardHtml(g)}<div class="deck-gesture-tail" role="presentation" aria-hidden="true"></div></div>` : `<div class="empty-state">${ico('scroll')}<h2>Keine Questkarten</h2><p>Lege im Questboard deine erste Quest an.</p><button class="primary" data-act="go-goals">Questboard öffnen</button></div>`}</div><div class="deck-caption">${gs.length ? `${S.card + 1}/${gs.length} Karten · ${pretty(S.day, { day: 'numeric', month: 'short' })}` : pretty(S.day, { day: 'numeric', month: 'short' })}</div>`;
 }
-PATH.save='<path d="M4 3h14l3 3v15H3V3zM7 3v7h10V3M7 21v-8h10v8M9 5v3h6"/>';
-function goalGroups(){return ['day','week','month','year'].map(p=>({p,items:goals().filter(g=>!isOnce(g.a)&&g.r.period===p)}))}
-function goalsView(){const archived=allGoals().filter(g=>!isOnce(g.a)&&!goals().some(x=>x.key===g.key)),once=S.activities.filter(isOnce);
- const filters=[['all','Alle'],['once','Einmalig'],['day','Täglich'],['week','Wöchentlich'],['month','Monatlich'],['year','Jährlich'],['archive','Archiv']];const show=p=>S.questFilter==='all'||S.questFilter===p;
- return `<div class="page-heading"><span class="eyebrow">DEIN ABENTEUER</span><div class="heading-row"><h1>Quests</h1></div></div><div class="goals-sticky">${calendarHTML()}</div><div class="quest-filter-bar">${filters.map(([p,label])=>`<button data-act="quest-filter" data-filter="${p}" class="quest-filter ${S.questFilter===p?'selected':''}">${label}</button>`).join('')}</div><div class="goals-scroll"><div class="goals-actions goals-triple"><button class="thin-button" data-act="edit-day" data-day="${nowDay()}">${ico('edit')}<span>Heute bearb.</span></button><button class="thin-button" data-act="edit-day" data-day="${dayAdd(nowDay(),-1)}">${ico('edit')}<span>Gestern bearb.</span></button><button class="thin-button add-quest-button" data-act="new" aria-label="Neue Quest erstellen">${ico('plus')}<span>Neue Quest</span></button></div>${show('once')?`<section class="goal-section"><h3>${ico('scroll')} EINMALIGE QUESTS</h3>${once.filter(a=>!a.archivedAt&&!a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine offenen einmaligen Quests</p>'}</section>`:''}${goalGroups().filter(gr=>show(gr.p)).map(gr=>`<section class="goal-section"><h3>${({day:'TÄGLICHE',week:'WÖCHENTLICHE',month:'MONATLICHE',year:'JÄHRLICHE'})[gr.p]} QUESTS</h3>${gr.items.map(g=>goalRow(g)).join('')||'<p class="muted">Noch keine Quests</p>'}</section>`).join('')}${(show('archive'))?`<section class="goal-section archived-list"><h3>ARCHIV & ABGESCHLOSSEN</h3>${archived.map(g=>goalRow(g,true)).join('')}${once.filter(a=>a.archivedAt||a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine archivierten Quests</p>'}</section>`:''}</div>`}
-function onceQuestState(a){return a.completedAt?'completed':a.archivedAt?'archived':nowDay()<a.availableFrom?'planned':a.availableUntil&&nowDay()>a.availableUntil?'expired':'available'}
-function oneTimeGoals(d){return S.activities.filter(a=>d===nowDay()&&isOnce(a)&&a.pinned&&a.availableFrom<=d&&(!a.availableUntil||a.availableUntil>=d)&&!a.completedAt&&!a.archivedAt).map(a=>({a,r:{id:'once',period:'day',minutes:null,count:null},index:0,key:onceKey(a)}))}
-function detailGoal(g){const parts=metricKeys(g.r).map(k=>k==='minutes'?formatMin(ruleValue(g.r,k)):num(ruleValue(g.r,k))+' ×');return `${g.a.kind==='reduce'?'Mana:':'Ziel:'} ${parts.join(' + ')} · ${NAMES[g.r.period]}${isRestart(g.r)?' · Neustart':''}`}
-function settingsView(){return settingsView05().replace('<h1>Optionen</h1>','<h1>Einstellungen</h1>').replaceAll(ico('flame'),EMBER_SVG).replace(/<label>Paket-Timeout[\s\S]*?<\/label>/,'').replace(/<p class="muted">1 Glut/,'<p class="muted">1 Glut').replace('Zaubern<input type="color"','Zaubern<input type="color"')+'<details class="settings-panel mini-doc"><summary>So funktioniert Leveln</summary><p>Nach oben wischen: neue Trainings- oder Mana-Verbrauchsmengen zum heutigen Tageswert hinzubuchen. Nach unten wischen: 0 bestätigen, bestehende Mengen bleiben erhalten. Die Ausspielmenge ist für Karte und Questbearbeitung identisch. Ohne Eintrag gilt Leveln = 0; Zaubern fragt am Folgetag freundlich nach. Unbekannter Mana-Verbrauch wird nie geschätzt. Streak = Flamme, Freeze = Schneeflocke, Glut = glühende Kohle. Quests trainieren Skills; 100 XP je Skill-Stufe, 1.000 XP je Charakterlevel. Eine einmalige Quest kann ohne Zeitlimit verfügbar sein.</p><p><b>Leveln 0.9 · Datenformat 4</b></p></details>'}
-function skillModal(){const s=skillById(S.modal.id);sheet(s?'Skill bearbeiten':'Neuen Skill erstellen',`<form id="skillForm" class="rpg-form"><label>Skillname<input name="name" maxlength="60" required value="${safe(s?.name||'')}"></label><label>Beschreibung<textarea name="description" maxlength="350" rows="3">${safe(s?.description||'')}</textarea></label><div class="field-grid"><label>Farbe<input type="color" name="color" value="${skillColor(s)}"></label><label>Symbol<select name="icon">${iconChoices(s?.icon)}</select></label></div><div class="sheet-actions"><button type="button" data-act="modal-close" class="thin-button">Abbrechen</button><button type="submit" class="primary">Skill speichern</button></div></form>${s?`<button class="danger-button" data-act="skill-delete" data-id="${safe(s.id)}">Skill unwiderruflich entfernen</button>`:''}`)}
-function profileModal(){const p=profile();sheet('Charakter gestalten',`<form id="profileForm" class="rpg-form"><label>Name<input name="name" maxlength="60" required value="${safe(p.name)}"></label><label>Beschreibung<textarea name="description" maxlength="350" rows="3">${safe(p.description)}</textarea></label><label>Themenfarbe<input type="color" name="color" value="${hex(p.color,'#67c65d')}"></label><label>Standard-Avatar<select name="avatar">${iconChoices(p.avatar)}</select></label><label>Eigenes Charakterbild<input name="image" type="file" accept="image/jpeg,image/png,image/webp"></label><label class="check-color"><input type="checkbox" name="removeImage"> Eigenes Bild entfernen</label><div class="sheet-actions"><button class="thin-button" type="button" data-act="modal-close">Abbrechen</button><button type="submit" class="primary">Charakter speichern</button></div></form>`)}
-function avatarMarkup(p=profile(),cls='avatar-circle'){if(p.image&&/^data:image\/(png|jpeg|webp);base64,/.test(p.image))return `<img class="${cls}" src="${p.image}" alt="Charakterbild">`;return `<span class="${cls} avatar-sigil" style="--avatar-color:${hex(p.color,'#67c65d')}">${ico(PATH[p.avatar]?p.avatar:'shield')}</span>`}
-function onceQuestRow(a){
- const state=onceQuestState(a),label={completed:'Abgeschlossen',archived:'Archiviert',planned:'Geplant',expired:'Abgelaufen',available:'Verfügbar'}[state],reward=(a.rewardSnapshot||a.rewardBindings||[]).reduce((sum,b)=>sum+b.xp,0),id=safe(a.id);
- return `<div class="goal-swipe once-swipe" data-once="${id}"><div class="goal-row-actions">${!a.completedAt&&!a.archivedAt?`<button data-act="once-edit" data-id="${id}" aria-label="Bearbeiten">${ico('edit')}<small>Bearbeiten</small></button><button data-act="once-archive" data-id="${id}" aria-label="Archivieren">${ico('bag')}<small>Archiv</small></button>`:''}</div><div class="goal-row quest-once-line" style="--goal-color:${hex(a.color,S.colors.level)}"><span class="goal-name once-title"><span class="goal-dot"></span><strong title="${safe(a.name)}">${safe(a.name)}</strong></span><span class="once-label" title="${safe(label)} · ${num(reward,1)} XP">${num(reward,1)} XP</span>${state==='available'?`<button class="once-finish" data-act="once-complete" data-id="${id}" aria-label="Einmalige Quest abschließen">${ico('check')}<span>Abschließen</span></button>`:`<span class="once-status">${safe(label)}</span>`}</div></div>`;
+// UNTERE NAVIGATION: Enthält auch das ein-/ausklappbare Mehr-Menü.
+function nav() {
+    const tabs = [['today', 'home', S.day === nowDay() ? 'Heute' : 'Gestern'], ['goals', 'goals', 'Quests'], ['character', 'user', 'Charakter'], ['stats', 'chart', 'Statistik']];
+    $('#bottomNav').innerHTML = `<nav class="tabs tabs-five">${tabs.map(([p, i, t]) => `<button class="tab ${S.page === p ? 'on' : ''}" data-act="tab" data-page="${p}">${p === 'character' ? avatarMarkup(profile(), 'nav-avatar') : ico(i)}<small>${t}</small></button>`).join('')}<div class="nav-more-wrap"><button class="tab nav-more ${S.moreOpen ? 'on' : ''}" data-act="more-toggle" aria-label="Mehr Optionen" aria-expanded="${!!S.moreOpen}">${ico('dots')}<small>Mehr</small></button>${S.moreOpen ? `<div class="nav-more-pop"><button data-act="export">${ico('save')} Backup sichern</button><button data-act="settings-toggle">${ico('settings')} ${S.page === 'settings' ? 'Zurück' : 'Einstellungen'}</button></div>` : ''}</div></nav>`;
+    if ($('#settingsShortcut'))
+        $('#settingsShortcut').innerHTML = '';
+    if ($('#backupShortcut'))
+        $('#backupShortcut').innerHTML = '';
 }
-
-function cardDraft(g){
- const key=entryKey(g,S.day),old=S.cardDrafts.get(key);if(old)return old;
- const values={};for(const k of metricKeys(g.r)){const standard=g.r[k==='minutes'?'standardMinutes':'standardCount'];values[k]=standard===null||standard===undefined?'':String(standard)}
- S.cardDrafts.set(key,values);return values;
+PATH.save = '<path d="M4 3h14l3 3v15H3V3zM7 3v7h10V3M7 21v-8h10v8M9 5v3h6"/>';
+function goalGroups() { return ['day', 'week', 'month', 'year'].map(p => ({ p, items: goals().filter(g => !isOnce(g.a) && g.r.period === p) })); }
+function goalsView() {
+    const archived = allGoals().filter(g => !isOnce(g.a) && !goals().some(x => x.key === g.key)), once = S.activities.filter(isOnce);
+    const filters = [['all', 'Alle'], ['once', 'Einmalig'], ['day', 'Täglich'], ['week', 'Wöchentlich'], ['month', 'Monatlich'], ['year', 'Jährlich'], ['archive', 'Archiv']];
+    const show = p => S.questFilter === 'all' || S.questFilter === p;
+    return `<div class="page-heading"><span class="eyebrow">DEIN ABENTEUER</span><div class="heading-row"><h1>Quests</h1></div></div><div class="goals-sticky">${calendarHTML()}</div><div class="quest-filter-bar">${filters.map(([p, label]) => `<button data-act="quest-filter" data-filter="${p}" class="quest-filter ${S.questFilter === p ? 'selected' : ''}">${label}</button>`).join('')}</div><div class="goals-scroll"><div class="goals-actions goals-triple"><button class="thin-button" data-act="edit-day" data-day="${nowDay()}">${ico('edit')}<span>Heute bearb.</span></button><button class="thin-button" data-act="edit-day" data-day="${dayAdd(nowDay(), -1)}">${ico('edit')}<span>Gestern bearb.</span></button><button class="thin-button add-quest-button" data-act="new" aria-label="Neue Quest erstellen">${ico('plus')}<span>Neue Quest</span></button></div>${show('once') ? `<section class="goal-section"><h3>${ico('scroll')} EINMALIGE QUESTS</h3>${once.filter(a => !a.archivedAt && !a.completedAt).map(onceQuestRow).join('') || '<p class="muted">Keine offenen einmaligen Quests</p>'}</section>` : ''}${goalGroups().filter(gr => show(gr.p)).map(gr => `<section class="goal-section"><h3>${({ day: 'TÄGLICHE', week: 'WÖCHENTLICHE', month: 'MONATLICHE', year: 'JÄHRLICHE' })[gr.p]} QUESTS</h3>${gr.items.map(g => goalRow(g)).join('') || '<p class="muted">Noch keine Quests</p>'}</section>`).join('')}${(show('archive')) ? `<section class="goal-section archived-list"><h3>ARCHIV & ABGESCHLOSSEN</h3>${archived.map(g => goalRow(g, true)).join('')}${once.filter(a => a.archivedAt || a.completedAt).map(onceQuestRow).join('') || '<p class="muted">Keine archivierten Quests</p>'}</section>` : ''}</div>`;
 }
-function bookingFields(g,up){
- const existing=entry(g,S.day),draft=cardDraft(g),out={mode:up?'up':'down',status:up?'yes':'no',source:'user',estimated:false};
- for(const k of metricKeys(g.r)){
-  const raw=up?draft[k]:0;
-  if(raw===''||raw===null||raw===undefined){out[k]=finite(existing?.[k])?existing[k]:0;continue}
-  const v=Number(raw);if(!Number.isFinite(v)||v<0||v>1e6||(k==='count'&&!Number.isInteger(v)))throw Error(`Ungültige Buchung: ${k}`);
-  const total=(finite(existing?.[k])?existing[k]:0)+(up?v:0);if(total>1e7)throw Error('Zu viele Einheiten');out[k]=total;
- }
- // An empty swipe confirms zero; a later zero swipe does not erase earlier values.
- if(!up&&existing){out.mode=existing.mode||'up';out.status=existing.status||'yes'}
- out.comment=existing?.comment||'';return out;
+function onceQuestState(a) { return a.completedAt ? 'completed' : a.archivedAt ? 'archived' : nowDay() < a.availableFrom ? 'planned' : a.availableUntil && nowDay() > a.availableUntil ? 'expired' : 'available'; }
+function oneTimeGoals(d) { return S.activities.filter(a => d === nowDay() && isOnce(a) && a.pinned && a.availableFrom <= d && (!a.availableUntil || a.availableUntil >= d) && !a.completedAt && !a.archivedAt).map(a => ({ a, r: { id: 'once', period: 'day', minutes: null, count: null }, index: 0, key: onceKey(a) })); }
+function detailGoal(g) { const parts = metricKeys(g.r).map(k => k === 'minutes' ? formatMin(ruleValue(g.r, k)) : num(ruleValue(g.r, k)) + ' ×'); return `${g.a.kind === 'reduce' ? 'Mana:' : 'Ziel:'} ${parts.join(' + ')} · ${NAMES[g.r.period]}${isRestart(g.r) ? ' · Neustart' : ''}`; }
+function settingsView() { return settingsView05().replace('<h1>Optionen</h1>', '<h1>Einstellungen</h1>').replaceAll(ico('flame'), EMBER_SVG).replace(/<label>Paket-Timeout[\s\S]*?<\/label>/, '').replace(/<p class="muted">1 Glut/, '<p class="muted">1 Glut').replace('Zaubern<input type="color"', 'Zaubern<input type="color"') + '<details class="settings-panel mini-doc"><summary>So funktioniert Leveln</summary><p>Nach oben wischen: neue Trainings- oder Mana-Verbrauchsmengen zum heutigen Tageswert hinzubuchen. Nach unten wischen: 0 bestätigen, bestehende Mengen bleiben erhalten. Die Ausspielmenge ist für Karte und Questbearbeitung identisch. Ohne Eintrag gilt Leveln = 0; Zaubern fragt am Folgetag freundlich nach. Unbekannter Mana-Verbrauch wird nie geschätzt. Streak = Flamme, Freeze = Schneeflocke, Glut = glühende Kohle. Quests trainieren Skills; 100 XP je Skill-Stufe, 1.000 XP je Charakterlevel. Eine einmalige Quest kann ohne Zeitlimit verfügbar sein.</p><p><b>Leveln 0.9 · Datenformat 4</b></p></details>'; }
+function skillModal() { const s = skillById(S.modal.id); sheet(s ? 'Skill bearbeiten' : 'Neuen Skill erstellen', `<form id="skillForm" class="rpg-form"><label>Skillname<input name="name" maxlength="60" required value="${safe(s?.name || '')}"></label><label>Beschreibung<textarea name="description" maxlength="350" rows="3">${safe(s?.description || '')}</textarea></label><div class="field-grid"><label>Farbe<input type="color" name="color" value="${skillColor(s)}"></label><label>Symbol<select name="icon">${iconChoices(s?.icon)}</select></label></div><div class="sheet-actions"><button type="button" data-act="modal-close" class="thin-button">Abbrechen</button><button type="submit" class="primary">Skill speichern</button></div></form>${s ? `<button class="danger-button" data-act="skill-delete" data-id="${safe(s.id)}">Skill unwiderruflich entfernen</button>` : ''}`); }
+function profileModal() { const p = profile(); sheet('Charakter gestalten', `<form id="profileForm" class="rpg-form"><label>Name<input name="name" maxlength="60" required value="${safe(p.name)}"></label><label>Beschreibung<textarea name="description" maxlength="350" rows="3">${safe(p.description)}</textarea></label><label>Themenfarbe<input type="color" name="color" value="${hex(p.color, '#67c65d')}"></label><label>Standard-Avatar<select name="avatar">${iconChoices(p.avatar)}</select></label><label>Eigenes Charakterbild<input name="image" type="file" accept="image/jpeg,image/png,image/webp"></label><label class="check-color"><input type="checkbox" name="removeImage"> Eigenes Bild entfernen</label><div class="sheet-actions"><button class="thin-button" type="button" data-act="modal-close">Abbrechen</button><button type="submit" class="primary">Charakter speichern</button></div></form>`); }
+function avatarMarkup(p = profile(), cls = 'avatar-circle') { if (p.image && /^data:image\/(png|jpeg|webp);base64,/.test(p.image))
+    return `<img class="${cls}" src="${p.image}" alt="Charakterbild">`; return `<span class="${cls} avatar-sigil" style="--avatar-color:${hex(p.color, '#67c65d')}">${ico(PATH[p.avatar] ? p.avatar : 'shield')}</span>`; }
+function onceQuestRow(a) {
+    const state = onceQuestState(a), label = { completed: 'Abgeschlossen', archived: 'Archiviert', planned: 'Geplant', expired: 'Abgelaufen', available: 'Verfügbar' }[state], reward = (a.rewardSnapshot || a.rewardBindings || []).reduce((sum, b) => sum + b.xp, 0), id = safe(a.id);
+    return `<div class="goal-swipe once-swipe" data-once="${id}"><div class="goal-row-actions">${!a.completedAt && !a.archivedAt ? `<button data-act="once-edit" data-id="${id}" aria-label="Bearbeiten">${ico('edit')}<small>Bearbeiten</small></button><button data-act="once-archive" data-id="${id}" aria-label="Archivieren">${ico('bag')}<small>Archiv</small></button>` : ''}</div><div class="goal-row quest-once-line" style="--goal-color:${hex(a.color, S.colors.level)}"><span class="goal-name once-title"><span class="goal-dot"></span><strong title="${safe(a.name)}">${safe(a.name)}</strong></span><span class="once-label" title="${safe(label)} · ${num(reward, 1)} XP">${num(reward, 1)} XP</span>${state === 'available' ? `<button class="once-finish" data-act="once-complete" data-id="${id}" aria-label="Einmalige Quest abschließen">${ico('check')}<span>Abschließen</span></button>` : `<span class="once-status">${safe(label)}</span>`}</div></div>`;
 }
-async function startCard(g,up){
- if(!g||S.busy||!canEdit(S.day))return;
- if(isOnce(g.a)){if(up)await completeOnce(g.a.id);else rotate(1);return}
- S.busy=true;
- try{
-  const draft=cardDraft(g);for(const metric of metricKeys(g.r)){const field=metric==='minutes'?'standardMinutes':'standardCount';const typed=draft[metric]===undefined||draft[metric]===''?null:Number(draft[metric]);if(typed!==g.r[field])await updatePlayAmount(g.key,metric,draft[metric]??'')}
-  const before=xpStats().sum,fields=bookingFields(g,up);
-  await dbPut('entries',makeEntry(g,S.day,fields));S.cardDrafts.delete(entryKey(g,S.day));
-  await sync();await reconcileWallet();
-  const after=xpStats().sum;vibrate();
-  if(after>before+1e-8)xpToast(after-before); // Mana is settled only on completed days/periods.
-  const prevLevel=Math.floor((before+1e-7)/1000),newLevel=Math.floor((after+1e-7)/1000);
-  if(newLevel>prevLevel)await celebrate(newLevel+1);
-  sound(false);S.cardExpanded=false;S.card=(S.card+1)%Math.max(1,goals(S.day).length);render();
-  toast(up?'Menge gebucht · du kannst später erneut buchen':'0 für heute notiert');
- }finally{S.busy=false}
+function cardDraft(g) {
+    const key = entryKey(g, S.day), old = S.cardDrafts.get(key);
+    if (old)
+        return old;
+    const values = {};
+    for (const k of metricKeys(g.r)) {
+        const standard = g.r[k === 'minutes' ? 'standardMinutes' : 'standardCount'];
+        values[k] = standard === null || standard === undefined ? '' : String(standard);
+    }
+    S.cardDrafts.set(key, values);
+    return values;
 }
-function manaConvert(xp){
- const track=document.querySelector('#xpTrack');
- const target=track?.getBoundingClientRect();
- const origin=document.querySelector('.deck-stack')?.getBoundingClientRect();
- const x=origin?origin.left+origin.width/2:window.innerWidth/2;
- const y=origin?origin.top+origin.height*.4:window.innerHeight*.5;
- const endX=target?target.left+target.width*.5:window.innerWidth*.5;
- const endY=target?target.top+target.height*.5:window.innerHeight*.15;
- // No personal data or assets leave the device: all crystals are local SVGs.
- for(let i=0;i<4;i++){
-   const particle=document.createElement('div');particle.className='mana-flying-crystal';
-   particle.innerHTML=MANA_CRYSTAL;particle.style.left=x+'px';particle.style.top=y+'px';
-   document.body.appendChild(particle);
-   const dx=endX-x+(i-1.5)*5,dy=endY-y;
-   if(particle.animate){
-     const motion=particle.animate([
-       {transform:`translate(${(i-1.5)*14}px,12px) scale(.45)`,opacity:0},
-       {transform:`translate(${(i-1.5)*35}px,-36px) scale(1.08)`,opacity:1,offset:.32},
-       {transform:`translate(${dx}px,${dy}px) scale(.17)`,opacity:.15}
-     ],{duration:680+i*75,delay:i*70,easing:'cubic-bezier(.2,.8,.15,1)'});
-     motion.onfinish=()=>particle.remove();
-   }else particle.remove();
-   setTimeout(()=>particle.remove(),1400);
- }
- const label=document.createElement('div');label.className='mana-xp-impact';
- label.textContent=`+${num(xp,2)} XP`;label.style.left=endX+'px';label.style.top=(endY+16)+'px';
- document.body.appendChild(label);
- setTimeout(()=>label.remove(),1650);
+function bookingFields(g, up) {
+    const existing = entry(g, S.day), draft = cardDraft(g), out = { mode: up ? 'up' : 'down', status: up ? 'yes' : 'no', source: 'user', estimated: false };
+    for (const k of metricKeys(g.r)) {
+        const raw = up ? draft[k] : 0;
+        if (raw === '' || raw === null || raw === undefined) {
+            out[k] = finite(existing?.[k]) ? existing[k] : 0;
+            continue;
+        }
+        const v = Number(raw);
+        if (!Number.isFinite(v) || v < 0 || v > 1e6 || (k === 'count' && !Number.isInteger(v)))
+            throw Error(`Ungültige Buchung: ${k}`);
+        const total = (finite(existing?.[k]) ? existing[k] : 0) + (up ? v : 0);
+        if (total > 1e7)
+            throw Error('Zu viele Einheiten');
+        out[k] = total;
+    }
+    // An empty swipe confirms zero; a later zero swipe does not erase earlier values.
+    if (!up && existing) {
+        out.mode = existing.mode || 'up';
+        out.status = existing.status || 'yes';
+    }
+    out.comment = existing?.comment || '';
+    return out;
 }
-async function exportBackup(){const data={activities:S.activities,entries:S.entries,overrides:S.overrides,meta:S.meta,skills:S.skills};const fileName=`Leveln-Backup-v4-${nowDay()}.json`,blob=new Blob([JSON.stringify({format:'progress-local-backup',version:4,exportedAt:new Date().toISOString(),appVersion:'0.9',data},null,2)],{type:'application/json'});const file=new File([blob],fileName,{type:'application/json'});
- if(navigator.share&&navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:'Leveln Backup'});return}catch(err){if(err?.name==='AbortError')return}}
- const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=fileName;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
-function migrateV2toV3(input){const data=structuredClone(input);if(!Array.isArray(data.activities)||!Array.isArray(data.meta))throw Error('Ungültiges Backupformat 2');for(const a of data.activities){if(!a.shortName)a.shortName=shortCode(a.name);if(isOnce(a)){if(a.availableUntil===undefined)a.availableUntil=null;continue}for(const rev of a.revisions||[]){for(const r of rev.rules||[]){for(const metric of ['minutes','count']){const fld=metric==='minutes'?'standardMinutes':'standardCount';if(r[fld]===null||r[fld]===undefined){const proposal=suggestStandard(r.period,r[metric],metric);if(proposal!=='')r[fld]=proposal}}}}}
- // Previous Zaubern/Sparen gestures were the reverse of version 0.7.
- // Normalize the UI gesture from measured values, keeping all numeric data intact.
- const savingIds=new Set(data.activities.filter(a=>a.kind==='reduce').map(a=>a.id));
- for(const e of data.entries||[]){
-  if(!savingIds.has(e.activityId)||!['up','down'].includes(e.mode))continue;
-  const measured=['minutes','count'].filter(k=>typeof e[k]==='number'&&Number.isFinite(e[k])&&e[k]>=0);
-  if(!measured.length)continue; // preserve ambiguous legacy records
-  const consumed=measured.some(k=>e[k]>0);
-  e.mode=consumed?'up':'down';
-  if(e.source!=='legacy')e.status=consumed?'yes':'no';
- }
- data.meta=data.meta.filter(m=>m.key!=='schemaVersion');data.meta.push({key:'schemaVersion',value:3});return data}
-function migrateV08toV09(input){
- const d=structuredClone(input);if(!d||!Array.isArray(d.activities)||!Array.isArray(d.entries)||!Array.isArray(d.meta)||!Array.isArray(d.overrides)||!Array.isArray(d.skills))throw Error('Kein gültiger Leveln-0.8-Datenstand.');
- const kind=new Map(d.activities.map(a=>[a.id,a.kind]));
- for(const e of d.entries){if(e.source==='auto'||e.source==='refused'){
-   if(kind.get(e.activityId)==='reduce'){e.source='unknown';e.mode='refused';e.status='no';e.estimated=false;e.minutes=null;e.count=null}
-   else{e.source='zero-auto';e.mode='down';e.status='no';e.estimated=false;e.minutes=e.minutes===null?null:0;e.count=e.count===null?null:0}
- }}
- d.meta=d.meta.filter(m=>m.key!=='schemaVersion');d.meta.push({key:'schemaVersion',value:4});return d;
+// KARTENBUCHUNG: Eingetragene Mengen addieren statt den Tag abzuschließen.
+// Aufwärts = Menge dokumentieren; Abwärts = 0 dokumentieren.
+async function startCard(g, up) {
+    if (!g || S.busy || !canEdit(S.day))
+        return;
+    if (isOnce(g.a)) {
+        if (up)
+            await completeOnce(g.a.id);
+        else
+            rotate(1);
+        return;
+    }
+    S.busy = true;
+    try {
+        const draft = cardDraft(g);
+        for (const metric of metricKeys(g.r)) {
+            const field = metric === 'minutes' ? 'standardMinutes' : 'standardCount';
+            const typed = draft[metric] === undefined || draft[metric] === '' ? null : Number(draft[metric]);
+            if (typed !== g.r[field])
+                await updatePlayAmount(g.key, metric, draft[metric] ?? '');
+        }
+        const before = xpStats().sum, fields = bookingFields(g, up);
+        await dbPut('entries', makeEntry(g, S.day, fields));
+        S.cardDrafts.delete(entryKey(g, S.day));
+        await sync();
+        await reconcileWallet();
+        const after = xpStats().sum;
+        vibrate();
+        if (after > before + 1e-8)
+            xpToast(after - before); // Mana is settled only on completed days/periods.
+        const prevLevel = Math.floor((before + 1e-7) / 1000), newLevel = Math.floor((after + 1e-7) / 1000);
+        if (newLevel > prevLevel)
+            await celebrate(newLevel + 1);
+        sound(false);
+        S.cardExpanded = false;
+        S.card = (S.card + 1) % Math.max(1, goals(S.day).length);
+        render();
+        toast(up ? 'Menge gebucht · du kannst später erneut buchen' : '0 für heute notiert');
+    }
+    finally {
+        S.busy = false;
+    }
 }
-async function migrateInstalled(){if(meta('schemaVersion',1)!==3)return;const d=migrateV08toV09({activities:S.activities,entries:S.entries,overrides:S.overrides,meta:S.meta,skills:S.skills});validateBackup(d);await dbTx(STORES,t=>{for(const n of STORES)for(const rec of d[n])t.objectStore(n).put(rec)});await sync()}
-
-async function setup(){db=await dbOpen();await sync();if(!meta('initialized',false)&&!meta('schemaVersion'))await saveMeta('schemaVersion',4);if(meta('schemaVersion',1)===3)await migrateInstalled();if(meta('schemaVersion',1)<3)throw Error('Nur Migration ab Leveln 0.8 wird unterstützt.');if(!meta('initialized',false))await saveMeta('initialized',true);if(!S.started){await saveMeta('v04StartedOn',nowDay());S.started=nowDay()}S.skills=await dbAll('skills');await reconcile();render();maybeCheckin();if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(console.warn)}
-async function importBackup(file){if(file.size>60*1024*1024)throw Error('Backup größer als 60 MB');const json=JSON.parse(await file.text());if(json.format!=='progress-local-backup'||![3,4].includes(json.version))throw Error('Bitte ein Backup aus Leveln 0.8 oder 0.9 wählen.');let d=json.version===3?migrateV08toV09(json.data):structuredClone(json.data);if(json.version===4){d.meta=d.meta.filter(m=>m.key!=='schemaVersion');d.meta.push({key:'schemaVersion',value:4})}validateBackup(d);if(!confirm(`${d.activities.length} Quests, ${d.entries.length} Einträge und ${d.skills.length} Skills importieren? Der aktuelle lokale Datenstand wird ersetzt.`))return;
- await dbTx(STORES,t=>{for(const n of STORES){const store=t.objectStore(n);store.clear();for(const rec of d[n])store.put(rec)}});S.cardDrafts.clear();S.modal=null;S.packet=null;S.page='today';S.day=nowDay();S.card=0;await sync();await reconcile();render();toast('Backup erfolgreich migriert und importiert')}
-
-
+// BACKUP-EXPORT: Format 4 beibehalten, inklusive aller Bilder/Meta/Skills.
+async function exportBackup() {
+    const data = { activities: S.activities, entries: S.entries, overrides: S.overrides, meta: S.meta, skills: S.skills };
+    const fileName = `Leveln-Backup-v4-${nowDay()}.json`, blob = new Blob([JSON.stringify({ format: 'progress-local-backup', version: 4, exportedAt: new Date().toISOString(), appVersion: '0.9', data }, null, 2)], { type: 'application/json' });
+    const file = new File([blob], fileName, { type: 'application/json' });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        try {
+            await navigator.share({ files: [file], title: 'Leveln Backup' });
+            return;
+        }
+        catch (err) {
+            if (err?.name === 'AbortError')
+                return;
+        }
+    }
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+// EINZIGE UNTERSTÜTZTE BESTANDSMIGRATION: Schema 3 (Leveln 0.8) -> 4 (0.9).
+// Bewusst keine älteren Datenformate nachrüsten, solange nicht beauftragt.
+function migrateV08toV09(input) {
+    const d = structuredClone(input);
+    if (!d || !Array.isArray(d.activities) || !Array.isArray(d.entries) || !Array.isArray(d.meta) || !Array.isArray(d.overrides) || !Array.isArray(d.skills))
+        throw Error('Kein gültiger Leveln-0.8-Datenstand.');
+    const kind = new Map(d.activities.map(a => [a.id, a.kind]));
+    for (const e of d.entries) {
+        if (e.source === 'auto' || e.source === 'refused') {
+            if (kind.get(e.activityId) === 'reduce') {
+                e.source = 'unknown';
+                e.mode = 'refused';
+                e.status = 'no';
+                e.estimated = false;
+                e.minutes = null;
+                e.count = null;
+            }
+            else {
+                e.source = 'zero-auto';
+                e.mode = 'down';
+                e.status = 'no';
+                e.estimated = false;
+                e.minutes = e.minutes === null ? null : 0;
+                e.count = e.count === null ? null : 0;
+            }
+        }
+    }
+    d.meta = d.meta.filter(m => m.key !== 'schemaVersion');
+    d.meta.push({ key: 'schemaVersion', value: 4 });
+    return d;
+}
+// Migration der lokal installierten Daten: nur Schema 3 -> 4.
+// In einem einzigen IndexedDB-Update speichern; bei Fehler nicht halb migrieren.
+async function migrateInstalled() { if (meta('schemaVersion', 1) !== 3)
+    return; const d = migrateV08toV09({ activities: S.activities, entries: S.entries, overrides: S.overrides, meta: S.meta, skills: S.skills }); validateBackup(d); await dbTx(STORES, t => { for (const n of STORES)
+    for (const rec of d[n])
+        t.objectStore(n).put(rec); }); await sync(); }
+// STARTUP: Datenbank öffnen, gegebenenfalls vorherige Version migrieren,
+// Tagesabschluss prüfen und anschließend die gewohnte Ansicht rendern.
+async function setup() { db = await dbOpen(); await sync(); if (!meta('initialized', false) && !meta('schemaVersion'))
+    await saveMeta('schemaVersion', 4); if (meta('schemaVersion', 1) === 3)
+    await migrateInstalled(); if (meta('schemaVersion', 1) < 3)
+    throw Error('Nur Migration ab Leveln 0.8 wird unterstützt.'); if (!meta('initialized', false))
+    await saveMeta('initialized', true); if (!S.started) {
+    await saveMeta('v04StartedOn', nowDay());
+    S.started = nowDay();
+} S.skills = await dbAll('skills'); await reconcile(); render(); maybeCheckin(); if ('serviceWorker' in navigator && location.protocol === 'https:')
+    navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(console.warn); }
+// BACKUP-IMPORT: Versionen 3 und 4 akzeptieren; vorhandene Validierung
+// und Transaktion unverändert lassen.
+async function importBackup(file) {
+    if (file.size > 60 * 1024 * 1024)
+        throw Error('Backup größer als 60 MB');
+    const json = JSON.parse(await file.text());
+    if (json.format !== 'progress-local-backup' || ![3, 4].includes(json.version))
+        throw Error('Bitte ein Backup aus Leveln 0.8 oder 0.9 wählen.');
+    let d = json.version === 3 ? migrateV08toV09(json.data) : structuredClone(json.data);
+    if (json.version === 4) {
+        d.meta = d.meta.filter(m => m.key !== 'schemaVersion');
+        d.meta.push({ key: 'schemaVersion', value: 4 });
+    }
+    validateBackup(d);
+    if (!confirm(`${d.activities.length} Quests, ${d.entries.length} Einträge und ${d.skills.length} Skills importieren? Der aktuelle lokale Datenstand wird ersetzt.`))
+        return;
+    await dbTx(STORES, t => { for (const n of STORES) {
+        const store = t.objectStore(n);
+        store.clear();
+        for (const rec of d[n])
+            store.put(rec);
+    } });
+    S.cardDrafts.clear();
+    S.modal = null;
+    S.packet = null;
+    S.page = 'today';
+    S.day = nowDay();
+    S.card = 0;
+    await sync();
+    await reconcile();
+    render();
+    toast('Backup erfolgreich migriert und importiert');
+}
 // One shared, icon-first gallery for Quest, Skill and character form selects.
-const ICON_GROUPS={
- 'Alle':[],
- 'Menschen':['user','person','mage','knight','robot','wizard','archer','ranger','priest'],
- 'Tiere':['cat','wolf','fox','owl','paw','bear','rabbit','horse','bird'],
- 'Fabelwesen':['dragon','unicorn','phoenix','griffin','slime'],
- 'Gegenstände':['shield','scroll','book','phone','dumbbell','wallet','game','sword','potion','key','bag'],
- 'Symbole':['spark','star','moon','sun','heart','target','palette','flame','snow','plus']
+const ICON_GROUPS = {
+    'Alle': [],
+    'Menschen': ['user', 'person', 'mage', 'knight', 'robot', 'wizard', 'archer', 'ranger', 'priest'],
+    'Tiere': ['cat', 'wolf', 'fox', 'owl', 'paw', 'bear', 'rabbit', 'horse', 'bird'],
+    'Fabelwesen': ['dragon', 'unicorn', 'phoenix', 'griffin', 'slime'],
+    'Gegenstände': ['shield', 'scroll', 'book', 'phone', 'dumbbell', 'wallet', 'game', 'sword', 'potion', 'key', 'bag'],
+    'Symbole': ['spark', 'star', 'moon', 'sun', 'heart', 'target', 'palette', 'flame', 'snow', 'plus']
 };
-Object.assign(PATH,{
- wizard:'<path d="M4 20h16M6 16l6-12 6 12M8 12q4 3 8 0M9 16q3 3 6 0M12 4l2-2"/><path d="M4 20q8 4 16 0"/>',
- archer:'<path d="M5 20q9-9 0-18M5 2l8 9-8 9m0-9h16m-4-3 4 3-4 3"/>',
- ranger:'<path d="m3 9 9-7 9 7-4 12H7zM6 10h12m-9 4h6m-4 4h2"/>',
- priest:'<path d="M12 2v20M7 7h10M5 19q7-5 14 0M3 22h18"/>',
- bear:'<path d="M5 8Q1 1 7 3l2 3q3-2 6 0l2-3q6-2 3 5 3 9-5 13H9Q2 17 5 8Z"/><path d="M8 12h.1m8 0h.1M10 16q2 3 4 0m-2-2v1"/>',
- rabbit:'<path d="M8 10Q2 1 6 2q4 0 5 8m3 0q0-9 5-8 4 1-3 9m-8 0q-4 3-3 8 7 7 14 0 1-5-3-8"/><path d="M9 15h.1m6 0h.1M12 17l1 1-1 1-1-1z"/>',
- horse:'<path d="m6 21 1-7-3-5 5-7 6 2 5 9-3 8H6ZM9 7l2 2m5 4h.1M7 15h10"/>',
- bird:'<path d="M3 15Q6 6 18 4q-4 6-2 8l5 1-5 3Q8 22 3 15Zm5-2 7-3M12 17l2 5"/>',
- griffin:'<path d="M3 17q5-6 8-8l1-7 4 5 5 1-5 5-1 8H9l-2-5m-4 1 5 4m6-11h.1"/>',
- slime:'<path d="M4 18q-3-5 3-11 5-7 10 0 6 6 3 11-2 5-8 4-6 1-8-4Z"/><path d="M8 14h.1m8 0h.1m-6 4q2 2 4 0"/>',
- sword:'<path d="m5 20 5-5 10-12 1 4-10 10-5 5M3 13l8 8m-4-8 4-4M4 20l-2 2"/>',
- potion:'<path d="M9 2h6m-5 0v7l-5 5q-3 7 7 8 10-1 7-8l-5-5V2m-7 14q5-4 10 0m-6-3h.1"/>',
- key:'<circle cx="7" cy="8" r="4"/><path d="M10 11l11 11m-6-6 3-3m-1 5 3-3"/>'
+Object.assign(PATH, {
+    wizard: '<path d="M4 20h16M6 16l6-12 6 12M8 12q4 3 8 0M9 16q3 3 6 0M12 4l2-2"/><path d="M4 20q8 4 16 0"/>',
+    archer: '<path d="M5 20q9-9 0-18M5 2l8 9-8 9m0-9h16m-4-3 4 3-4 3"/>',
+    ranger: '<path d="m3 9 9-7 9 7-4 12H7zM6 10h12m-9 4h6m-4 4h2"/>',
+    priest: '<path d="M12 2v20M7 7h10M5 19q7-5 14 0M3 22h18"/>',
+    bear: '<path d="M5 8Q1 1 7 3l2 3q3-2 6 0l2-3q6-2 3 5 3 9-5 13H9Q2 17 5 8Z"/><path d="M8 12h.1m8 0h.1M10 16q2 3 4 0m-2-2v1"/>',
+    rabbit: '<path d="M8 10Q2 1 6 2q4 0 5 8m3 0q0-9 5-8 4 1-3 9m-8 0q-4 3-3 8 7 7 14 0 1-5-3-8"/><path d="M9 15h.1m6 0h.1M12 17l1 1-1 1-1-1z"/>',
+    horse: '<path d="m6 21 1-7-3-5 5-7 6 2 5 9-3 8H6ZM9 7l2 2m5 4h.1M7 15h10"/>',
+    bird: '<path d="M3 15Q6 6 18 4q-4 6-2 8l5 1-5 3Q8 22 3 15Zm5-2 7-3M12 17l2 5"/>',
+    griffin: '<path d="M3 17q5-6 8-8l1-7 4 5 5 1-5 5-1 8H9l-2-5m-4 1 5 4m6-11h.1"/>',
+    slime: '<path d="M4 18q-3-5 3-11 5-7 10 0 6 6 3 11-2 5-8 4-6 1-8-4Z"/><path d="M8 14h.1m8 0h.1m-6 4q2 2 4 0"/>',
+    sword: '<path d="m5 20 5-5 10-12 1 4-10 10-5 5M3 13l8 8m-4-8 4-4M4 20l-2 2"/>',
+    potion: '<path d="M9 2h6m-5 0v7l-5 5q-3 7 7 8 10-1 7-8l-5-5V2m-7 14q5-4 10 0m-6-3h.1"/>',
+    key: '<circle cx="7" cy="8" r="4"/><path d="M10 11l11 11m-6-6 3-3m-1 5 3-3"/>'
 });
-let pickerSelect=null;
-S.moreOpen=false;S.iconCategory='Alle';
-function enhanceIconSelectors(){
- const root=$('#modalRoot');if(!root)return;
- for(const sel of root.querySelectorAll('select[name="iconKey"],select[name="icon"],select[name="avatar"]')){
-  if(sel.dataset.galleryReady)return;
-  sel.dataset.galleryReady='1';sel.classList.add('icon-select-hidden');
-  const button=document.createElement('button');button.type='button';button.className='icon-gallery-trigger';button.dataset.act='icon-open';
-  button.innerHTML=`<span class="gallery-preview">${ico(sel.value||'spark')}</span><span>Symbol auswählen <small>Icon-Galerie öffnen</small></span>${ico('chevron')}`;
-  sel.after(button);
- }
+let pickerSelect = null;
+S.moreOpen = false;
+S.iconCategory = 'Alle';
+function enhanceIconSelectors() {
+    const root = $('#modalRoot');
+    if (!root)
+        return;
+    for (const sel of root.querySelectorAll('select[name="iconKey"],select[name="icon"],select[name="avatar"]')) {
+        if (sel.dataset.galleryReady)
+            return;
+        sel.dataset.galleryReady = '1';
+        sel.classList.add('icon-select-hidden');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'icon-gallery-trigger';
+        button.dataset.act = 'icon-open';
+        button.innerHTML = `<span class="gallery-preview">${ico(sel.value || 'spark')}</span><span>Symbol auswählen <small>Icon-Galerie öffnen</small></span>${ico('chevron')}`;
+        sel.after(button);
+    }
 }
-function openIconGallery(button){pickerSelect=button.previousElementSibling;
- if(!pickerSelect||pickerSelect.tagName!=='SELECT')return;
- S.iconCategory='Alle';renderIconGallery();}
-function renderIconGallery(){
- const root=$('#iconPickerRoot');if(!root||!pickerSelect)return;
- const listed=Object.entries(ICON_GROUPS).filter(([k])=>k!=='Alle');
- const icons=S.iconCategory==='Alle'?[...new Set(listed.flatMap(([,v])=>v))]:ICON_GROUPS[S.iconCategory]||[];
- root.innerHTML=`<div class="gallery-backdrop" data-act="icon-close"><section class="icon-gallery" role="dialog" aria-modal="true" aria-label="Symbol auswählen"><header><h2>Symbol wählen</h2><button data-act="icon-close" class="icon-gallery-x" aria-label="Schließen">${ico('close')}</button></header><div class="icon-categories">${Object.keys(ICON_GROUPS).map(k=>`<button class="${S.iconCategory===k?'on':''}" data-act="icon-category" data-category="${safe(k)}">${safe(k)}</button>`).join('')}</div><div class="icon-gallery-grid">${pickerSelect.name==='iconKey'?`<button class="icon-tile ${pickerSelect.value===''?'picked':''}" data-act="icon-choice" data-value="">${ico('spark')}<small>Standard</small></button>`:''}${icons.filter(k=>PATH[k]).map(k=>`<button class="icon-tile ${pickerSelect.value===k?'picked':''}" data-act="icon-choice" data-value="${safe(k)}">${ico(k)}<small>${safe(ICON_NAMES[k]||'Symbol')}</small></button>`).join('')}</div></section></div>`;
+// SYMBOLAUSWAHL: Gemeinsamer Icon-Pool für Quests, Skills, Charakter.
+function openIconGallery(button) {
+    pickerSelect = button.previousElementSibling;
+    if (!pickerSelect || pickerSelect.tagName !== 'SELECT')
+        return;
+    S.iconCategory = 'Alle';
+    renderIconGallery();
 }
-function chooseIcon(value){if(!pickerSelect)return;if(value&&!PATH[value])return;
- // Select entries absent from legacy dropdown need an option for clean FormData persistence.
- if(![...pickerSelect.options].some(o=>o.value===value)){const o=document.createElement('option');o.value=value;o.textContent=ICON_NAMES[value]||'Symbol';pickerSelect.append(o)}
- pickerSelect.value=value;pickerSelect.dispatchEvent(new Event('change',{bubbles:true}));
- const trigger=pickerSelect.nextElementSibling;if(trigger){trigger.querySelector('.gallery-preview').innerHTML=ico(value||'spark');}
- closeIconGallery();}
-function closeIconGallery(){pickerSelect=null;$('#iconPickerRoot').innerHTML=''}
-
-
+function renderIconGallery() {
+    const root = $('#iconPickerRoot');
+    if (!root || !pickerSelect)
+        return;
+    const listed = Object.entries(ICON_GROUPS).filter(([k]) => k !== 'Alle');
+    const icons = S.iconCategory === 'Alle' ? [...new Set(listed.flatMap(([, v]) => v))] : ICON_GROUPS[S.iconCategory] || [];
+    root.innerHTML = `<div class="gallery-backdrop" data-act="icon-close"><section class="icon-gallery" role="dialog" aria-modal="true" aria-label="Symbol auswählen"><header><h2>Symbol wählen</h2><button data-act="icon-close" class="icon-gallery-x" aria-label="Schließen">${ico('close')}</button></header><div class="icon-categories">${Object.keys(ICON_GROUPS).map(k => `<button class="${S.iconCategory === k ? 'on' : ''}" data-act="icon-category" data-category="${safe(k)}">${safe(k)}</button>`).join('')}</div><div class="icon-gallery-grid">${pickerSelect.name === 'iconKey' ? `<button class="icon-tile ${pickerSelect.value === '' ? 'picked' : ''}" data-act="icon-choice" data-value="">${ico('spark')}<small>Standard</small></button>` : ''}${icons.filter(k => PATH[k]).map(k => `<button class="icon-tile ${pickerSelect.value === k ? 'picked' : ''}" data-act="icon-choice" data-value="${safe(k)}">${ico(k)}<small>${safe(ICON_NAMES[k] || 'Symbol')}</small></button>`).join('')}</div></section></div>`;
+}
+function chooseIcon(value) {
+    if (!pickerSelect)
+        return;
+    if (value && !PATH[value])
+        return;
+    // Select entries absent from legacy dropdown need an option for clean FormData persistence.
+    if (![...pickerSelect.options].some(o => o.value === value)) {
+        const o = document.createElement('option');
+        o.value = value;
+        o.textContent = ICON_NAMES[value] || 'Symbol';
+        pickerSelect.append(o);
+    }
+    pickerSelect.value = value;
+    pickerSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    const trigger = pickerSelect.nextElementSibling;
+    if (trigger) {
+        trigger.querySelector('.gallery-preview').innerHTML = ico(value || 'spark');
+    }
+    closeIconGallery();
+}
+function closeIconGallery() { pickerSelect = null; $('#iconPickerRoot').innerHTML = ''; }
 /* ===== Leveln 0.9: trusted daily logging, unified card amount and 2D mascot ===== */
-PATH.rune='<path d="M12 2 19 10 15 10 20 21 12 16 4 21 9 10 5 10Z"/><path d="M12 2v14M9 10h6"/><circle cx="12" cy="10" r="1.25"/>';
-PATH.pixel='<path d="M7 3h4v4H7zM13 3h4v4h-4zM3 9h4v4H3zM9 9h6v6H9zM17 9h4v4h-4zM3 15h4v4H3zM17 15h4v4h-4zM7 19h4v3H7zM13 19h4v3h-4z"/>';
-const ICON_NAMES={user:'Person',person:'Mensch',mage:'Magier',knight:'Ritter',robot:'Roboter',wizard:'Zauberer',archer:'Bogenschütze',ranger:'Waldläufer',priest:'Priesterin',cat:'Katze',wolf:'Wolf',fox:'Fuchs',owl:'Eule',paw:'Tierpfote',bear:'Bär',rabbit:'Hase',horse:'Pferd',bird:'Vogel',dragon:'Drache',unicorn:'Einhorn',phoenix:'Phönix',griffin:'Greif',slime:'Schleimwesen',shield:'Schild',scroll:'Schriftrolle',book:'Buch',phone:'Handy',dumbbell:'Hantel',wallet:'Geldbörse',game:'Spielcontroller',sword:'Schwert',potion:'Zaubertrank',key:'Schlüssel',bag:'Tasche',spark:'Funke',star:'Stern',moon:'Mond',sun:'Sonne',heart:'Herz',target:'Zielscheibe',palette:'Farbpalette',flame:'Flamme',snow:'Schneeflocke',plus:'Plus',rune:'Zauberrune',pixel:'Pixel-Emblem',home:'Zuhause',goals:'Quests',chart:'Statistik',settings:'Einstellungen',close:'Schließen',check:'Haken',edit:'Bearbeiten',calendar:'Kalender',dots:'Menü',back:'Zurück',lock:'Schloss',arrow:'Pfeil',chevron:'Aufklappen',save:'Speichern'};
+PATH.rune = '<path d="M12 2 19 10 15 10 20 21 12 16 4 21 9 10 5 10Z"/><path d="M12 2v14M9 10h6"/><circle cx="12" cy="10" r="1.25"/>';
+PATH.pixel = '<path d="M7 3h4v4H7zM13 3h4v4h-4zM3 9h4v4H3zM9 9h6v6H9zM17 9h4v4h-4zM3 15h4v4H3zM17 15h4v4h-4zM7 19h4v3H7zM13 19h4v3h-4z"/>';
+const ICON_NAMES = { user: 'Person', person: 'Mensch', mage: 'Magier', knight: 'Ritter', robot: 'Roboter', wizard: 'Zauberer', archer: 'Bogenschütze', ranger: 'Waldläufer', priest: 'Priesterin', cat: 'Katze', wolf: 'Wolf', fox: 'Fuchs', owl: 'Eule', paw: 'Tierpfote', bear: 'Bär', rabbit: 'Hase', horse: 'Pferd', bird: 'Vogel', dragon: 'Drache', unicorn: 'Einhorn', phoenix: 'Phönix', griffin: 'Greif', slime: 'Schleimwesen', shield: 'Schild', scroll: 'Schriftrolle', book: 'Buch', phone: 'Handy', dumbbell: 'Hantel', wallet: 'Geldbörse', game: 'Spielcontroller', sword: 'Schwert', potion: 'Zaubertrank', key: 'Schlüssel', bag: 'Tasche', spark: 'Funke', star: 'Stern', moon: 'Mond', sun: 'Sonne', heart: 'Herz', target: 'Zielscheibe', palette: 'Farbpalette', flame: 'Flamme', snow: 'Schneeflocke', plus: 'Plus', rune: 'Zauberrune', pixel: 'Pixel-Emblem', home: 'Zuhause', goals: 'Quests', chart: 'Statistik', settings: 'Einstellungen', close: 'Schließen', check: 'Haken', edit: 'Bearbeiten', calendar: 'Kalender', dots: 'Menü', back: 'Zurück', lock: 'Schloss', arrow: 'Pfeil', chevron: 'Aufklappen', save: 'Speichern' };
 // Small, same-color interior contours make the whole gallery more expressive without adding multicolor fills.
-const ICON_DETAILS={
- person:'<path d="M9 6q3-3 6 0M7 19l2-2m8 2-2-2"/>',user:'<path d="M9 9q3 2 6 0M9 17h6"/>',mage:'<path d="M8 17l2 2m4-10h2m-8 4h7m-5-8 2 3"/>',knight:'<path d="M8 10h8M10 7l2-2 2 2M8 19h2m4 0h2"/>',robot:'<circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M9 17l2 1 2-1M12 4h.01"/>',wizard:'<path d="M7 17h10m-8 2 2 1m1-11h.01M17 4l1-2"/>',archer:'<path d="M7 4l3-2M7 19l3 2M15 9l3-2M15 13l3 2"/>',ranger:'<path d="M9 7h6M7 17l2 2m8-2-2 2M10 11h4"/>',priest:'<path d="M8 4l4-2 4 2m-8 13 4-3 4 3"/>',
- cat:'<path d="M5 10l3 1m11-1-3 1M3 16l5-1m13 1-5-1M3 19l5-2m13 2-5-2M7 6l2 3m8-3-2 3"/>',wolf:'<path d="m6 6 2 4m10-4-2 4M5 16l5-1m9 1-5-1M11 20l1-1 1 1"/>',fox:'<path d="M5 9l3 3m11-3-3 3M6 17l4-2m8 2-4-2M9 20l3-1 3 1"/>',owl:'<path d="M6 7q2-3 5 0m2 0q3-3 5 0M6 17l4 2m8-2-4 2"/>',paw:'<path d="M8 16q4-3 8 0M10 20h4"/>',bear:'<path d="M5 8l4 2m10-2-4 2M8 19l3 1m5-1-3 1"/>',rabbit:'<path d="M8 5l1 4m7-4-1 4M6 19l3 2m9-2-3 2"/>',horse:'<path d="M7 8l3-4m0 9 2 1M8 18l5 1M14 6l3 4"/>',bird:'<path d="M5 15q6-4 11-5M8 17l3 1m2 0 4-2"/>',
- dragon:'<path d="M6 13l4 1m-3 3 3 2m5-15 2 2M12 12l3 2"/>',unicorn:'<path d="M7 16l4 1M15 11l3 3M7 19l6 1"/>',phoenix:'<path d="M7 10l2 3M17 8l-2 5m-6 5 3 2 3-2"/>',griffin:'<path d="M8 8l3-3M5 15l3 2m9-7 3 2M11 15l3 2"/>',slime:'<path d="M6 11q5-4 10 0m-9 7q2 3 4 3m7-4-2 4"/>',
- shield:'<path d="M12 5v13M8 8l4-2 4 2M8 14l4 3 4-3"/>',scroll:'<path d="M8 9h6m-6 4h6m-6 4h4"/>',book:'<path d="M6 8l3-.5M6 12h3m6-4 3-.5M15 12h3"/>',phone:'<path d="M9 5h6M9 15h6M9 8h6M9 11h4"/>',dumbbell:'<path d="M9 9v6m6-6v6M4 8v8m16-8v8"/>',wallet:'<path d="M7 6h9M6 16h5M15 14h.01"/>',game:'<path d="M5 9l2-3h10l2 3m-8 8h2"/>',sword:'<path d="M14 5l5 2M5 19l2 2m5-9 5-5"/>',potion:'<path d="M8 18q4-2 8 0M10 8h4M13 14l2 2m-7 1 1-1"/>',key:'<path d="M6 6h2M4 10l2 2m7 4 2-2"/>',bag:'<path d="M7 13h10M8 17h8m-3-9 2-2"/>',
- spark:'<path d="m5 4 1 2M19 4l-1 2M5 20l1-2M19 20l-1-2"/>',star:'<path d="m12 7-1 3 3 2m-2 5 3-1"/>',moon:'<path d="M14 5l1 2m-2 11h2M5 10h1"/>',sun:'<circle cx="12" cy="12" r="1.4"/>',heart:'<path d="M6 9q1-3 4-2m4 9 2-2"/>',target:'<path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>',palette:'<path d="M9 5l1 1m7 9 2-1"/>',flame:'<path d="M11 19q-3-4 2-8 0 3 2 4"/>',snow:'<path d="m5 12 3 1m11-1-3 1"/>'
+const ICON_DETAILS = {
+    person: '<path d="M9 6q3-3 6 0M7 19l2-2m8 2-2-2"/>', user: '<path d="M9 9q3 2 6 0M9 17h6"/>', mage: '<path d="M8 17l2 2m4-10h2m-8 4h7m-5-8 2 3"/>', knight: '<path d="M8 10h8M10 7l2-2 2 2M8 19h2m4 0h2"/>', robot: '<circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M9 17l2 1 2-1M12 4h.01"/>', wizard: '<path d="M7 17h10m-8 2 2 1m1-11h.01M17 4l1-2"/>', archer: '<path d="M7 4l3-2M7 19l3 2M15 9l3-2M15 13l3 2"/>', ranger: '<path d="M9 7h6M7 17l2 2m8-2-2 2M10 11h4"/>', priest: '<path d="M8 4l4-2 4 2m-8 13 4-3 4 3"/>',
+    cat: '<path d="M5 10l3 1m11-1-3 1M3 16l5-1m13 1-5-1M3 19l5-2m13 2-5-2M7 6l2 3m8-3-2 3"/>', wolf: '<path d="m6 6 2 4m10-4-2 4M5 16l5-1m9 1-5-1M11 20l1-1 1 1"/>', fox: '<path d="M5 9l3 3m11-3-3 3M6 17l4-2m8 2-4-2M9 20l3-1 3 1"/>', owl: '<path d="M6 7q2-3 5 0m2 0q3-3 5 0M6 17l4 2m8-2-4 2"/>', paw: '<path d="M8 16q4-3 8 0M10 20h4"/>', bear: '<path d="M5 8l4 2m10-2-4 2M8 19l3 1m5-1-3 1"/>', rabbit: '<path d="M8 5l1 4m7-4-1 4M6 19l3 2m9-2-3 2"/>', horse: '<path d="M7 8l3-4m0 9 2 1M8 18l5 1M14 6l3 4"/>', bird: '<path d="M5 15q6-4 11-5M8 17l3 1m2 0 4-2"/>',
+    dragon: '<path d="M6 13l4 1m-3 3 3 2m5-15 2 2M12 12l3 2"/>', unicorn: '<path d="M7 16l4 1M15 11l3 3M7 19l6 1"/>', phoenix: '<path d="M7 10l2 3M17 8l-2 5m-6 5 3 2 3-2"/>', griffin: '<path d="M8 8l3-3M5 15l3 2m9-7 3 2M11 15l3 2"/>', slime: '<path d="M6 11q5-4 10 0m-9 7q2 3 4 3m7-4-2 4"/>',
+    shield: '<path d="M12 5v13M8 8l4-2 4 2M8 14l4 3 4-3"/>', scroll: '<path d="M8 9h6m-6 4h6m-6 4h4"/>', book: '<path d="M6 8l3-.5M6 12h3m6-4 3-.5M15 12h3"/>', phone: '<path d="M9 5h6M9 15h6M9 8h6M9 11h4"/>', dumbbell: '<path d="M9 9v6m6-6v6M4 8v8m16-8v8"/>', wallet: '<path d="M7 6h9M6 16h5M15 14h.01"/>', game: '<path d="M5 9l2-3h10l2 3m-8 8h2"/>', sword: '<path d="M14 5l5 2M5 19l2 2m5-9 5-5"/>', potion: '<path d="M8 18q4-2 8 0M10 8h4M13 14l2 2m-7 1 1-1"/>', key: '<path d="M6 6h2M4 10l2 2m7 4 2-2"/>', bag: '<path d="M7 13h10M8 17h8m-3-9 2-2"/>',
+    spark: '<path d="m5 4 1 2M19 4l-1 2M5 20l1-2M19 20l-1-2"/>', star: '<path d="m12 7-1 3 3 2m-2 5 3-1"/>', moon: '<path d="M14 5l1 2m-2 11h2M5 10h1"/>', sun: '<circle cx="12" cy="12" r="1.4"/>', heart: '<path d="M6 9q1-3 4-2m4 9 2-2"/>', target: '<path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>', palette: '<path d="M9 5l1 1m7 9 2-1"/>', flame: '<path d="M11 19q-3-4 2-8 0 3 2 4"/>', snow: '<path d="m5 12 3 1m11-1-3 1"/>'
 };
-Object.entries(ICON_DETAILS).forEach(([key,extra])=>{if(PATH[key])PATH[key]+=extra});
-function iconChoices(current){const listed=[...new Set(Object.values(ICON_GROUPS).flat())].filter(k=>PATH[k]);if(current&&!listed.includes(current)&&PATH[current])listed.unshift(current);return listed.map(k=>`<option value="${safe(k)}" ${current===k?'selected':''}>${safe(ICON_NAMES[k]||'Symbol')}</option>`).join('')}
-
-function unknownFields(g){const v={mode:'refused',status:'no',source:'unknown',estimated:false};for(const k of metricKeys(g.r))v[k]=null;return v}
-function recordedConsumption(g,d){const e=entry(g,d);return !!e&&e.source!=='unknown'&&e.source!=='auto'&&e.source!=='refused'&&metricKeys(g.r).some(k=>finite(e[k])&&e[k]>0)}
-function checkinItems(){const d=dayAdd(nowDay(),-1);return goals(d).filter(g=>!isOnce(g.a)&&g.a.kind==='reduce'&&!recordedConsumption(g,d)&&!['zero-confirmed','unknown'].includes(entry(g,d)?.source)).map(g=>({g,d}))}
-function assessment(g,p){
- const a=g.a,r=p.rule||rules(a,p.start).find(x=>x.id===g.r.id)||g.r,keys=metricKeys(r);
- const totals={minutes:0,count:0};let complete=true,hasEstimated=false,hasUnknown=false;
- const effectiveStart=(a.createdAt||S.started||p.start).slice(0,10);
- for(const d of allDays(effectiveStart>p.start?effectiveStart:p.start, p.end<dayAdd(nowDay(),1)?p.end:dayAdd(nowDay(),1))){
-   const e=entry(g,d);
-   if(!e){if(a.kind==='reduce')complete=false;continue} // No Leveln booking is always 0; no invented entry is needed.
-   if(['auto','refused','unknown'].includes(e.source)){hasUnknown=true;hasEstimated=true;complete=false;continue}
-   for(const k of keys){if(!finite(e[k])){complete=false;hasUnknown=true}else totals[k]+=e[k]}
- }
- const finished=p.end<=nowDay();let state='pending';
- if(a.kind==='reduce'){
-   if(hasUnknown||keys.some(k=>totals[k]>ruleValue(r,k)+1e-9))state='fail';
-   else if(finished&&complete)state='success';
- }else if(keys.every(k=>totals[k]+1e-9>=ruleValue(r,k)))state='success';
- else if(finished&&complete)state='fail';
- if(r.period==='day'){
-   const e=entry(g,p.start);
-   if(!e)state=a.kind==='build'&&finished?'fail':'pending';
-   else if(e.source==='legacy'&&!finite(e.minutes)&&!finite(e.count))state=e.status==='yes'?'success':e.status==='no'?'fail':'pending';
-   else if(a.kind==='reduce'&&hasUnknown)state='fail';
-   else if(!complete&&e.mode==='up'&&!keys.length)state='success';
- }
- return {state,totals,complete,hasEstimated,hasUnknown,finished};
+Object.entries(ICON_DETAILS).forEach(([key, extra]) => { if (PATH[key])
+    PATH[key] += extra; });
+function iconChoices(current) { const listed = [...new Set(Object.values(ICON_GROUPS).flat())].filter(k => PATH[k]); if (current && !listed.includes(current) && PATH[current])
+    listed.unshift(current); return listed.map(k => `<option value="${safe(k)}" ${current === k ? 'selected' : ''}>${safe(ICON_NAMES[k] || 'Symbol')}</option>`).join(''); }
+function unknownFields(g) { const v = { mode: 'refused', status: 'no', source: 'unknown', estimated: false }; for (const k of metricKeys(g.r))
+    v[k] = null; return v; }
+function recordedConsumption(g, d) { const e = entry(g, d); return !!e && e.source !== 'unknown' && e.source !== 'auto' && e.source !== 'refused' && metricKeys(g.r).some(k => finite(e[k]) && e[k] > 0); }
+// MANA-CHECK: Nur fehlende Verbrauchseinträge des Vortags berücksichtigen.
+function checkinItems() { const d = dayAdd(nowDay(), -1); return goals(d).filter(g => !isOnce(g.a) && g.a.kind === 'reduce' && !recordedConsumption(g, d) && !['zero-confirmed', 'unknown'].includes(entry(g, d)?.source)).map(g => ({ g, d })); }
+// PERIODENSTATUS: Streak-Erfolg getrennt von Tagesbuchungen berechnen.
+// Bei Zaubern bleiben unbekannte Mengen unbekannt; nicht schätzen.
+function assessment(g, p) {
+    const a = g.a, r = p.rule || rules(a, p.start).find(x => x.id === g.r.id) || g.r, keys = metricKeys(r);
+    const totals = { minutes: 0, count: 0 };
+    let complete = true, hasEstimated = false, hasUnknown = false;
+    const effectiveStart = (a.createdAt || S.started || p.start).slice(0, 10);
+    for (const d of allDays(effectiveStart > p.start ? effectiveStart : p.start, p.end < dayAdd(nowDay(), 1) ? p.end : dayAdd(nowDay(), 1))) {
+        const e = entry(g, d);
+        if (!e) {
+            if (a.kind === 'reduce')
+                complete = false;
+            continue;
+        } // No Leveln booking is always 0; no invented entry is needed.
+        if (['auto', 'refused', 'unknown'].includes(e.source)) {
+            hasUnknown = true;
+            hasEstimated = true;
+            complete = false;
+            continue;
+        }
+        for (const k of keys) {
+            if (!finite(e[k])) {
+                complete = false;
+                hasUnknown = true;
+            }
+            else
+                totals[k] += e[k];
+        }
+    }
+    const finished = p.end <= nowDay();
+    let state = 'pending';
+    if (a.kind === 'reduce') {
+        if (hasUnknown || keys.some(k => totals[k] > ruleValue(r, k) + 1e-9))
+            state = 'fail';
+        else if (finished && complete)
+            state = 'success';
+    }
+    else if (keys.every(k => totals[k] + 1e-9 >= ruleValue(r, k)))
+        state = 'success';
+    else if (finished && complete)
+        state = 'fail';
+    if (r.period === 'day') {
+        const e = entry(g, p.start);
+        if (!e)
+            state = a.kind === 'build' && finished ? 'fail' : 'pending';
+        else if (e.source === 'legacy' && !finite(e.minutes) && !finite(e.count))
+            state = e.status === 'yes' ? 'success' : e.status === 'no' ? 'fail' : 'pending';
+        else if (a.kind === 'reduce' && hasUnknown)
+            state = 'fail';
+        else if (!complete && e.mode === 'up' && !keys.length)
+            state = 'success';
+    }
+    return { state, totals, complete, hasEstimated, hasUnknown, finished };
 }
-async function reconcile(){
- // Yesterday's missing training is zero. Missing Mana stays open for a next-day check-in;
- // older unknown usage is recorded as unknown, never as an estimated number.
- const cutoff=dayAdd(nowDay(),-1),fresh=[];
- if(S.started){for(let d=S.started,i=0;d<=cutoff&&i<3650;d=dayAdd(d,1),i++){
-   for(const g of goals(d).filter(x=>!isOnce(x.a))){if(entry(g,d)||g.a.kind==='reduce'&&d===cutoff)continue;
-     const fields=g.a.kind==='reduce'?unknownFields(g):{mode:'down',status:'no',source:'zero-auto',estimated:false,...Object.fromEntries(metricKeys(g.r).map(k=>[k,0]))};
-     fresh.push(makeEntry(g,d,fields));
-   }
- }}
- if(fresh.length){await dbTx(['entries'],t=>fresh.forEach(e=>t.objectStore('entries').put(e)));await sync()}
- await reconcileWallet();
+// TAGESABSCHLUSS: Fehlende Alt-Einträge behandeln und Bewertungszustände
+// aktualisieren. Nicht mit der Kartenbuchung selbst verwechseln.
+async function reconcile() {
+    // Yesterday's missing training is zero. Missing Mana stays open for a next-day check-in;
+    // older unknown usage is recorded as unknown, never as an estimated number.
+    const cutoff = dayAdd(nowDay(), -1), fresh = [];
+    if (S.started) {
+        for (let d = S.started, i = 0; d <= cutoff && i < 3650; d = dayAdd(d, 1), i++) {
+            for (const g of goals(d).filter(x => !isOnce(x.a))) {
+                if (entry(g, d) || g.a.kind === 'reduce' && d === cutoff)
+                    continue;
+                const fields = g.a.kind === 'reduce' ? unknownFields(g) : { mode: 'down', status: 'no', source: 'zero-auto', estimated: false, ...Object.fromEntries(metricKeys(g.r).map(k => [k, 0])) };
+                fresh.push(makeEntry(g, d, fields));
+            }
+        }
+    }
+    if (fresh.length) {
+        await dbTx(['entries'], t => fresh.forEach(e => t.objectStore('entries').put(e)));
+        await sync();
+    }
+    await reconcileWallet();
 }
-function manaInPeriod(g){if(g.a.kind!=='reduce')return null;const p=currentPeriod(g,S.day);if(!p)return null;const used={minutes:0,count:0};let unknown=false;for(const d of allDays(p.start,dayAdd(S.day,1))){const e=entry(g,d);if(e&&['auto','refused','unknown'].includes(e.source))unknown=true;else if(e)for(const k of metricKeys(g.r)){if(finite(e[k]))used[k]+=e[k];else unknown=true}}
- return {p,used,unknown}}
-function manaPanel(g){const data=manaInPeriod(g);if(!data)return '';const parts=metricKeys(g.r).map(k=>{const total=ruleValue(g.r,k),used=data.used[k],left=Math.max(0,total-used);return `<div class="mana-row">${MANA_CRYSTAL}<span><b>${data.unknown?'?':num(left,1)} / ${num(total,1)} ${k==='minutes'?'min':'×'}</b><small>${data.unknown?'Verbrauch teilweise unbekannt':'Mana übrig'} ${k==='minutes'?'(Zeit)':'(Anzahl)'}</small></span></div>`});return `<div class="mana-budget">${parts.join('')}</div>`}
-
-async function updatePlayAmount(key,metric,raw){
- const g=goalByKey(key,S.day);if(!g||isOnce(g.a)||!metricKeys(g.r).includes(metric))return;
- const value=readNumber(raw,metric==='minutes'?'Ausspielminuten':'Ausspielanzahl');
- if(metric==='count'&&value!==null&&!Number.isInteger(value))throw Error('Ausspielanzahl muss ganzzahlig sein.');
- const field=metric==='minutes'?'standardMinutes':'standardCount';if(g.r[field]===value)return;
- const a=structuredClone(g.a),today=nowDay();let current=a.revisions.find(r=>r.from===today);
- if(!current){const rev=structuredClone(revision(a,today));rev.from=today;rev.rules=structuredClone(rev.rules);a.revisions.push(rev);current=rev}
- for(const rev of a.revisions.filter(r=>r.from>=today)){
-   for(const r of rev.rules||[])if(r.id===g.r.id)r[field]=value;
- }
- a.revisions.sort((x,y)=>x.from.localeCompare(y.from));a.updatedAt=new Date().toISOString();
- await dbPut('activities',a);await sync();
- // The card draft is intentionally retained: the user may still be typing.
+function manaInPeriod(g) {
+    if (g.a.kind !== 'reduce')
+        return null;
+    const p = currentPeriod(g, S.day);
+    if (!p)
+        return null;
+    const used = { minutes: 0, count: 0 };
+    let unknown = false;
+    for (const d of allDays(p.start, dayAdd(S.day, 1))) {
+        const e = entry(g, d);
+        if (e && ['auto', 'refused', 'unknown'].includes(e.source))
+            unknown = true;
+        else if (e)
+            for (const k of metricKeys(g.r)) {
+                if (finite(e[k]))
+                    used[k] += e[k];
+                else
+                    unknown = true;
+            }
+    }
+    return { p, used, unknown };
 }
-
-const CAT_DRAWING=`<svg class="cat-2d" viewBox="0 0 240 212" role="img" aria-label="Überraschte, schwarze, langhaarige Katze">
+function manaPanel(g) { const data = manaInPeriod(g); if (!data)
+    return ''; const parts = metricKeys(g.r).map(k => { const total = ruleValue(g.r, k), used = data.used[k], left = Math.max(0, total - used); return `<div class="mana-row">${MANA_CRYSTAL}<span><b>${data.unknown ? '?' : num(left, 1)} / ${num(total, 1)} ${k === 'minutes' ? 'min' : '×'}</b><small>${data.unknown ? 'Verbrauch teilweise unbekannt' : 'Mana übrig'} ${k === 'minutes' ? '(Zeit)' : '(Anzahl)'}</small></span></div>`; }); return `<div class="mana-budget">${parts.join('')}</div>`; }
+// DIREKTE EINGABE: Kartenfelder und Tagesdatensatz synchron halten.
+async function updatePlayAmount(key, metric, raw) {
+    const g = goalByKey(key, S.day);
+    if (!g || isOnce(g.a) || !metricKeys(g.r).includes(metric))
+        return;
+    const value = readNumber(raw, metric === 'minutes' ? 'Ausspielminuten' : 'Ausspielanzahl');
+    if (metric === 'count' && value !== null && !Number.isInteger(value))
+        throw Error('Ausspielanzahl muss ganzzahlig sein.');
+    const field = metric === 'minutes' ? 'standardMinutes' : 'standardCount';
+    if (g.r[field] === value)
+        return;
+    const a = structuredClone(g.a), today = nowDay();
+    let current = a.revisions.find(r => r.from === today);
+    if (!current) {
+        const rev = structuredClone(revision(a, today));
+        rev.from = today;
+        rev.rules = structuredClone(rev.rules);
+        a.revisions.push(rev);
+        current = rev;
+    }
+    for (const rev of a.revisions.filter(r => r.from >= today)) {
+        for (const r of rev.rules || [])
+            if (r.id === g.r.id)
+                r[field] = value;
+    }
+    a.revisions.sort((x, y) => x.from.localeCompare(y.from));
+    a.updatedAt = new Date().toISOString();
+    await dbPut('activities', a);
+    await sync();
+    // The card draft is intentionally retained: the user may still be typing.
+}
+const CAT_DRAWING = `<svg class="cat-2d" viewBox="0 0 240 212" role="img" aria-label="Überraschte, schwarze, langhaarige Katze">
  <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M28 35l6-7m-3 16-10-2M212 32l-6-7m3 17 10-2M121 4v10" opacity=".4"/></g>
  <!-- Flat silhouette: layered tufted fur, fluffy cheeks and long tail. -->
  <path d="M165 154q36-18 55 8 11 24-10 36-16 9-28-2 19 4 23-12 3-17-24-15Z" fill="#0c0c0f"/>
@@ -772,51 +1726,267 @@ const CAT_DRAWING=`<svg class="cat-2d" viewBox="0 0 240 212" role="img" aria-lab
  <path d="M89 184q10-9 21-5l9 8 10-8q12-4 22 5l-6 14q-12 5-25-4-13 9-25 4Z" fill="#151519" stroke="#3b3941" stroke-width="2"/>
  <path d="M99 191v5m9-5v4m25-4v4m10-4v5" stroke="#4e4a51" stroke-width="1.4" stroke-linecap="round"/>
  </svg>`;
-const CAT_HEADLINES=['WOW! Noch dein ganzes Mana?!','Ich trau meinen Augen nicht!','Ein magischer Null-Verbrauch?!','Sag bloß, du hast Mana gespart!','Kein einziger Mana-Kristall weg?!','Na sowas! Alles noch da?'];
-const CAT_SUBLINES=['Hast du gestern wirklich nichts verbraucht?','Ist die Anzeige korrekt oder ist dir eine Buchung durchgerutscht?','War gestern tatsächlich ein kompletter Mana-Spar-Tag?','Bevor ich feiere: Stimmt dein Eintrag für gestern?'];
-const CAT_CHOICES=[
- ['Yes! ✨','Stimmt genau!','Alles noch da!','Jap, null verbraucht!','So sieht’s aus!'],
- ['Ups, ganz vergessen …','Ich trag’s schnell nach','Moment, da fehlt was!','Ich korrigiere das','Erwischt, ich hab’s vergessen'],
- ['Keine Ahnung. 🤷','Weiß ich leider nicht','Puh, keine Erinnerung','Menge unbekannt lassen','Kann ich nicht sagen']
+const CAT_HEADLINES = ['WOW! Noch dein ganzes Mana?!', 'Ich trau meinen Augen nicht!', 'Ein magischer Null-Verbrauch?!', 'Sag bloß, du hast Mana gespart!', 'Kein einziger Mana-Kristall weg?!', 'Na sowas! Alles noch da?'];
+const CAT_SUBLINES = ['Hast du gestern wirklich nichts verbraucht?', 'Ist die Anzeige korrekt oder ist dir eine Buchung durchgerutscht?', 'War gestern tatsächlich ein kompletter Mana-Spar-Tag?', 'Bevor ich feiere: Stimmt dein Eintrag für gestern?'];
+const CAT_CHOICES = [
+    ['Yes! ✨', 'Stimmt genau!', 'Alles noch da!', 'Jap, null verbraucht!', 'So sieht’s aus!'],
+    ['Ups, ganz vergessen …', 'Ich trag’s schnell nach', 'Moment, da fehlt was!', 'Ich korrigiere das', 'Erwischt, ich hab’s vergessen'],
+    ['Keine Ahnung. 🤷', 'Weiß ich leider nicht', 'Puh, keine Erinnerung', 'Menge unbekannt lassen', 'Kann ich nicht sagen']
 ];
-function checkinModal(){const items=checkinItems();if(!items.length){S.modal=null;renderModal();return}
- const {g,d}=items[0];S.checkinQueue=items.map(i=>({key:i.g.key,day:i.d}));const v=S.checkinVariant||0;S.checkinVariant=v+1;const button=(i,action,cl)=>`<button class="mana-answer ${cl}" data-act="${action}">${safe(CAT_CHOICES[i][v%CAT_CHOICES[i].length])}</button>`;
- sheet('Mana-Check',`<div class="mana-check-dialog"><div class="cat-scene">${CAT_DRAWING}<span class="cat-spark s1">✦</span><span class="cat-spark s2">✧</span></div><span class="eyebrow">GESTERN · ${safe(g.a.name)}${items.length>1?' · '+items.length+' Quests offen':''}</span><h3>${safe(CAT_HEADLINES[v%CAT_HEADLINES.length])}</h3><p>${safe(CAT_SUBLINES[v%CAT_SUBLINES.length])}</p><div class="mana-confirm-actions">${button(0,'mana-confirm','is-confirm')}${button(1,'mana-correct','is-correct')}${button(2,'mana-unknown','is-unknown')}</div><small class="mana-note">„Weiß ich nicht“ lässt den Verbrauch unbekannt und beendet den Streak. Es wird nichts geschätzt.</small></div>`,true);
+function checkinModal() {
+    const items = checkinItems();
+    if (!items.length) {
+        S.modal = null;
+        renderModal();
+        return;
+    }
+    const { g, d } = items[0];
+    S.checkinQueue = items.map(i => ({ key: i.g.key, day: i.d }));
+    const v = S.checkinVariant || 0;
+    S.checkinVariant = v + 1;
+    const button = (i, action, cl) => `<button class="mana-answer ${cl}" data-act="${action}">${safe(CAT_CHOICES[i][v % CAT_CHOICES[i].length])}</button>`;
+    sheet('Mana-Check', `<div class="mana-check-dialog"><div class="cat-scene">${CAT_DRAWING}<span class="cat-spark s1">✦</span><span class="cat-spark s2">✧</span></div><span class="eyebrow">GESTERN · ${safe(g.a.name)}${items.length > 1 ? ' · ' + items.length + ' Quests offen' : ''}</span><h3>${safe(CAT_HEADLINES[v % CAT_HEADLINES.length])}</h3><p>${safe(CAT_SUBLINES[v % CAT_SUBLINES.length])}</p><div class="mana-confirm-actions">${button(0, 'mana-confirm', 'is-confirm')}${button(1, 'mana-correct', 'is-correct')}${button(2, 'mana-unknown', 'is-unknown')}</div><small class="mana-note">„Weiß ich nicht“ lässt den Verbrauch unbekannt und beendet den Streak. Es wird nichts geschätzt.</small></div>`, true);
 }
-async function answerManaCheckin(answer){const first=checkinItems()[0];if(!first)return;const {g,d}=first;const base=entry(g,d)||{};
- const fields=answer==='confirmed'?{mode:'down',status:'no',source:'zero-confirmed',estimated:false,...Object.fromEntries(metricKeys(g.r).map(k=>[k,0]))}:unknownFields(g);
- await dbPut('entries',makeEntry(g,d,{...fields,comment:base.comment||''}));await sync();await reconcileWallet();S.modal=null;render();const rest=checkinItems();if(rest.length){S.modal={type:'checkin'};renderModal()}else{toast(answer==='confirmed'?'Mega! Mana gespart ✨':'Mana unbekannt · Streak nicht erfüllt')}
+async function answerManaCheckin(answer) {
+    const first = checkinItems()[0];
+    if (!first)
+        return;
+    const { g, d } = first;
+    const base = entry(g, d) || {};
+    const fields = answer === 'confirmed' ? { mode: 'down', status: 'no', source: 'zero-confirmed', estimated: false, ...Object.fromEntries(metricKeys(g.r).map(k => [k, 0])) } : unknownFields(g);
+    await dbPut('entries', makeEntry(g, d, { ...fields, comment: base.comment || '' }));
+    await sync();
+    await reconcileWallet();
+    S.modal = null;
+    render();
+    const rest = checkinItems();
+    if (rest.length) {
+        S.modal = { type: 'checkin' };
+        renderModal();
+    }
+    else {
+        toast(answer === 'confirmed' ? 'Mega! Mana gespart ✨' : 'Mana unbekannt · Streak nicht erfüllt');
+    }
 }
-function maybeCheckin(force=false){if(S.modal||S.packet)return;const items=checkinItems();if(items.length&&(force||!S.checkShown)){S.checkShown=true;S.modal={type:'checkin'};renderModal()}}
-
-let goalSwipe=null;let suppressClickUntil=0;
-document.addEventListener('click',e=>{if(Date.now()<suppressClickUntil)return;let el=e.target.closest('[data-act]');if(!el)return;if(el.classList.contains('shade')&&e.target!==el)return;handleAction(el.dataset.act,el)});
-document.addEventListener('input',e=>{const el=e.target;if(el.classList.contains('card-entry-input')){const key=el.dataset.goal+'|'+S.day;let draft=S.cardDrafts.get(key)||{};draft[el.dataset.metric]=el.value;S.cardDrafts.set(key,draft)}});
-document.addEventListener('change',e=>{const el=e.target;if(el.classList.contains('card-entry-input'))updatePlayAmount(el.dataset.goal,el.dataset.metric,el.value).catch(showError)});
-document.addEventListener('submit',e=>{if(e.target.id==='goalForm'){e.preventDefault();saveGoal(e.target).catch(showError)}if(e.target.id==='dayForm'){e.preventDefault();saveDay(e.target).catch(showError)}});
-document.addEventListener('change',e=>{const el=e.target;if(el.dataset.setting){let k=el.dataset.setting,v=k==='sound'?el.checked:k==='packetTimeout'||k==='backgroundShade'?Number(el.value):el.value;storeSetting(k,v).catch(showError)}if(el.id==='bgImagePicker'&&el.files[0])saveBackgroundImage(el.files[0]).catch(showError);if(el.id==='statGoal'){S.statGoal=el.value;render()}if(el.id==='statStack'){S.statStack=el.checked;render()}if(el.id==='statMetric'){S.statMetric=el.value;render()}if(el.id==='iconPreviewSelect'){storeSetting('iconVariant',el.value).catch(showError)}});
-document.addEventListener('submit',e=>{if(e.target.id==='profileForm'){e.preventDefault();saveProfile(e.target).catch(showError)}if(e.target.id==='skillForm'){e.preventDefault();saveSkill(e.target).catch(showError)}});
-document.addEventListener('change',e=>{if(e.target.name==='kind'||e.target.name==='questType'){const f=e.target.form,banner=f?.querySelector('.quest-type-banner');if(banner){const once=f.elements.questType.value==='once',isSpell=f.elements.kind.value==='reduce';banner.textContent=once?'EINMALIGE MISSION':isSpell?'ZAUBER-QUEST':'LEVELN-QUEST';banner.style.setProperty('--type-color',isSpell?S.colors.save:S.colors.level)}}if(e.target.name==='unlimited'){const f=e.target.form;if(f)f.elements.availableUntil.disabled=e.target.checked}if(['period','mode','startDate'].includes(e.target.name)){const f=e.target.form;if(!S.modal?.key&&!S.modal?.activityId&&f){for(const [target,source,metric] of [['stdMinutes','minutes','minutes'],['stdCount','count','count']]){const input=f.elements[target];if(!input.dataset.edited)input.value=suggestStandard(f.elements.period.value,f.elements[source].value,metric,f.elements.startDate.value,f.elements.mode.value)}}}});
-document.addEventListener('input',e=>{if(['stdMinutes','stdCount'].includes(e.target.name))e.target.dataset.edited='true';const f=e.target.form;if(f&&['minutes','count'].includes(e.target.name)&&!S.modal?.key&&!S.modal?.activityId){const target=f.elements[e.target.name==='minutes'?'stdMinutes':'stdCount'];if(!target.dataset.edited)target.value=suggestStandard(f.elements.period.value,e.target.value,e.target.name,f.elements.startDate.value,f.elements.mode.value)}});
-document.addEventListener('change',e=>{if(e.target.id==='questTypeSelect'){const f=e.target.closest('form'),once=e.target.value==='once';f.querySelector('#oneTimeFields').hidden=!once;f.querySelector('#recurringFields').hidden=once;f.querySelector('#onceRewards').hidden=!once;f.querySelector('#recurringRates').hidden=once;}});
-$('#bgImageFile').addEventListener('change',e=>{if(e.target.files[0])saveBackgroundImage(e.target.files[0]).catch(showError);e.target.value=''});
-$('#importFile').addEventListener('change',e=>{if(e.target.files[0])importBackup(e.target.files[0]).catch(showError);e.target.value='' });
+// Hinweissteuerung des Mana-Checks; ohne Änderung der Erinnerungslogik.
+function maybeCheckin(force = false) { if (S.modal || S.packet)
+    return; const items = checkinItems(); if (items.length && (force || !S.checkShown)) {
+    S.checkShown = true;
+    S.modal = { type: 'checkin' };
+    renderModal();
+} }
+let goalSwipe = null;
+let suppressClickUntil = 0;
+document.addEventListener('click', e => { if (Date.now() < suppressClickUntil)
+    return; let el = e.target.closest('[data-act]'); if (!el)
+    return; if (el.classList.contains('shade') && e.target !== el)
+    return; handleAction(el.dataset.act, el); });
+document.addEventListener('input', e => { const el = e.target; if (el.classList.contains('card-entry-input')) {
+    const key = el.dataset.goal + '|' + S.day;
+    let draft = S.cardDrafts.get(key) || {};
+    draft[el.dataset.metric] = el.value;
+    S.cardDrafts.set(key, draft);
+} });
+document.addEventListener('change', e => { const el = e.target; if (el.classList.contains('card-entry-input'))
+    updatePlayAmount(el.dataset.goal, el.dataset.metric, el.value).catch(showError); });
+document.addEventListener('submit', e => { if (e.target.id === 'goalForm') {
+    e.preventDefault();
+    saveGoal(e.target).catch(showError);
+} if (e.target.id === 'dayForm') {
+    e.preventDefault();
+    saveDay(e.target).catch(showError);
+} });
+document.addEventListener('change', e => { const el = e.target; if (el.dataset.setting) {
+    let k = el.dataset.setting, v = k === 'sound' ? el.checked : k === 'packetTimeout' || k === 'backgroundShade' ? Number(el.value) : el.value;
+    storeSetting(k, v).catch(showError);
+} if (el.id === 'bgImagePicker' && el.files[0])
+    saveBackgroundImage(el.files[0]).catch(showError); if (el.id === 'statGoal') {
+    S.statGoal = el.value;
+    render();
+} if (el.id === 'statStack') {
+    S.statStack = el.checked;
+    render();
+} if (el.id === 'statMetric') {
+    S.statMetric = el.value;
+    render();
+} if (el.id === 'iconPreviewSelect') {
+    storeSetting('iconVariant', el.value).catch(showError);
+} });
+document.addEventListener('submit', e => { if (e.target.id === 'profileForm') {
+    e.preventDefault();
+    saveProfile(e.target).catch(showError);
+} if (e.target.id === 'skillForm') {
+    e.preventDefault();
+    saveSkill(e.target).catch(showError);
+} });
+document.addEventListener('change', e => { if (e.target.name === 'kind' || e.target.name === 'questType') {
+    const f = e.target.form, banner = f?.querySelector('.quest-type-banner');
+    if (banner) {
+        const once = f.elements.questType.value === 'once', isSpell = f.elements.kind.value === 'reduce';
+        banner.textContent = once ? 'EINMALIGE MISSION' : isSpell ? 'ZAUBER-QUEST' : 'LEVELN-QUEST';
+        banner.style.setProperty('--type-color', isSpell ? S.colors.save : S.colors.level);
+    }
+} if (e.target.name === 'unlimited') {
+    const f = e.target.form;
+    if (f)
+        f.elements.availableUntil.disabled = e.target.checked;
+} if (['period', 'mode', 'startDate'].includes(e.target.name)) {
+    const f = e.target.form;
+    if (!S.modal?.key && !S.modal?.activityId && f) {
+        for (const [target, source, metric] of [['stdMinutes', 'minutes', 'minutes'], ['stdCount', 'count', 'count']]) {
+            const input = f.elements[target];
+            if (!input.dataset.edited)
+                input.value = suggestStandard(f.elements.period.value, f.elements[source].value, metric, f.elements.startDate.value, f.elements.mode.value);
+        }
+    }
+} });
+document.addEventListener('input', e => { if (['stdMinutes', 'stdCount'].includes(e.target.name))
+    e.target.dataset.edited = 'true'; const f = e.target.form; if (f && ['minutes', 'count'].includes(e.target.name) && !S.modal?.key && !S.modal?.activityId) {
+    const target = f.elements[e.target.name === 'minutes' ? 'stdMinutes' : 'stdCount'];
+    if (!target.dataset.edited)
+        target.value = suggestStandard(f.elements.period.value, e.target.value, e.target.name, f.elements.startDate.value, f.elements.mode.value);
+} });
+document.addEventListener('change', e => { if (e.target.id === 'questTypeSelect') {
+    const f = e.target.closest('form'), once = e.target.value === 'once';
+    f.querySelector('#oneTimeFields').hidden = !once;
+    f.querySelector('#recurringFields').hidden = once;
+    f.querySelector('#onceRewards').hidden = !once;
+    f.querySelector('#recurringRates').hidden = once;
+} });
+$('#bgImageFile').addEventListener('change', e => { if (e.target.files[0])
+    saveBackgroundImage(e.target.files[0]).catch(showError); e.target.value = ''; });
+$('#importFile').addEventListener('change', e => { if (e.target.files[0])
+    importBackup(e.target.files[0]).catch(showError); e.target.value = ''; });
 // Capture card swipes on the front card only. Horizontal date wheel uses a separate pointer target.
-document.addEventListener('pointerdown',e=>{const goalrow=e.target.closest('.goal-swipe');if(goalrow&&!e.target.closest('.goal-row-actions,button[data-act=once-complete],button[data-act=goal-expand]'))goalSwipe={id:e.pointerId,el:goalrow,startX:e.clientX,startY:e.clientY,old:goalrow.classList.contains('revealed')};const surface=e.target.closest('#activeCard,.deck-gesture-tail');const card=surface?.id==='activeCard'?surface:surface?.closest('.deck-stack')?.querySelector('#activeCard');if(card&&!e.target.closest('button,input,select,textarea,label')&&!S.packet&&!S.busy){gesture={id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now(),key:card.dataset.goal,el:card};surface.setPointerCapture?.(e.pointerId)}
- const wheel=null;if(wheel){wheelGesture={id:e.pointerId,x:e.clientX,last:e.clientX,time:performance.now(),el:wheel,moved:false};wheel.setPointerCapture?.(e.pointerId)}
- const chip=e.target.closest('.package-chip');if(chip){clearTimeout(timer);packageGesture={id:e.pointerId,y:e.clientY,el:chip,n:Number(chip.dataset.n)};chip.setPointerCapture?.(e.pointerId)}},{passive:true});
-document.addEventListener('pointermove',e=>{if(goalSwipe&&goalSwipe.id===e.pointerId){const dx=e.clientX-goalSwipe.startX,dy=e.clientY-goalSwipe.startY;if(Math.abs(dx)>18&&Math.abs(dx)>Math.abs(dy)*1.25){goalSwipe.el.classList.add('dragging');goalSwipe.el.style.setProperty('--row-shift',Math.max(-130,Math.min(0,(goalSwipe.old?-130:0)+dx))+'px')}}if(gesture&&e.pointerId===gesture.id){let dx=e.clientX-gesture.x,dy=e.clientY-gesture.y;gesture.el.style.transform=`translate(${dx*.8}px,${dy*.8}px) rotate(${dx*.012}deg)`}
- if(wheelGesture&&e.pointerId===wheelGesture.id){let dx=e.clientX-wheelGesture.x;let offset=Math.max(-85,Math.min(85,dx));wheelGesture.el.style.transform=`translateX(${offset}px)`;if(Math.abs(dx)>8)wheelGesture.moved=true}
- if(packageGesture&&e.pointerId===packageGesture.id){let dy=e.clientY-packageGesture.y;packageGesture.el.style.transform=`translateY(${Math.min(0,dy)}px) scale(${dy<0?1.08:1})`}
+document.addEventListener('pointerdown', e => {
+    const goalrow = e.target.closest('.goal-swipe');
+    if (goalrow && !e.target.closest('.goal-row-actions,button[data-act=once-complete],button[data-act=goal-expand]'))
+        goalSwipe = { id: e.pointerId, el: goalrow, startX: e.clientX, startY: e.clientY, old: goalrow.classList.contains('revealed') };
+    const surface = e.target.closest('#activeCard,.deck-gesture-tail');
+    const card = surface?.id === 'activeCard' ? surface : surface?.closest('.deck-stack')?.querySelector('#activeCard');
+    if (card && !e.target.closest('button,input,select,textarea,label') && !S.packet && !S.busy) {
+        gesture = { id: e.pointerId, x: e.clientX, y: e.clientY, time: performance.now(), key: card.dataset.goal, el: card };
+        surface.setPointerCapture?.(e.pointerId);
+    }
+    const wheel = null;
+    if (wheel) {
+        wheelGesture = { id: e.pointerId, x: e.clientX, last: e.clientX, time: performance.now(), el: wheel, moved: false };
+        wheel.setPointerCapture?.(e.pointerId);
+    }
+    const chip = e.target.closest('.package-chip');
+    if (chip) {
+        clearTimeout(timer);
+        packageGesture = { id: e.pointerId, y: e.clientY, el: chip, n: Number(chip.dataset.n) };
+        chip.setPointerCapture?.(e.pointerId);
+    }
+}, { passive: true });
+document.addEventListener('pointermove', e => {
+    if (goalSwipe && goalSwipe.id === e.pointerId) {
+        const dx = e.clientX - goalSwipe.startX, dy = e.clientY - goalSwipe.startY;
+        if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+            goalSwipe.el.classList.add('dragging');
+            goalSwipe.el.style.setProperty('--row-shift', Math.max(-130, Math.min(0, (goalSwipe.old ? -130 : 0) + dx)) + 'px');
+        }
+    }
+    if (gesture && e.pointerId === gesture.id) {
+        let dx = e.clientX - gesture.x, dy = e.clientY - gesture.y;
+        gesture.el.style.transform = `translate(${dx * .8}px,${dy * .8}px) rotate(${dx * .012}deg)`;
+    }
+    if (wheelGesture && e.pointerId === wheelGesture.id) {
+        let dx = e.clientX - wheelGesture.x;
+        let offset = Math.max(-85, Math.min(85, dx));
+        wheelGesture.el.style.transform = `translateX(${offset}px)`;
+        if (Math.abs(dx) > 8)
+            wheelGesture.moved = true;
+    }
+    if (packageGesture && e.pointerId === packageGesture.id) {
+        let dy = e.clientY - packageGesture.y;
+        packageGesture.el.style.transform = `translateY(${Math.min(0, dy)}px) scale(${dy < 0 ? 1.08 : 1})`;
+    }
 });
-document.addEventListener('pointerup',e=>{if(goalSwipe&&goalSwipe.id===e.pointerId){const sw=goalSwipe;goalSwipe=null;const dx=e.clientX-sw.startX,dy=e.clientY-sw.startY;sw.el.classList.remove('dragging');sw.el.style.removeProperty('--row-shift');if(Math.abs(dx)>35&&Math.abs(dx)>Math.abs(dy)){suppressClickUntil=Date.now()+280;document.querySelectorAll('.goal-swipe.revealed').forEach(x=>{if(x!==sw.el)x.classList.remove('revealed')});sw.el.classList.toggle('revealed',dx<0)}}if(gesture&&e.pointerId===gesture.id){let g=gesture;gesture=null;let dx=e.clientX-g.x,dy=e.clientY-g.y,absX=Math.abs(dx),absY=Math.abs(dy);if(Math.max(absX,absY)>70){suppressClickUntil=Date.now()+420;let goal=goalByKey(g.key,S.day);if(absX>absY){animateCard(dx>0?'right':'left',async()=>rotate(dx>0?-1:1)).catch(showError)}else if(canEdit(S.day)){animateCard(dy<0?'up':'down',async()=>{await startCard(goal,dy<0);sound(false)}).catch(showError)}else{render();toast('Vergangene Tage sind gesperrt')}}else{g.el.style.transform='';g.el.style.opacity=''}}
- if(wheelGesture&&e.pointerId===wheelGesture.id){let w=wheelGesture;wheelGesture=null;const dx=e.clientX-w.x,dt=performance.now()-w.time;w.el.style.transition='transform 190ms cubic-bezier(.2,.8,.2,1)';w.el.style.transform='translateX(0)';if(Math.abs(dx)>=30 || (Math.abs(dx)>=17&&dt<170)){suppressClickUntil=Date.now()+280;const target=dx>0?dayAdd(nowDay(),-1):nowDay();S.day=target;S.card=0;S.packet=null;setTimeout(()=>{render()},155)}}
-
- if(packageGesture&&e.pointerId===packageGesture.id){let q=packageGesture;packageGesture=null;let dy=e.clientY-q.y;q.el.style.transform='';if(dy<-38){suppressClickUntil=Date.now()+380;sendPacket(q.n,q.el).catch(showError)}else armTimer()}
+document.addEventListener('pointerup', e => {
+    if (goalSwipe && goalSwipe.id === e.pointerId) {
+        const sw = goalSwipe;
+        goalSwipe = null;
+        const dx = e.clientX - sw.startX, dy = e.clientY - sw.startY;
+        sw.el.classList.remove('dragging');
+        sw.el.style.removeProperty('--row-shift');
+        if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) {
+            suppressClickUntil = Date.now() + 280;
+            document.querySelectorAll('.goal-swipe.revealed').forEach(x => { if (x !== sw.el)
+                x.classList.remove('revealed'); });
+            sw.el.classList.toggle('revealed', dx < 0);
+        }
+    }
+    if (gesture && e.pointerId === gesture.id) {
+        let g = gesture;
+        gesture = null;
+        let dx = e.clientX - g.x, dy = e.clientY - g.y, absX = Math.abs(dx), absY = Math.abs(dy);
+        if (Math.max(absX, absY) > 70) {
+            suppressClickUntil = Date.now() + 420;
+            let goal = goalByKey(g.key, S.day);
+            if (absX > absY) {
+                animateCard(dx > 0 ? 'right' : 'left', async () => rotate(dx > 0 ? -1 : 1)).catch(showError);
+            }
+            else if (canEdit(S.day)) {
+                animateCard(dy < 0 ? 'up' : 'down', async () => { await startCard(goal, dy < 0); sound(false); }).catch(showError);
+            }
+            else {
+                render();
+                toast('Vergangene Tage sind gesperrt');
+            }
+        }
+        else {
+            g.el.style.transform = '';
+            g.el.style.opacity = '';
+        }
+    }
+    if (wheelGesture && e.pointerId === wheelGesture.id) {
+        let w = wheelGesture;
+        wheelGesture = null;
+        const dx = e.clientX - w.x, dt = performance.now() - w.time;
+        w.el.style.transition = 'transform 190ms cubic-bezier(.2,.8,.2,1)';
+        w.el.style.transform = 'translateX(0)';
+        if (Math.abs(dx) >= 30 || (Math.abs(dx) >= 17 && dt < 170)) {
+            suppressClickUntil = Date.now() + 280;
+            const target = dx > 0 ? dayAdd(nowDay(), -1) : nowDay();
+            S.day = target;
+            S.card = 0;
+            S.packet = null;
+            setTimeout(() => { render(); }, 155);
+        }
+    }
+    if (packageGesture && e.pointerId === packageGesture.id) {
+        let q = packageGesture;
+        packageGesture = null;
+        let dy = e.clientY - q.y;
+        q.el.style.transform = '';
+        if (dy < -38) {
+            suppressClickUntil = Date.now() + 380;
+            sendPacket(q.n, q.el).catch(showError);
+        }
+        else
+            armTimer();
+    }
 });
-document.addEventListener('pointercancel',()=>{gesture=null;wheelGesture=null;if(packageGesture){packageGesture.el.style.transform='';packageGesture=null}clearTimeout(timer);armTimer()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(timer);else{if(S.packet)armTimer();else if(!S.modal){reconcile().then(()=>{render();maybeCheckin()}).catch(console.error)}}});
-window.addEventListener('focus',()=>{if(S.packet)armTimer()});
-setInterval(()=>{if(!document.hidden&&!S.packet&&!S.modal){if(S.day!==nowDay()&&S.day===dayAdd(nowDay(),-1)){}maybeCheckin()}},60000);
-window.addEventListener('error',e=>console.error('Leveln 0.9',e.error));
-setup().catch(e=>{$('#app').innerHTML=`<div class="fatal"><h2>Leveln konnte nicht starten</h2><p>${safe(e.message)}</p><p>Bitte GitHub Pages über HTTPS und Safari öffnen.</p></div>`;console.error(e)});
+document.addEventListener('pointercancel', () => { gesture = null; wheelGesture = null; if (packageGesture) {
+    packageGesture.el.style.transform = '';
+    packageGesture = null;
+} clearTimeout(timer); armTimer(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden)
+    clearTimeout(timer);
+else {
+    if (S.packet)
+        armTimer();
+    else if (!S.modal) {
+        reconcile().then(() => { render(); maybeCheckin(); }).catch(console.error);
+    }
+} });
+window.addEventListener('focus', () => { if (S.packet)
+    armTimer(); });
+setInterval(() => { if (!document.hidden && !S.packet && !S.modal) {
+    if (S.day !== nowDay() && S.day === dayAdd(nowDay(), -1)) { }
+    maybeCheckin();
+} }, 60000);
+window.addEventListener('error', e => console.error('Leveln 0.9', e.error));
+setup().catch(e => { $('#app').innerHTML = `<div class="fatal"><h2>Leveln konnte nicht starten</h2><p>${safe(e.message)}</p><p>Bitte GitHub Pages über HTTPS und Safari öffnen.</p></div>`; console.error(e); });

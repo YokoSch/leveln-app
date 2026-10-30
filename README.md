@@ -1,4 +1,8 @@
-# Leveln 0.9 – iPhone-Web-App (PWA)
+# Leveln 0.9 – iPhone-Web-App (PWA, Quellcode bereinigt)
+
+> **Bereinigungsstand 30.10.2026:** Dieselbe App-Version **0.9**, kein neues Datenformat, keine neuen Funktionen und keine bewusst geänderte Bedienung. Entfernt wurden nur von späteren Definitionen überschriebene oder unbenutzte Funktionskörper; der JavaScript-Code wurde lesbarer formatiert und kommentiert. Der Service-Worker-Cache hat eine neue Kennung, damit die bereinigte Datei beim Update geladen wird. Technische Hinweise stehen in `WARTUNG.md`.
+
+**Vor dem Ersetzen der Dateien** sicherheitshalber ein JSON-Backup aus deiner aktuellen Leveln-0.9-Installation erstellen. Die bestehenden lokalen Daten werden nicht zurückgesetzt.
 
 Die neue Version baut auf **Leveln 0.8** auf. Daten liegen lokal auf deinem Gerät in IndexedDB, nicht auf einem Server. Der Datenbankname und der Speicherort bleiben gleich.
 
