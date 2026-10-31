@@ -1,0 +1,29 @@
+
+/* Vektor-Icons aus Designvorlagen.zip: dieselbe Form in allen Skins. */
+.lv10-root .lv-asset-icon {
+  display:inline-block; flex:none; background-color:currentColor;
+  width:1.35em; height:1.35em; vertical-align:-.25em;
+  -webkit-mask-image:var(--lv-asset-url);mask-image:var(--lv-asset-url);
+  -webkit-mask-position:center;mask-position:center;
+  -webkit-mask-size:contain;mask-size:contain;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+}
+.lv10-root .lv-icon-image{display:inline-block;width:1.35em;height:1.35em;object-fit:contain;vertical-align:-.25em;}
+.lv10-root .lv-asset-icon[data-icon="spielmechanik/mana"]{color:var(--lv-mana)}
+.lv10-root .lv-asset-icon[data-icon="spielmechanik/glut"]{color:var(--lv-ember)}
+.lv10-root .lv-asset-icon[data-icon="symbole/flamme"]{color:var(--lv-ember)}
+.lv10-root .lv-asset-icon[data-icon="symbole/schneeflocke"]{color:var(--lv-mana)}
+.lv10-root[data-leveln-skin="dark"] .lv-card-art .lv-asset-icon{filter:drop-shadow(0 0 6px currentColor)}
+.lv10-root[data-leveln-skin="retro"] .lv-card-art .lv-asset-icon{filter:none}
+.lv10-root .lv-card-art .lv-asset-icon{width:62px;height:62px}
+.lv10-root .lv-card-art .lv-asset-icon[data-icon="spielmechanik/zaubern"]{width:70px;height:70px}
+.lv10-root .lv-card .lv-asset-icon {max-width:100%;}
+.lv10-root .lv-nav button .lv-asset-icon {width:23px;height:23px;}
+.lv10-root .lv-ghost-button .lv-asset-icon {width:19px;height:19px;}
+.lv10-root .lv-avatar .lv-asset-icon{width:52px;height:52px;}
+.lv10-root .lv-gallery-tile .lv-asset-icon{width:45px;height:45px;}
+.lv10-root .lv-gallery-tile {min-width:0}
+.lv10-root .lv-gallery-tile small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+
+/* Icons of quests/skills inherit the derived user color; system resources
+   remain semantic tokens and may also be user-customized through applyGlobal. */

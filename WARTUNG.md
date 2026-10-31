@@ -66,3 +66,54 @@ Diese Datei beschreibt **den vorhandenen Stand von Version 0.9**, nicht neue ode
 4. ZIP-Inhalt, Icon-Dateien und Manifeste auf Vollständigkeit prüfen.
 
 **Grenze:** Keine vollständige Safari-/iPhone-E2E-Simulation. Deshalb empfiehlt sich wie vor jedem GitHub-Pages-Update ein JSON-Backup sowie ein kurzer Test der installierten App.
+
+---
+
+# Ergänzung: Leveln 0.10 · 31.10.2026
+
+Der vorstehende Teil dokumentiert weiterhin den bereinigten **0.9-Kern**. Version 0.10 führt die folgenden Erweiterungen ein.
+
+## Projektstruktur und Start
+
+- `app.js` bleibt als klassisches Skript mit Gameplay, vollständigen Bestandsdaten und Event-Handlern. Ein direkter Start am Ende von `app.js` wurde entfernt, damit `v010.js` anschließend **vor** der Initialisierung geladen wird.
+- `v010.js` überschreibt deklarierte UI-Funktionen bewusst in der klassischen JS-Globalumgebung (`ico`, `art`, `render`, `setup`, `editGoalModal`, `saveGoal`, `saveSkill`, `todayView`, `startCard`, `rotate`, `goalsView`, `statsView`, `settingsView`, `exportBackup`, `importBackup`, `handleAction`, `renderIconGallery`). Solange die Erweiterung besteht, **keine eigenständige Umstellung nur eines Skripts auf `type=module`** vornehmen.
+- `styles-010.css` folgt auf `styles.css`. `theme/palette.js` und `theme/designkit.js` stehen vor `app.js` und `v010.js`.
+- `setup()` wird erst ganz am Ende von `v010.js` aufgerufen. `__LEVELN_UNIT_TEST__` unterdrückt den automatischen Start nur für den isolierten Node-Logiktest.
+
+## Persistenz, Migration und Revisionslogik
+
+- Bestehende IndexedDB-ID/Store-Namen behalten, weiterhin `activities`, `entries`, `overrides`, `meta`, `skills`.
+- Datenformat/Backupformat **5**. `migrateV09toV010` ergänzt `cardShown`, `deckOrder`, `statisticColor` bei Aktivitäten und `statisticColor` bei Skills, ohne alte Zeit-/Anzahlwerte oder `skillRates` zu überschreiben.
+- Migrationsschritte **nur von Format 4**, keine rückwirkenden Schritte 1–3 anlegen, solange nicht ausdrücklich beauftragt.
+- Ein eigener `statisticColor` ist nicht die Kartenfarbe. Kartenfarben bleiben nutzergesteuert. Der Farbabstand wird mit näherungsweisem OKLab-Maximin bei Vergabe der Statistikfarbe berechnet; beim Rendern wird nichts automatisch neu zugewiesen.
+- Änderung von Zeit-/Anzahl-Skill-XP erzeugt wie bisher eine neue Questrevision für die Zukunft. XP wird aus den tatsächlichen `entries` und der jeweiligen Revision abgeleitet. Keine zusätzliche XP-Gutschrift beim Wischen führen.
+- Die Kartenmenge kann über die Plus-/Minus-Tasten verändert werden. Die bestehende Routine `updatePlayAmount` speichert diesen Standard; `bookingFields` addiert die gewählte Menge zum Tagesdatensatz.
+
+## Wichtige 0.10-Einstiegspunkte
+
+| Bereich | Funktionen |
+| --- | --- |
+| Erststart und Migration | `setup`, `migrateV09toV010`, `migrateInstalled`, `importBackup` |
+| Design und Nutzerfarben | `lv10Skin`, `applyTheme`, `lv10Paint`, `LevelnPalette10` |
+| Iconzuordnung | `ICON_MAP10`, `ico`, `art`, `renderIconGallery` |
+| Questerstellung | `editGoalModal`, `lv10MetricTable`, `lv10RateRow`, `lv10ReadBindings`, `saveGoal` |
+| Statistikfarben | `lv10DistinctColor`, `lv10NewStatColor`, `lv10StatisticColor`, `lv10SkillStatisticColor` |
+| Deck und Buchungen | `lv10DeckGoals`, `lv10DeckSelect`, `cardHtml`, `todayView`, `startCard` |
+| Kartenverwaltung | `lv10ManagerOpen/Close/Render`, `lv10SaveDeckOrder`, `lv10SortDeck`, `lv10ToggleCard` |
+| Statistik | `lv10StatValue`, `statsView` |
+| Beschleunigte Steppers | `lv10StepAmount`, `lv10HoldTick`, `lv10HoldStop`, Pointer-Event-Capture in `v010.js` |
+
+## Änderungen an den Event-Handlern des 0.9-Kerns
+
+Die Dokument-Pointer-Listener für das Wischen sind weiterhin in `app.js`, nutzen aber für Version 0.10 folgende Ergebnisse: **hoch = buchen ohne automatische Rotation**, **links/rechts = rotieren**, **kurz runter = anderen Stapel wählen**. Der längere Abwärts-Hold sowie die Mengensteuerung werden in `v010.js` per Capture-Handler implementiert. Bei Gestenänderungen **immer beide Dateien** ansehen, um widersprüchliche Listener zu vermeiden.
+
+## Tests und Veröffentlichung
+
+```bash
+node --check app.js
+node --check v010.js
+node --check theme/palette.js
+node tests/logic.test.cjs
+```
+
+Außerdem prüfen, dass alle `ASSETS` in `sw.js` tatsächlich vorhanden sind. Bei Updates `CACHE` erhöhen. Ein lokal laufender Node-Test ersetzt ausdrücklich **keinen iPhone-/Safari-Integrationstest**. Vor jedem Deployment aus 0.9 ein Backup anlegen und auf derselben GitHub-Pages-Origin bleiben.

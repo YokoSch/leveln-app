@@ -1,0 +1,134 @@
+/*
+ * Leveln 0.10 · Design tokens (DESIGN ONLY)
+ * The same layout and SVG pictograms are used in all 3 skins.
+ * Scope: .lv10-root[data-leveln-skin].
+ * Old 0.9 app is NOT modified by this standalone package.
+ * Skin names: dark=mystisch/Neon 3, light=weich/spielerisch 2,
+ * retro=Game-Boy-inspired, light monochrome with sparse status accents.
+ */
+.lv10-root {
+  --lv-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --lv-bg: #f6f8f7;
+  --lv-surface: #ffffff;
+  --lv-surface-2: #f1f4f3;
+  --lv-card-face: #ffffff;
+  --lv-text: #141e23;
+  --lv-muted: #637579;
+  --lv-line: #d7e5dd;
+  --lv-strong-line: #a6baa9;
+  --lv-active: #18bb73;
+  --lv-accent-rgb: 22, 186, 110;
+  --lv-xp: #20c975;
+  --lv-track: #e6eee8;
+  --lv-mana: #3278ce;
+  --lv-ember: #f1a64e;
+  --lv-danger: #c9444b;
+  --lv-shadow: 0 16px 34px #354d3822;
+  --lv-nav-shadow: 0 -8px 35px #152b2110;
+  --lv-card-shadow: 0 22px 38px #273b3125;
+  --lv-chip-shadow: 0 4px 9px #071a1311;
+  --lv-radius-card: 26px;
+  --lv-radius-panel: 22px;
+  --lv-radius-control: 13px;
+  --lv-border-size: 1.5px;
+  --lv-art-filter: none;
+  --lv-ornament: none;
+  --lv-grain-opacity: 0;
+  --lv-corner-color: #30c87b;
+  --lv-card-accent: #2acb79;
+  --lv-nav-background: #ffffff;
+  --lv-backdrop: radial-gradient(circle at 65% 24%,#e6fbef 0%,transparent 52%),linear-gradient(180deg,#fafbfa,#f0f5f1);
+  --lv-pixel-shadow: none;
+  font-family:var(--lv-font);
+  background: var(--lv-bg);
+  color: var(--lv-text);
+  color-scheme: light;
+}
+.lv10-root[data-leveln-skin="dark"] {
+  color-scheme: dark;
+  --lv-bg: #071310;
+  --lv-surface: #101f1c;
+  --lv-surface-2: #142a24;
+  --lv-card-face: #071a15;
+  --lv-text: #f0fff6;
+  --lv-muted: #a6c5b9;
+  --lv-line: #2b6550;
+  --lv-strong-line: #40df78;
+  --lv-active: #7afb78;
+  --lv-accent-rgb: 104, 255, 126;
+  --lv-xp: #86ff7b;
+  --lv-track: #14352a;
+  --lv-mana: #5bafff;
+  --lv-ember: #f2a73b;
+  --lv-danger: #ff6e7b;
+  --lv-shadow: 0 12px 34px #0007,0 0 22px #0d773a1d;
+  --lv-nav-shadow: 0 -8px 38px #010c0aee;
+  --lv-card-shadow: 0 22px 55px #000b, 0 0 35px #28ed7825;
+  --lv-chip-shadow: 0 3px 8px #0007;
+  --lv-radius-card: 25px;
+  --lv-radius-panel: 18px;
+  --lv-radius-control: 12px;
+  --lv-border-size: 1.8px;
+  --lv-corner-color: #c0ff9b;
+  --lv-nav-background: #081814;
+  --lv-backdrop: radial-gradient(ellipse at 50% 4%,#124e30 0%,transparent 50%),linear-gradient(160deg,#061714,#07100f 70%);
+  --lv-ornament: block;
+  --lv-grain-opacity: .13;
+}
+.lv10-root[data-leveln-skin="light"] {
+  --lv-bg: #fffdf8;
+  --lv-surface: #fffefa;
+  --lv-surface-2: #f9f6f0;
+  --lv-card-face: #ffffff;
+  --lv-text: #152630;
+  --lv-muted: #65777d;
+  --lv-line: #e6e9df;
+  --lv-strong-line: #c8d9bd;
+  --lv-active: #28bf78;
+  --lv-accent-rgb: 44, 202, 114;
+  --lv-xp: #5fd267;
+  --lv-track: #e8f1dc;
+  --lv-mana: #379ae0;
+  --lv-ember: #f2af58;
+  --lv-danger: #db5252;
+  --lv-shadow: 0 12px 32px #7f977527;
+  --lv-card-shadow: 0 17px 39px #6c9c8130;
+  --lv-chip-shadow: 0 3px 8px #8da18b15;
+  --lv-radius-card: 30px;
+  --lv-radius-panel: 23px;
+  --lv-radius-control: 16px;
+  --lv-border-size: 1.3px;
+  --lv-corner-color: #ffca5e;
+  --lv-ornament: block;
+  --lv-nav-background: #fffefa;
+  --lv-backdrop: radial-gradient(circle at 12% 20%,#ffefd0 0%,transparent 40%),radial-gradient(circle at 94% 45%,#e2f4de 0%,transparent 48%),linear-gradient(#fffdf8,#faf6eb);
+}
+.lv10-root[data-leveln-skin="retro"] {
+  --lv-bg: #fefefb;
+  --lv-surface: #ffffff;
+  --lv-surface-2: #f5f5f2;
+  --lv-card-face: #ffffff;
+  --lv-text: #0c0c0b;
+  --lv-muted: #505050;
+  --lv-line: #161616;
+  --lv-strong-line: #050505;
+  --lv-active: #161616;
+  --lv-accent-rgb: 17, 17, 17;
+  --lv-xp: #18ae64;
+  --lv-track: #d9d9d5;
+  --lv-mana: #1d6fad;
+  --lv-ember: #d18a2b;
+  --lv-danger: #be3636;
+  --lv-shadow: 3px 3px 0 #101010;
+  --lv-nav-shadow: 0 -2px 0 #111;
+  --lv-card-shadow: 6px 6px 0 #111;
+  --lv-chip-shadow: 2px 2px 0 #111;
+  --lv-radius-card: 11px;
+  --lv-radius-panel: 8px;
+  --lv-radius-control: 6px;
+  --lv-border-size: 2.5px;
+  --lv-corner-color: #111;
+  --lv-pixel-shadow: 2px 2px 0 #111;
+  --lv-nav-background: #fff;
+  --lv-backdrop: linear-gradient(#fefefd,#f6f6f3);
+}

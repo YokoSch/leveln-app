@@ -1,0 +1,18 @@
+/* Optional animation layer, keeps pictogram shapes shared across themes. */
+@keyframes lv10-aura {0%,100% {filter:drop-shadow(0 0 4px #38fa7c);opacity:.75}50% {filter:drop-shadow(0 0 13px #6fff87);opacity:1}}
+@keyframes lv10-flame {0%,100%{transform:translateY(0) rotate(-8deg) scale(.99);opacity:.86}45%{transform:translateY(-4px) rotate(4deg) scale(1.1);opacity:1}70%{transform:translateY(-2px) rotate(-1deg) scale(.94)}}
+@keyframes lv10-spark {0%,100% {opacity:.18;transform:translate(0,3px)}45%{opacity:1;transform:translate(1px,-5px)}}
+.lv10-root .lv-flame-layer {position:absolute;inset:-2px;pointer-events:none;z-index:2;display:none;overflow:visible}
+.lv10-root[data-leveln-skin="dark"] .lv-flame-layer {display:block}
+.lv10-root .lv-flame {position:absolute;width:22px;height:34px;filter:drop-shadow(0 0 7px #76fb57);opacity:.88;animation:lv10-flame 2.8s ease-in-out infinite;}
+.lv10-root .lv-flame svg {width:100%;height:100%;fill:url(#lv10FlameGrad)}
+.lv10-root .lv-flame.f1 {top:-13px;left:14%;animation-delay:-.3s;transform:scale(.7)}
+.lv10-root .lv-flame.f2 {top:-18px;right:29%;animation-delay:-1.6s}
+.lv10-root .lv-flame.f3 {top:36%;right:-16px;animation-delay:-.8s;transform:rotate(90deg)}
+.lv10-root .lv-flame.f4 {top:63%;left:-17px;animation-delay:-2.2s;transform:rotate(-90deg)}
+.lv10-root .lv-flame.f5 {bottom:-18px;left:42%;animation-delay:-1.2s;transform:rotate(180deg)}
+.lv10-root .lv-flame.f6 {bottom:-14px;right:17%;animation-delay:-2.8s;transform:rotate(180deg)}
+.lv10-root .lv-spark {position:absolute;width:4px;height:4px;background:#d8ff94;box-shadow:0 0 8px #64ff71;transform:rotate(45deg);animation:lv10-spark 2s ease-in-out infinite}
+.lv10-root .lv-spark.s1{top:1%;right:15%;animation-delay:-1.2s}.lv10-root .lv-spark.s2{top:34%;left:-7px;animation-delay:-.6s}.lv10-root .lv-spark.s3{bottom:2%;right:24%;animation-delay:-1.9s}
+.lv10-root[data-leveln-skin="dark"] .lv-card--primary {animation:lv10-aura 5.6s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce) { .lv10-root .lv-flame,.lv10-root .lv-spark,.lv10-root[data-leveln-skin="dark"] .lv-card--primary {animation:none!important} }

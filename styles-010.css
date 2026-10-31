@@ -1,0 +1,153 @@
+/*
+ * LEVELN 0.10 · Live PWA integration of Design-Master (Oct 31, 2026)
+ * Three themes share layouts/icons; user hues are converted via palette.js.
+ * Scoped to .lv10-root and .lv10-app where possible. Historical CSS remains
+ * in styles.css to retain compatibility with 0.9 flows not redesigned here.
+ */
+html.lv10-root{--bg:var(--lv-bg);--panel:var(--lv-surface);--panel2:var(--lv-surface-2);--text:var(--lv-text);--muted:var(--lv-muted);--border:var(--lv-line);--save:var(--lv-zaubern);--level:var(--lv-leveln);--shadow:var(--lv-shadow);color:var(--lv-text);background:var(--lv-bg)}
+html.lv10-root body{background:var(--lv-backdrop);color:var(--lv-text);}
+html.lv10-root .app{background:transparent;color:var(--lv-text)}
+html.lv10-root button:focus-visible,html.lv10-root input:focus-visible,html.lv10-root select:focus-visible{outline:2px solid var(--lv-active);outline-offset:2px}
+html.lv10-root .ico.lv-asset-icon {display:inline-block;background-color:currentColor;flex:none;vertical-align:-.25em;stroke:none;fill:none;-webkit-mask-image:var(--lv-asset-url);mask-image:var(--lv-asset-url);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;width:1.28em;height:1.28em}
+html.lv10-root .ico.lv-asset-icon[data-icon="spielmechanik/mana"]{color:var(--lv-mana)}
+html.lv10-root .ico.lv-asset-icon[data-icon="spielmechanik/glut"]{color:var(--lv-ember)}
+html.lv10-root .ico.lv-asset-icon[data-icon="symbole/flamme"]{color:var(--lv-ember)}
+html.lv10-root .ico.lv-asset-icon[data-icon="symbole/schneeflocke"]{color:var(--lv-mana)}
+html.lv10-root[data-leveln-skin="dark"]{--bg:#071310;--panel:#101f1c;--panel2:#142a24;--text:#f0fff6;--muted:#a6c5b9;--border:#2b6550;color-scheme:dark;}
+html.lv10-root[data-leveln-skin="light"]{--bg:#fffdf8;--panel:#fffefa;--panel2:#f9f6f0;--text:#152630;--muted:#65777d;--border:#e6e9df;color-scheme:light;}
+html.lv10-root[data-leveln-skin="retro"]{--bg:#fefefb;--panel:#fff;--panel2:#f5f5f2;--text:#0c0c0b;--muted:#505050;--border:#222;color-scheme:light;}
+html.lv10-root[data-leveln-skin="retro"] .app,html.lv10-root[data-leveln-skin="retro"] .tabs{font-family:ui-monospace, Menlo, Consolas, monospace;letter-spacing:-.025em}
+html.lv10-root[data-leveln-skin="retro"] button:not(.tab){border-radius:5px}
+html.lv10-root[data-leveln-skin="retro"] .goal-row,html.lv10-root[data-leveln-skin="retro"] .settings-panel,html.lv10-root[data-leveln-skin="retro"] .skill-card{border:2px solid #161616;border-radius:9px;box-shadow:3px 3px 0 #111}
+
+/* Thumb-optimised 2-deck page; the active card extends almost to bottom nav */
+html.lv10-root .today-head{padding-top:5px;padding-bottom:0;flex:none}
+html.lv10-root .today-topline{padding:0 18px}
+.lv10-deck-toggle{display:grid;grid-template-columns:1fr 1fr 42px;gap:8px;align-items:center;padding:6px 13px;flex:none}
+.lv10-deck-toggle button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:35px;border:1px solid var(--border);color:var(--muted);background:var(--panel);border-radius:12px;font-size:12px;font-weight:850}
+.lv10-deck-toggle button.on{color:var(--text);background:var(--panel2);border-color:var(--lv-active);box-shadow:0 2px 10px #0001}
+.lv10-deck-toggle .ico{width:19px;height:19px}
+html.lv10-root .deck-area{padding:1px 12px 0;min-height:0;flex:1}
+html.lv10-root .deck-stack{position:relative;height:100%;margin:0;isolation:isolate;max-height:740px;overflow:visible}
+html.lv10-root .play-card.face{inset:0 0 52px;z-index:3;overflow:visible;min-height:0;border-radius:var(--lv-radius-card);border:2px solid var(--lv-card-accent,var(--card-accent));box-shadow:var(--lv-card-shadow);background:var(--lv-card-face);color:var(--lv-text);touch-action:none;}
+html.lv10-root .peek-wrap{position:absolute;inset:0 0 52px!important;height:auto!important;width:100%;overflow:visible;pointer-events:none}
+html.lv10-root .peek-wrap.peek-1{transform:translateY(25px) scale(.976);z-index:2}
+html.lv10-root .peek-wrap.peek-2{transform:translateY(49px) scale(.952);z-index:1}
+html.lv10-root .peek-wrap .play-card.peek{inset:0;opacity:1;position:absolute;border:2px solid var(--lv-card-accent,var(--card-accent));background:var(--lv-card-face);border-radius:var(--lv-radius-card);filter:none;box-shadow:0 5px 17px #0002}
+html.lv10-root .play-card .card-header{padding:9px 14px 0;display:flex;align-items:center;gap:7px;flex-shrink:0}
+html.lv10-root .card-pill{color:var(--lv-card-ink,var(--text));border-color:var(--lv-card-accent,var(--border))}
+html.lv10-root .card-head-icon{color:var(--lv-card-ink,var(--card-accent));margin-left:auto}
+html.lv10-root .card-head-icon .ico{width:25px;height:25px}
+.lv10-card-edit{background:var(--lv-surface-2);color:var(--lv-text);border:1px solid var(--lv-line);border-radius:11px;width:37px;height:37px;display:grid;place-items:center;flex:none;z-index:5;position:relative}
+.lv10-card-edit .ico{width:20px;height:20px}
+html.lv10-root .play-card .card-main{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1.8vh,13px);flex:1;min-height:0;padding:4px 15px}
+html.lv10-root .play-card .card-main .card-art{width:clamp(50px,14vw,78px);height:clamp(50px,14vw,78px);color:var(--lv-card-ink,var(--lv-text));filter:none}
+html.lv10-root[data-leveln-skin="dark"] .play-card.face .card-art{filter:drop-shadow(0 0 7px var(--lv-card-accent))}
+html.lv10-root .play-card .card-main h2{color:var(--lv-text);font-size:clamp(20px,6vw,29px);margin:0;text-align:center}
+html.lv10-root .play-card .card-main p{color:var(--lv-muted);font-size:11px;line-height:1.25;text-align:center;margin:0}
+html.lv10-root .play-card .card-daily-tally{margin:0;color:var(--lv-muted)}
+html.lv10-root .play-card .card-foot{padding:7px 15px 10px;margin-top:auto;flex-shrink:0}
+html.lv10-root .peek-wrap .play-card.peek .card-main{justify-content:flex-start;opacity:.8}
+html.lv10-root .peek-wrap .play-card.peek .card-art{width:46px;height:46px}
+html.lv10-root .peek-wrap .play-card.peek .card-main h2{font-size:19px}
+html.lv10-root .peek-wrap .play-card.peek .card-foot{padding-bottom:6px}
+html.lv10-root .peek-wrap .play-card.peek .card-short{font-size:13px}
+html.lv10-root .deck-gesture-tail{z-index:4;height:52px;touch-action:none}
+html.lv10-root .deck-caption{font-size:10px;letter-spacing:.01em;padding:0 4px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Current per-play quantity: single tap = 1 unit; hold accelerates smoothly. */
+.lv10-play-amounts{display:flex;flex-direction:column;gap:5px;width:min(100%,280px);margin:0 auto;position:relative;z-index:6;flex-shrink:0}
+.lv10-amount-row{display:flex;align-items:center;justify-content:center;gap:7px;width:100%}
+.lv10-amount-row>small{font-size:10px;font-weight:800;color:var(--lv-muted);min-width:36px}
+.lv10-amount-stepper{display:grid;grid-template-columns:45px minmax(76px,1fr) 45px;align-items:center;flex:1;border:1px solid var(--lv-card-accent,var(--border));border-radius:12px;background:var(--lv-surface-2);overflow:hidden;height:45px;max-width:228px;color:var(--lv-text)}
+.lv10-step{height:100%;width:100%;color:var(--lv-text);border:0;background:transparent;display:grid;place-items:center;font-size:24px;font-weight:650;touch-action:none;user-select:none;-webkit-user-select:none}
+.lv10-step:active{background:var(--lv-card-soft,var(--panel2))}
+.lv10-amount-stepper strong{text-align:center;font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lv10-amount-stepper em{font-style:normal;font-size:11px;color:var(--lv-muted)}
+html.lv10-root[data-leveln-skin="dark"] .lv10-amount-stepper{box-shadow:0 0 9px rgba(var(--lv-card-rgb),.20)}
+
+/* Designed flames live in an isolated effect layer; text/buttons stay sharp. */
+.lv10-flame-trim{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible}
+.lv10-flame-trim i{position:absolute;display:block;pointer-events:none;background:var(--lv-card-accent);opacity:.8;filter:drop-shadow(0 0 6px var(--lv-card-accent));animation:lv10-flame-pulse 2.6s ease-in-out infinite alternate}
+.lv10-flame-trim .top,.lv10-flame-trim .bottom{left:8px;right:8px;height:24px;-webkit-mask:url('./assets/flame-tiling.svg') repeat-x center / 26px 29px;mask:url('./assets/flame-tiling.svg') repeat-x center / 26px 29px}
+.lv10-flame-trim .top{top:-21px}.lv10-flame-trim .bottom{bottom:-20px;transform:rotate(180deg);animation-delay:-1.3s}
+.lv10-flame-trim .left,.lv10-flame-trim .right{top:14px;bottom:14px;width:22px;-webkit-mask:url('./assets/flame-tiling.svg') repeat-y center / 23px 28px;mask:url('./assets/flame-tiling.svg') repeat-y center / 23px 28px}
+.lv10-flame-trim .left{left:-18px}.lv10-flame-trim .right{right:-18px;animation-delay:-1s}
+@keyframes lv10-flame-pulse{from{opacity:.4;filter:drop-shadow(0 0 2px var(--lv-card-accent))}to{opacity:.9;filter:drop-shadow(0 0 12px var(--lv-card-accent))}}
+html.lv10-root[data-leveln-skin="dark"] .play-card.face.level-glow,html.lv10-root[data-leveln-skin="dark"] .play-card.face.mana-glow{box-shadow:0 0 12px rgba(var(--lv-card-rgb),.73),0 0 32px rgba(var(--lv-card-rgb),.37),0 12px 36px #000b;animation:lv10-user-aura 4.5s ease-in-out infinite;border:2px solid var(--lv-card-accent)}
+html.lv10-root[data-leveln-skin="light"] .play-card.face{background:linear-gradient(155deg,var(--lv-card-soft) -25%,#fff 55%);box-shadow:0 10px 27px rgba(var(--lv-card-rgb),.15),0 1px 9px #0001}
+html.lv10-root[data-leveln-skin="light"] .lv10-flame-trim i{opacity:.32;filter:none}
+html.lv10-root[data-leveln-skin="retro"] .play-card.face,html.lv10-root[data-leveln-skin="retro"] .peek-wrap .play-card.peek{border:3px solid #111;background:#fff;border-radius:11px;box-shadow:6px 7px 0 #111}
+html.lv10-root[data-leveln-skin="retro"] .lv10-flame-trim i{opacity:0}
+html.lv10-root[data-leveln-skin="retro"] .lv10-amount-stepper{border:2px solid #111;border-radius:4px}
+
+/* Objective editor: one table per unit, compact labelled rows. */
+.lv10-quest-form .lv10-metrics{display:flex;flex-direction:column;gap:12px;margin:12px 0 4px}
+.lv10-add-metric{width:100%;min-height:74px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;background:var(--lv-surface-2);color:var(--lv-text);border:2px dashed var(--lv-active);border-radius:17px;font-size:13px;font-weight:850}
+.lv10-add-metric b{font-size:30px;line-height:1;color:var(--lv-active)}
+.lv10-metric-table{background:var(--lv-surface-2);border:1px solid var(--lv-line);border-radius:16px;padding:10px 11px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.lv10-metric-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lv10-metric-head h3{margin:0;font-size:15px}
+.lv10-danger-quiet{border:0;background:transparent;color:var(--lv-danger);font-size:24px;line-height:1;padding:3px 10px}
+.lv10-units-help{font-size:11px;line-height:1.4;color:var(--lv-muted);margin:0}
+.lv10-binding-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) 29px;gap:5px;font-size:10px;color:var(--lv-muted)}
+.lv10-binding-head b:first-child{grid-column:1}.lv10-binding-head b:nth-child(2){grid-column:2}
+.lv10-metric-table .binding-row{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) 29px;gap:5px;align-items:end}
+.lv10-metric-table .binding-row label{font-size:10px;font-weight:700;color:var(--lv-muted);min-width:0}
+.lv10-metric-table .binding-row select,.lv10-metric-table .binding-row input{display:block;height:42px!important;width:100%;padding:7px 5px!important;margin-top:4px;color:var(--lv-text);background:var(--lv-surface)}
+.lv10-metric-table .binding-remove{height:42px;width:28px;font-size:22px}
+.lv10-metric-table .lv10-add-skill{width:100%;min-height:36px}
+.lv10-quest-form #onceRewards{background:var(--lv-surface-2);padding:12px;border-radius:14px;display:flex;flex-direction:column;gap:9px}
+.lv10-quest-form #onceRewards h3{font-size:14px}
+.lv10-quest-form #onceRewards .thin-button{width:100%}
+.lv10-quest-form [hidden]{display:none!important}
+
+/* New screen-independent manager: normal bottom navigation is hidden. */
+body.deck-menu-open #bottomNav{display:none!important}
+#deckManagerRoot{position:relative;z-index:550}
+.lv10-manager{position:fixed;inset:0;z-index:550;display:flex;flex-direction:column;background:var(--lv-backdrop);color:var(--lv-text);padding-top:env(safe-area-inset-top,0px);overscroll-behavior:contain}
+.lv10-manager-header{flex:none;display:flex;align-items:center;gap:8px;padding:12px 15px 6px}
+.lv10-manager-header strong{font-size:23px;letter-spacing:-.05em}
+.lv10-manager-header small{font-size:10px;color:var(--lv-muted);flex:1}
+.lv10-manager-header button{background:var(--lv-surface);color:var(--lv-text);width:42px;height:42px;display:grid;place-items:center;border-radius:12px;border:1px solid var(--lv-line)}
+.lv10-manager-kind{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 14px 13px}
+.lv10-manager-kind button{min-height:42px;border:1px solid var(--lv-line);background:var(--lv-surface);color:var(--lv-text);border-radius:11px;font-weight:800}
+.lv10-manager-kind button.on{border-color:var(--lv-active);box-shadow:inset 0 0 0 1px var(--lv-active);background:var(--lv-surface-2)}
+.lv10-manager-content{display:grid;grid-template-columns:minmax(108px,37%) minmax(0,1fr);gap:10px;padding:5px 11px 8px;min-height:0;overflow:auto;flex:1}
+.lv10-manager-list{display:flex;flex-direction:column;gap:6px;min-width:0}
+.lv10-manager-list-row{display:grid;grid-template-columns:24px minmax(0,1fr) 38px;align-items:center;gap:3px;min-height:57px;padding:4px;background:var(--lv-surface);border:1px solid var(--lv-line);border-radius:11px;font-size:11px;font-weight:750;touch-action:pan-y}
+.lv10-manager-list-row span{overflow:hidden;text-overflow:ellipsis}
+.lv10-drag-handle{border:0;background:transparent;color:var(--lv-text);font-size:20px;min-height:42px;touch-action:none;cursor:grab}
+.lv10-switch{display:grid;place-items:center;width:34px;height:25px;cursor:pointer}
+.lv10-switch input{position:absolute;opacity:0;width:1px;height:1px}
+.lv10-switch i{width:32px;height:20px;border-radius:20px;background:var(--lv-track);border:1px solid var(--lv-line);position:relative}
+.lv10-switch i::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:white;box-shadow:0 1px 3px #0004}
+.lv10-switch input:checked+i{background:var(--lv-xp)}.lv10-switch input:checked+i::after{left:15px}
+.lv10-manager-minis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-content:start}
+.lv10-mini-card{position:relative;min-width:0;aspect-ratio:3/4;max-height:175px;background:var(--lv-card-face);border:2px solid var(--lv-card-accent);border-radius:var(--lv-radius-card);color:var(--lv-text);box-shadow:2px 4px 10px #0002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.lv10-mini-card.hidden-card{opacity:.35;filter:grayscale(.8)}
+.lv10-mini-art .ico{width:40px;height:40px;color:var(--lv-card-ink)}
+.lv10-mini-card strong{font-size:11px;text-align:center}
+.lv10-manager-footer{flex:none;display:flex;gap:5px;padding:10px 9px max(12px,env(safe-area-inset-bottom));border-top:1px solid var(--lv-line);background:var(--lv-nav-background)}
+.lv10-manager-footer button{flex:1;min-width:0;min-height:53px;border:1px solid var(--lv-line);background:var(--lv-surface);color:var(--lv-text);font-size:10px;font-weight:850;border-radius:9px;padding:3px;line-height:1.1}
+.lv10-manager-footer button.lv10-manager-exit{width:48px;flex:0 0 44px;font-size:18px}
+.lv10-manager-list-row.lv10-dragging{outline:2px dashed var(--lv-active);opacity:.75}
+@media(max-width:350px){.lv10-manager-content{grid-template-columns:minmax(98px,38%) 1fr}.lv10-mini-card{gap:4px}.lv10-manager-footer button{font-size:9px}}
+
+/* Stats skill filter, stable colors and compact chart. */
+.lv10-statistics .stats-two-filter{display:flex;flex-direction:column;gap:6px}
+.lv10-statistics .stats-two-filter label{width:100%;font-size:11px}
+.lv10-statistics .stats-two-filter select{width:100%;height:36px;min-height:36px;font-size:12px}
+.lv10-statistics .stats-controls{gap:6px}
+.lv10-statistics .stats-single{min-height:0}
+.lv10-statistics .stats-metric button{min-height:33px}
+.lv10-statistics .stats-nav{padding:2px 0}
+.lv10-goals-actions{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px}
+.lv10-goals-actions button{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;font-size:10px;padding:5px 3px}
+.lv10-goals-actions .ico{width:17px;height:17px}
+html.lv10-root .goals-sticky{background:var(--lv-bg)!important;box-shadow:0 10px 20px -15px #000a;isolation:isolate;z-index:30}
+html.lv10-root .goals-sticky::before{background:var(--lv-bg)}
+html.lv10-root .quest-filter-bar{background:var(--lv-bg)}
+html.lv10-root[data-leveln-skin="retro"] .tabs{background:#fff;border-top:2px solid #111}
+html.lv10-root[data-leveln-skin="retro"] .play-card .card-pill{border:1px solid #111;color:#111}
+@media(prefers-reduced-motion:reduce){.lv10-flame-trim i,.lv10-root .play-card.face{animation:none!important;transition:none!important}}

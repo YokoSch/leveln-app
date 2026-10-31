@@ -1,32 +1,59 @@
-# Leveln 0.9 – iPhone-Web-App (PWA, Quellcode bereinigt)
+# Leveln 0.10 – iPhone-Web-App (PWA)
 
-> **Bereinigungsstand 30.10.2026:** Dieselbe App-Version **0.9**, kein neues Datenformat, keine neuen Funktionen und keine bewusst geänderte Bedienung. Entfernt wurden nur von späteren Definitionen überschriebene oder unbenutzte Funktionskörper; der JavaScript-Code wurde lesbarer formatiert und kommentiert. Der Service-Worker-Cache hat eine neue Kennung, damit die bereinigte Datei beim Update geladen wird. Technische Hinweise stehen in `WARTUNG.md`.
+**Spiel deine Quests – trainiere Skills – gestalte deinen Charakter.** Version 0.10 baut auf dem **bereinigten Stand von Leveln 0.9** und den freigegebenen Designvorlagen auf. Die App funktioniert als lokale, installierbare Web-App (GitHub Pages) und erfordert keinen Benutzeraccount.
 
-**Vor dem Ersetzen der Dateien** sicherheitshalber ein JSON-Backup aus deiner aktuellen Leveln-0.9-Installation erstellen. Die bestehenden lokalen Daten werden nicht zurückgesetzt.
+## Sicheres Update von 0.9
 
-Die neue Version baut auf **Leveln 0.8** auf. Daten liegen lokal auf deinem Gerät in IndexedDB, nicht auf einem Server. Der Datenbankname und der Speicherort bleiben gleich.
+1. In der aktuell installierten **Leveln 0.9** über **Mehr → Backup sichern** ein **JSON-Backup** erstellen und außerhalb der App aufbewahren. Das alte ZIP ebenfalls behalten.
+2. Dieses 0.10-ZIP entpacken und **alle Dateien und Unterordner aus dem ZIP-Stamm** in das vorhandene GitHub-Repository kopieren. Vorhandene Dateien ersetzen, insbesondere `index.html`, `app.js`, `sw.js`, `styles.css`, Manifestdateien und Bilder. Zusätzlich müssen `v010.js`, `styles-010.css`, `assets/` und `theme/` mit hochgeladen werden.
+3. `git add . && git commit -m "Leveln 0.10" && git push` (im lokalen Repository). Die **GitHub-Pages-Adresse nicht ändern**, sonst liegt die bestehende IndexedDB unter einer anderen Website-Quelle.
+4. Die bisherige Leveln-App aktualisieren/neu öffnen. Ein installierter Service Worker kann beim ersten Aufruf noch Dateien der vorherigen Version liefern; gegebenenfalls erneut schließen und öffnen oder in Safari die Seite aktualisieren.
+5. Quests, Skills, Charakter-XP und zurückliegende Tageswerte prüfen, bevor du weitere Daten einträgst. **Die installierte 0.9-App vor der Überprüfung nicht löschen**.
 
-## Installation / Update auf dem iPhone
+## Daten und Backups
 
-1. **Unbedingt vorher** in Leveln 0.8 unter **Mehr → Backup sichern** ein JSON-Backup anlegen und außerhalb der App aufbewahren.
-2. ZIP entpacken und alle Dateien aus `Leveln-v0.9-iPhone-App/` inklusive `icons/` auf denselben GitHub-Pages-Webpfad hochladen, auf dem v0.8 lief. Die URL bzw. die Domain nicht ändern, sonst ist der lokale Datenstand nicht zugänglich.
-3. Die Seite in Safari neu laden; eine ggf. installierte Home-Bildschirm-Verknüpfung weiterverwenden. Bei Bedarf die Seite nach dem Update zweimal laden, damit der neue Service Worker alle Dateien aktualisiert.
-4. Der Start migriert vorhandene Daten im selben Browser automatisch von **Schema 3 (v0.8)** auf **Schema 4 (v0.9)**. Alternativ lässt sich das Backup aus v0.8 importieren. Ältere Backups/Versionen werden nicht mehr unterstützt.
+- **Datenformat 5 / Backupformat 5** in Version 0.10; automatischer Migrationsweg **0.9 (Format 4) → 0.10 (Format 5)**. Import akzeptiert bewusst **nur Backupformat 4 oder 5**. Ältere Formate werden nicht zusätzlich unterstützt.
+- Der IndexedDB-Datenbankname und die bestehenden Stores bleiben erhalten. Beim Upgrade kommen neue Eigenschaften für Kartensichtbarkeit, Stapelreihenfolge und Statistikfarben hinzu. Historische Tagesdaten, XP-Quellen und Skillzuordnungen werden bei der Migration **nicht umgebucht oder verdoppelt**.
+- Backup-Name: `Leveln-Backup-JJJJ-MM-TT.json` (immer derselbe Vorschlag pro Tag). Über das Teilen-Menü wird ausschließlich die JSON-Datei übergeben. iOS kann beim Speichern trotzdem selbst eine Kopie mit Namenszusatz anlegen; automatisches Überschreiben eines gewählten Ordners ist in einer iPhone-PWA nicht zuverlässig möglich.
+- Daten bleiben lokal im Browser des Geräts; das Backup ist **nicht verschlüsselt**. Änderungen an Safari-Website-Daten oder der ursprünglichen Domain können die lokal gespeicherten Daten beeinflussen.
 
-**Wichtig:** Das Löschen der Website-Daten, der Wechsel zu einer anderen Domain oder das Entfernen der Safari-Daten kann die lokal gespeicherten Einträge beseitigen. Regelmäßig Backups erstellen.
+## Neuerungen in Leveln 0.10
 
-## Änderungen in v0.9
+**Quests und Skills.** Ein wiederkehrendes Ziel wird bei Bedarf als eigene **Zeit- und/oder Anzahl-Tabelle** angelegt. Jede Tabelle enthält den Zielwert, die tägliche Ausspielmenge und beliebig viele XP-Zeilen für zugehörige Skills – ausdrücklich **XP pro Stunde** oder **XP pro Anzahl**. Bei neuen Quests sind beide Tabellen zunächst deaktiviert. Die Lebensbereich-Zuordnung entfällt. Einmalige Missionen behalten ihre einmalige Abschlussbelohnung. Unklare Checkboxen sind beschriftet.
 
-- Karten glühen passend zur Questfarbe. Leveln hat ein Pixel-Emblem, Zaubern ein Runenzeichen statt eines doppelten Manasymbols.
-- Einmalige Quests erscheinen einzeilig im Questboard. Mit einem horizontalen Swipe werden „Bearbeiten“ und „Archiv“ sichtbar; „Abschließen“ bleibt direkt in der Zeile.
-- „Neue Quest“ ist im Questboard rechts neben „Gestern bearb.“ verfügbar.
-- Drei Kartenebenen sind angedeutet; die Ziehfläche der vordersten Karte wurde bis in den sichtbaren unteren Stapelbereich erweitert.
-- Die einfarbige Icon-Galerie enthält zusätzliche Konturdetails und deutsche Beschriftungen.
-- Mana-Check am nächsten Tag: die erstaunte, flächige schwarze 2D-Katze fragt, wenn für eine Zauber-Quest kein positiver Verbrauch eingetragen wurde. Bestätigen, korrigieren und unbekannt lassen sind drei eigenständige Aktionen; die Formulierungen wechseln.
-- **Keine geschätzte Standard-Abbuchung mehr.** Bei Leveln gilt eine fehlende Buchung als 0. Bei Zaubern bleibt nicht erfasster Mana-Verbrauch unbekannt und zählt als gescheiterter Streak; es wird kein fiktiver Verbrauch gebucht.
-- **Eine gemeinsame Ausspielmenge pro Quest und Metrik:** auf der Karte und im Quest-Editor ist derselbe Wert hinterlegt. Änderungen sind synchron. Nur bei erstmaliger Erstellung gibt es den Vorschlag: tägliche Quest = Zielmenge; mehrtägig Anzahl = 1; mehrtägig Minuten = Zielmenge geteilt durch Anzahl der Tage (für Kalender-Monat/Jahr nach den tatsächlichen Tagen des Zeitraums).
-- Migration wandelt alte automatische Zauber-Buchungen aus v0.8 in „unbekannt“ um und setzt automatisch ergänzte Leveln-Einträge auf 0. Vom Nutzer selbst erfasste Buchungen bleiben bestehen.
+**Karten.** Zwei getrennte Stapel für **Leveln** und **Zaubern**. Hochwischen bucht die gewählte Menge und lässt dieselbe Karte liegen; seitliches Wischen wechselt zur nächsten. Kurzes Herunterwischen wechselt den Stapel; nach längerem Herunterziehen und Halten öffnet sich die Kartenverwaltung. Plus/Minus neben dem Ausspielwert verändern ihn durch Tippen um **1 Minute bzw. 1 Anzahl**, durch Halten zunehmend schneller (maximal **30 Minuten bzw. 10 Einheiten je wiederholtem Schritt**). Jede Questkarte hat einen direkten Bearbeiten-Button mit drei Punkten. Die Vorderkarte hat eine große Wischfläche, zwei weitere Karten liegen darunter sichtbar; Statuskonturen können flammenartig animiert werden.
 
-## Technik
+**Kartenverwaltung.** Vollbild mit Miniaturkarten, sichtbarem Kartenkürzel, Kartensichtbarkeit und Drag-and-drop-Reihenfolge. Sortierung alphabetisch oder nach Questzeitraum, jeweils auf-/absteigend. Erreichbar aus dem Tagesdeck und dem Questboard. Beim Verlassen gelangst du zur vorherigen Ansicht zurück.
 
-Statische HTML/CSS/JavaScript-PWA, keine zusätzlichen Libraries oder Cloud-Dienste erforderlich. Alle App-Dateien müssen auf einem HTTPS-Webhost unter demselben Verzeichnis erreichbar sein. Datei `index.html` ist die Startseite. Backupformat: `progress-local-backup` Version 4.
+**Statistik.** Statistikfarben für Quests und Skills getrennt von den individuell wählbaren Kartenfarben. Zu ähnliche Statistikfarben werden beim Erstellen einmalig mithilfe von OKLab-Farbabständen unterschieden. Ein neuer Skillfilter ergänzt den Questfilter; Zeit/Anzahl werden bei Skillfilterung proportional zur XP-Zuordnung angezeigt.
+
+**Design.** Drei gemeinsam freigegebene Modi: **Dunkel / Neon-RPG**, **Hell / Pastell** und **Minimalistisch / Weißes Pixel-Retro**. Individuelle Nutzerfarben bleiben erhalten; nur ihre Darstellung wird themenspezifisch abgeleitet. Gemeinsamer Pool aus **63 Original-SVGs**, darunter **44 auswählbare und 19 Systemicons**. Drei neue `lvl+`-App-Logos (mit Fackel und Kartenstapel).
+
+## Steuerung
+
+| Geste/Aktion | Bedeutung |
+| --- | --- |
+| Karte nach oben | Aktuelle Ausspielmenge buchen; Karte bleibt vorne |
+| Karte links/rechts | Vorherige/nächste Karte |
+| Kurz nach unten | Leveln-/Zaubern-Stapel wechseln |
+| Weiter nach unten ziehen und halten | Kartenverwaltung öffnen |
+| `−` / `+` tippen oder halten | Ausspielmenge ändern, Halten beschleunigt |
+| Drei Punkte auf Karte | Quest bearbeiten |
+| Kartenverwaltung unten | Sortieren, Sichtbarkeit, Schließen |
+
+## Tests und Grenzen
+
+Zentrale Funktions- und Migrationsprüfungen lassen sich ohne weitere Installation mit `node tests/logic.test.cjs` ausführen. Außerdem wurden der JavaScript-Syntaxcheck und die Vollständigkeit der Offline-Ressourcen geprüft.
+
+**Noch offen:** Ein vollständiger Integrationstest auf einem echten iPhone in Safari, inklusive Gesten, Service-Worker-Update und Import eines persönlichen 0.9-Backups. **0.10 zunächst als Testversion verwenden und das 0.9-Backup behalten.**
+
+## Wichtige Projektdateien
+
+- `app.js`: bestehender, aus 0.9 übernommener Daten-/Gameplaykern und Event-Handler.
+- `v010.js`: v0.10-spezifische UI- und Datenformat-Erweiterungen, Start erst nach Registrierung aller Overrides.
+- `styles.css`: Kompatibilitätsstyles der bisherigen App.
+- `styles-010.css`: neue Karten, Formen, Themes, Gesten-Steuerelemente und Vollbild-Kartenverwaltung.
+- `theme/palette.js`: dynamische, kontrastabhängige Nutzerfarben.
+- `assets/icons/mono/`: ein originaler SVG-Satz für Icons und Systemzeichen.
+- `sw.js`: Precache der offline verfügbaren Ressourcen.
+- `WARTUNG.md`: Informationen für Weiterentwicklungen.

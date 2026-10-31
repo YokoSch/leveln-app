@@ -1,0 +1,66 @@
+/*
+ * Leveln 0.10 – Live-Farbsystem (NACH components/assets/effects einbinden).
+ * Alle Konturen, Icons, Flammen und Fortschrittsbalken verwenden aus einer
+ * NUTZERFARBE abgeleitete Tokens. Farbformen sind in allen Skins identisch.
+ * Tokens kommen von LevelnPalette10.applyQuest() / applyGlobal().
+ */
+.lv10-root .lv-card, .lv10-root .lv-sort-card, .lv10-root .lv-quest-item {
+  --lv-card-ink: var(--lv-text);
+  --lv-card-soft: var(--lv-surface-2);
+  --lv-card-rgb: var(--lv-accent-rgb);
+  --lv-card-core: var(--lv-xp);
+}
+.lv10-root .lv-card::before {
+  background: radial-gradient(ellipse at 8% 0%,rgba(var(--lv-card-rgb),.17),transparent 43%),
+              radial-gradient(ellipse at 97% 100%,rgba(var(--lv-card-rgb),.10),transparent 48%);
+}
+.lv10-root .lv-card-tag, .lv10-root .lv-card-art {color:var(--lv-card-ink);}
+.lv10-root .lv-card-art .lv-asset-icon:not([data-icon="spielmechanik/mana"]):not([data-icon="spielmechanik/glut"]):not([data-icon="symbole/flamme"]):not([data-icon="symbole/schneeflocke"]) {color:var(--lv-card-ink)}
+.lv10-root .lv-meter span {background:var(--lv-card-accent);}
+.lv10-root .lv-xp-track span {background:linear-gradient(90deg,var(--lv-leveln,var(--lv-xp)),var(--lv-xp));}
+.lv10-root .lv-compare-col {background:linear-gradient(to top,var(--lv-leveln,var(--lv-xp)),var(--lv-xp));}
+.lv10-root .lv-compare-col::after {background:var(--lv-zaubern,var(--lv-mana));}
+.lv10-root .lv-quest-item {border-left-color:var(--lv-quest-accent,var(--lv-active));}
+.lv10-root .lv-quest-item .lv-asset-icon {color:var(--lv-card-ink);}
+.lv10-root .lv-sort-card {border-color:var(--lv-quest-accent,var(--lv-active));}
+.lv10-root .lv-spark {background:var(--lv-card-core);box-shadow:0 0 8px var(--lv-card-accent);}
+.lv10-root .lv-flame {filter:drop-shadow(0 0 7px var(--lv-card-accent));}
+.lv10-root .lv-flame svg {fill:var(--lv-card-accent);}
+.lv10-root .lv-flame .lv-flame-inner {fill:var(--lv-card-core);opacity:.8;}
+/* Card-only aura; NO filter on the whole card (buttons and text remain crisp). */
+@keyframes lv10-user-aura {
+  0%,100% {box-shadow:0 0 5px rgba(var(--lv-card-rgb),.55),0 0 19px rgba(var(--lv-card-rgb),.24),0 17px 45px #000b;}
+  50% {box-shadow:0 0 11px rgba(var(--lv-card-rgb),.8),0 0 34px rgba(var(--lv-card-rgb),.43),0 17px 45px #000b;}
+}
+.lv10-root[data-leveln-skin="dark"] .lv-card--primary {
+  border:2px solid var(--lv-card-accent);
+  background:radial-gradient(ellipse at 50% 0,var(--lv-card-soft,#0f3224),var(--lv-card-face) 53%);
+  box-shadow:0 0 8px rgba(var(--lv-card-rgb),.6),0 0 25px rgba(var(--lv-card-rgb),.27),0 15px 50px #000a;
+  animation:lv10-user-aura 5.8s ease-in-out infinite;
+}
+.lv10-root[data-leveln-skin="dark"] .lv-card-corner {border-color:var(--lv-card-accent);box-shadow:0 0 7px var(--lv-card-accent);}
+.lv10-root[data-leveln-skin="dark"] .lv-card-art {color:var(--lv-card-ink);filter:drop-shadow(0 0 7px var(--lv-card-accent));}
+.lv10-root[data-leveln-skin="dark"] .lv-card-tag {color:var(--lv-card-ink);}
+.lv10-root[data-leveln-skin="dark"] .lv-amount-stepper {border-color:var(--lv-card-accent);box-shadow:0 0 9px rgba(var(--lv-card-rgb),.22);}
+.lv10-root[data-leveln-skin="dark"] .lv-stack-back {border-color:var(--lv-card-accent,var(--lv-line));}
+.lv10-root[data-leveln-skin="dark"] .lv-stack-back.second {border-color:var(--lv-card-accent,var(--lv-line));}
+.lv10-root[data-leveln-skin="light"] .lv-card--primary {
+  border:2px solid var(--lv-card-accent);
+  background:linear-gradient(160deg,var(--lv-card-soft) 0%,#fff 43%,#fff 100%);
+  box-shadow:0 14px 36px rgba(var(--lv-card-rgb),.13),0 2px 9px #1b2f2020;
+}
+.lv10-root[data-leveln-skin="light"] .lv-card-art {color:var(--lv-card-ink)}
+.lv10-root[data-leveln-skin="light"] .lv-card-corner {border-color:var(--lv-card-accent)}
+.lv10-root[data-leveln-skin="retro"] .lv-card--primary {
+  border:3px solid #111;background:#fff;box-shadow:6px 7px 0 #111;
+}
+.lv10-root[data-leveln-skin="retro"] .lv-card-art,
+.lv10-root[data-leveln-skin="retro"] .lv-card-tag,
+.lv10-root[data-leveln-skin="retro"] .lv-quest-item .lv-asset-icon {color:#111}
+.lv10-root[data-leveln-skin="retro"] .lv-card::before {background:transparent}
+.lv10-root[data-leveln-skin="retro"] .lv-meter span {background:var(--lv-card-accent);}
+.lv10-root[data-leveln-skin="retro"] .lv-sort-card {border-color:#111;}
+.lv10-root[data-leveln-skin="retro"] .lv-quest-item {border-left-color:var(--lv-quest-accent)}
+@media (prefers-reduced-motion:reduce) {
+  .lv10-root[data-leveln-skin="dark"] .lv-card--primary {animation:none;}
+}

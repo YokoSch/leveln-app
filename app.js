@@ -1,5 +1,5 @@
 /*
- * LEVELN 0.9 – BEREINIGTER QUELLCODE
+ * LEVELN 0.10 – KOMPATIBILITÄTSKERN (0.9)
  *
  * Nur technische Bereinigung der bestehenden Version 0.9.
  * Keine Änderung an Regeln, UX, gespeicherten Daten oder Migrationsumfang.
@@ -1835,7 +1835,7 @@ document.addEventListener('change', e => { if (e.target.name === 'kind' || e.tar
     if (!S.modal?.key && !S.modal?.activityId && f) {
         for (const [target, source, metric] of [['stdMinutes', 'minutes', 'minutes'], ['stdCount', 'count', 'count']]) {
             const input = f.elements[target];
-            if (!input.dataset.edited)
+            if (input && !input.dataset.edited)
                 input.value = suggestStandard(f.elements.period.value, f.elements[source].value, metric, f.elements.startDate.value, f.elements.mode.value);
         }
     }
@@ -1843,7 +1843,7 @@ document.addEventListener('change', e => { if (e.target.name === 'kind' || e.tar
 document.addEventListener('input', e => { if (['stdMinutes', 'stdCount'].includes(e.target.name))
     e.target.dataset.edited = 'true'; const f = e.target.form; if (f && ['minutes', 'count'].includes(e.target.name) && !S.modal?.key && !S.modal?.activityId) {
     const target = f.elements[e.target.name === 'minutes' ? 'stdMinutes' : 'stdCount'];
-    if (!target.dataset.edited)
+    if (target && !target.dataset.edited)
         target.value = suggestStandard(f.elements.period.value, e.target.value, e.target.name, f.elements.startDate.value, f.elements.mode.value);
 } });
 document.addEventListener('change', e => { if (e.target.id === 'questTypeSelect') {
@@ -1928,8 +1928,13 @@ document.addEventListener('pointerup', e => {
             if (absX > absY) {
                 animateCard(dx > 0 ? 'right' : 'left', async () => rotate(dx > 0 ? -1 : 1)).catch(showError);
             }
+            else if (dy > 0) {
+                // 0.10: a short down swipe switches the entire deck.
+                animateCard('down', async () => lv10DeckSelect(S.deckKind === 'build' ? 'reduce' : 'build')).catch(showError);
+            }
             else if (canEdit(S.day)) {
-                animateCard(dy < 0 ? 'up' : 'down', async () => { await startCard(goal, dy < 0); sound(false); }).catch(showError);
+                // 0.10: up only books; the active card is never auto-rotated.
+                animateCard('up', async () => { await startCard(goal, true); }).catch(showError);
             }
             else {
                 render();
@@ -1989,4 +1994,4 @@ setInterval(() => { if (!document.hidden && !S.packet && !S.modal) {
     maybeCheckin();
 } }, 60000);
 window.addEventListener('error', e => console.error('Leveln 0.9', e.error));
-setup().catch(e => { $('#app').innerHTML = `<div class="fatal"><h2>Leveln konnte nicht starten</h2><p>${safe(e.message)}</p><p>Bitte GitHub Pages über HTTPS und Safari öffnen.</p></div>`; console.error(e); });
+// Startup is called by v010.js after the versioned compatibility overrides load.
