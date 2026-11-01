@@ -1,0 +1,16 @@
+/* Leveln 0.11 – Thumb-gerechte Galerie ohne redundante Sortierliste */
+.lv10-manager-content{display:block;overflow:auto;padding:13px 15px;flex:1}
+.lv10-manager-minis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-content:start}
+.lv10-mini-card{width:100%;height:auto;max-height:none;min-height:130px;aspect-ratio:3/4;touch-action:none;cursor:grab}
+.lv10-mini-card.lv10-dragging{outline:3px dashed var(--lv-active);opacity:.72;cursor:grabbing;transform:scale(.97)}
+.lv10-mini-card.hidden-card{opacity:.5}
+.lv11-mini-visible{position:absolute;top:4px;right:4px;display:grid;place-items:center;padding:7px;background:var(--lv-surface);border:1px solid var(--lv-line);border-radius:9px;z-index:2;touch-action:manipulation}
+.lv11-mini-visible input{width:19px;height:19px;accent-color:var(--lv-active)}
+.lv10-manager-header button{display:none}
+.lv10-manager-footer{display:flex;gap:4px;flex-wrap:wrap;padding:8px 8px max(10px,env(safe-area-inset-bottom));justify-content:stretch}
+.lv10-manager-footer button{flex:1 1 calc(25% - 8px);min-height:38px;font-size:10px}
+.lv10-manager-footer .lv11-kind{flex:1 1 calc(50% - 8px);font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px}
+.lv10-manager-footer .lv11-kind.on{border-color:var(--lv-active);box-shadow:0 0 0 1px var(--lv-active)}
+.lv10-manager-footer .lv11-kind .ico{width:21px;height:21px}
+.lv10-manager-footer button.lv10-manager-exit{flex:0 0 44px}
+@media(max-width:360px){.lv10-manager-minis{grid-template-columns:repeat(2,minmax(0,1fr))}}

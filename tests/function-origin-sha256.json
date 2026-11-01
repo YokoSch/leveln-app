@@ -1,0 +1,897 @@
+{
+  "app.js:dbAll": {
+    "file": "src/shared/data/database.js",
+    "sha256": "ef2729622326f4805fdb5171b1ddbb3f51f1bbdfccf50617c3dd72adb667130a",
+    "adapted": false
+  },
+  "app.js:dbTx": {
+    "file": "src/shared/data/database.js",
+    "sha256": "734b58cfeca3df2c24af30ca02f897f7827215bc121f9a15c26d6660ccf70da5",
+    "adapted": false
+  },
+  "app.js:saveMeta": {
+    "file": "src/shared/data/database.js",
+    "sha256": "700a6ace5f7980142942012e758c81f354f733801739bae63d173ba61bf5f1c7",
+    "adapted": false
+  },
+  "app.js:revision": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "3b501f56516a655b308b45ba2d3853ec9e6712b94f13225a586cc07f57122a8e",
+    "adapted": false
+  },
+  "app.js:rules": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "ffefb7d5cd79ec3f4aed5ca31d6a17d2d5cf3eb8cdd36a6a8419154c8aac99c5",
+    "adapted": false
+  },
+  "app.js:goalByKey": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "06d0aa98a6c92d2f82959803d9dc040196c09a35654ef81fcd3380bbd65e919e",
+    "adapted": false
+  },
+  "app.js:entryKey": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "aa4da1519bc384b238db472f7308940d2c048c5edc4d943e92a00b8a6fa7a2dc",
+    "adapted": false
+  },
+  "app.js:entry": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "9eca91c2c913ae25f32dbf9c9015044ebea4b4891461d6d02231c287000eaf7f",
+    "adapted": false
+  },
+  "app.js:ruleValue": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "f49bc9ea040d36879d97403ec1c55c38c7dffd2b9c1e08ec78ec281eb476f467",
+    "adapted": false
+  },
+  "app.js:metricKeys": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "8d48cb5a1ad213b548172054990b89876d74a106ef915de1699b8cbb2891a7c3",
+    "adapted": false
+  },
+  "app.js:rate": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "900674cb35fee27c829d40cd9a78751dbea305c2c3426b3dc179561b418b3afd",
+    "adapted": false
+  },
+  "app.js:limit": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "f58399ddd9e1bfa21be336631aea9093f089002a123d5556c4a21e22cc3040df",
+    "adapted": false
+  },
+  "app.js:isRestart": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "bd7b74e63f063f4f8122eacac28592ee3cdd5dc6d2f9d84a1a63c3bef73a4df1",
+    "adapted": false
+  },
+  "app.js:calendarStart": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "29cc3ebe88bf9ea2a0f480f84e959f752b6e68ae32959b77540dea892a9f9465",
+    "adapted": false
+  },
+  "app.js:calendarNext": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "d3b341a27fc0f3a7f5f541c9722fb001f80d66d0e4f3193a1914c8cc06a147f8",
+    "adapted": false
+  },
+  "app.js:allDays": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "82e6e1b8fff21a0ff5f880c274c75438bb0bcb9626d59873f3c6080e44e055f3",
+    "adapted": false
+  },
+  "app.js:periods": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "e9fb566de59f227ed3e373c114707bb65ad7a851194ad08f6f5f2ad104cc06a7",
+    "adapted": false
+  },
+  "app.js:currentPeriod": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "85cdeb0a940b21edee125305afd9e55ae6c93f0cc14063811b46ac0a2d1daa3b",
+    "adapted": false
+  },
+  "app.js:finalLocked": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "8cd8bae42e5ed2dd2577bc05750e56ff69311d885e2a861ce9b0546d3554038f",
+    "adapted": false
+  },
+  "app.js:frozenKey": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "14fca99c70118291a283b356abd4df5da6fd7e1ff9d26d72c34daa1ca1823e61",
+    "adapted": false
+  },
+  "app.js:outcome": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "6f204b165bc2e06eab6668e3e84a8a9339a2706940202f39c8f557713f2c016e",
+    "adapted": false
+  },
+  "app.js:stData": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "29faf59d5214f53d784fb668959197675bb0c932898b32ccb3ad4a4e9f7992b9",
+    "adapted": false
+  },
+  "app.js:assumed": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "2c978d9d5529bf204858e4f8666014eeefcb94a0cdec87c3f498d3630be4973e",
+    "adapted": false
+  },
+  "app.js:makeEntry": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "e96c9bec2c5102a302b00d3a4b3ab8aadc6650f8e52f5d5765a17c26fa4a3183",
+    "adapted": false
+  },
+  "app.js:sync05": {
+    "file": "src/shared/data/database.js",
+    "sha256": "fcdb98e8fa3c35fed38536d9194ef6c5906f5b0347a774690fadf3a6c287cee5",
+    "adapted": false
+  },
+  "app.js:hex": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "39794a58a7e00a53bc87b00f07d1e1b8b4771807e3a3856fccf7c08181009e6e",
+    "adapted": false
+  },
+  "app.js:streakBefore": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "a14259dbee3b5241e1cdf194b83628a5f811ea99b7d704704902ae9f168767f6",
+    "adapted": false
+  },
+  "app.js:reconcileWallet": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "3dd88699d2a2cf0f32038d383451a684d4bc8fa167bb923eb97c61f0548e03bf",
+    "adapted": false
+  },
+  "app.js:buyFreeze": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "75e1621451a326905ff91cb09b9cbfc718968842e3e24a4490d4bf89ebf433ef",
+    "adapted": false
+  },
+  "app.js:metricOwner": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "273443d582465a4c91d3caaf6f70415cb98217b895cfca2f439e1837543393d5",
+    "adapted": false
+  },
+  "app.js:xpBar": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "2b766ce5a50c0e3ed81c96f027bc77b2f282f1fb51986e5d563f3d7d55792892",
+    "adapted": false
+  },
+  "app.js:initialState": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "cdbe084abcd197bb4b4009c21531bea37bcc0cd5e5b204732c2cef8c04d07b7b",
+    "adapted": false
+  },
+  "app.js:calRange": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "0d71c777b441e7c713911b113d67911f3ea0b8e7a6a920d9aef8a126ece85d77",
+    "adapted": false
+  },
+  "app.js:badgeFor": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "3d498d61d618e5f20f68fe895cc3f417e14461c6fdca88a2ae3018da37d4c521",
+    "adapted": false
+  },
+  "app.js:monthCalendar": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "99c1b32e4fb7ba3f3cd62541167b56f7461e4a31a1d270343d141293e18ec610",
+    "adapted": false
+  },
+  "app.js:calendarHTML": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "3fbbff628b8a35725d1d3345f0104c0ace2c18779e1867da119a8151ba0e4d66",
+    "adapted": false
+  },
+  "app.js:freezeAction": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "3caa39b7b6985d00eace044b7dcdf973acfa78cefcdb01539461e25c9499ec89",
+    "adapted": false
+  },
+  "app.js:calMove": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "054b0c8d041a531db5f8a034d13f11cf222b24edc6f67a9cb741c27265408d3d",
+    "adapted": false
+  },
+  "app.js:statsRange": {
+    "file": "pages/statistik/page.base.js",
+    "sha256": "b014f70a54327d7f07ec63518f2bfec0baf52b3de984d8feed20350a0d85c08b",
+    "adapted": false
+  },
+  "app.js:sheet": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "91654a315e1cc9efa3357bea1d5a0374c858f3c51397ecbabc8487a784604402",
+    "adapted": false
+  },
+  "app.js:renderModal05": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "c39901c2667015e0d400735302e774d6faebbeb3d12d8c8c4d72a707176e5c94",
+    "adapted": false
+  },
+  "app.js:closeModal": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "6546d72cb4e8709bc894e2e422237944248f84a3a6aa78a6bf167f9f0f81cdcc",
+    "adapted": false
+  },
+  "app.js:readNumber": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "ca0e4f3034184a6b0eac159d56eb76d0e35ad7c31fa73fd2935f67dad753a612",
+    "adapted": false
+  },
+  "app.js:fileArt": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "9589b948172f6d57f739f7d7e21ef9e5206a32e3069a247687410dfb5a6b207c",
+    "adapted": false
+  },
+  "app.js:canEdit": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "5f68c22734ddea0ea070f3a12d9cd4b3a286c89b2a79975c65690f102a241e77",
+    "adapted": false
+  },
+  "app.js:cardMenuModal": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "7f3fa2f7a4e3e2b8c64be034406ca2a68c80233f5cd341b5294b43674952ffcf",
+    "adapted": false
+  },
+  "app.js:refuse": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "0ce16b712db123afcfa3669b16da63ed57c0e4f9c24ded2281d1674f79cb2db1",
+    "adapted": false
+  },
+  "app.js:packetDefault": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "139c1b3bd6448a77f72c4ae0ccbcf94fa2ecdb5aa56eee4f97be49610f97c721",
+    "adapted": false
+  },
+  "app.js:finishPhase": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "411adaf87510cb76e674b9332d79937653203786b201ba582e9a5cb7dba1a2eb",
+    "adapted": false
+  },
+  "app.js:advanceCard": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "c767b8076ddedb78a104bc6ac391dc5467b097ced0588c234c7afa4ff209129a",
+    "adapted": false
+  },
+  "app.js:armTimer": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "bbb63a075804f8c964a5902980e026f76f5d98cbdb48600e06feb949229e3f48",
+    "adapted": false
+  },
+  "app.js:sendPacket": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "2af5bd778898c38c415ef2c703f762917214228a8185ba1db73be621815342c8",
+    "adapted": false
+  },
+  "app.js:flyChip": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "938404864021b25709d1b2b04f266e833caf68fdde6bfa0693847a135d7ba156",
+    "adapted": false
+  },
+  "app.js:xpToast": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "ebf45a030dc455d934071b59eb380cdb325cab0514bea4f7e0582c7a1a9f3bc1",
+    "adapted": false
+  },
+  "app.js:vibrate": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "5c15df4fdac31680ae78b95670d5730b77cc07a0767982b67ffdf58b8fdb8063",
+    "adapted": false
+  },
+  "app.js:celebrate": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "4c25bb40a8b9bca875af6880129ddc45ed5fe786ccf8db353d779bbf1fb78db1",
+    "adapted": false
+  },
+  "app.js:toast": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "c8ab47fc7cdec9ca28df2d31ffe7ba8706cc080d32d2b1c6aa8693f0b1e1c910",
+    "adapted": false
+  },
+  "app.js:sound": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "762eb63de6c2685a5f8e09684d10624922c679a660e2982c54a395578e0fcac4",
+    "adapted": false
+  },
+  "app.js:showError": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "dae94418a1751ffd946b67bbbce10fb6efe74680287a75d530e2718f86a5092c",
+    "adapted": false
+  },
+  "app.js:animateCard": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "19e9047f1489bc232b8e27510b48f9683563a05ec06d892af7cf69c2f221726d",
+    "adapted": false
+  },
+  "app.js:go": {
+    "file": "src/app/navigation.base.js",
+    "sha256": "18b759aa2558033623724a2c28abd11096aaf56151e890487a5412f3b3fd60a1",
+    "adapted": false
+  },
+  "app.js:storeSetting": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "a3f34fac164302e117b068fc1b15b851ed9a9396a16bdecf75b2c5fff7f2a0e5",
+    "adapted": false
+  },
+  "app.js:erase": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "4500bf34585130d90062f799afbda3ed89fbbc02340bf2753746781bbc7b558e",
+    "adapted": false
+  },
+  "app.js:handleAction05": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "b45c82b68182865afaef9b8e5d87e660c9f34470393c49b46f44bf8b2bd35875",
+    "adapted": false
+  },
+  "app.js:goalColor": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "8a9ffb6a1bea67dd0c452717af170daa66fdcb0fc84b6c850e29bee0a20369b9",
+    "adapted": false
+  },
+  "app.js:goalRow": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "c97ffba37526f13a41c0413d839a8b66616f021ec3927c8aea364b795e5750d3",
+    "adapted": false
+  },
+  "app.js:editDayModal": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "bd864bab94fc1e954b77a7cf6f7966661704020cd46f1d7481edb64c5f7237a6",
+    "adapted": false
+  },
+  "app.js:saveDay": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "71a65a5e895cffc834b6e782ef600b25088f37a2dc30a53144e82a63842db18d",
+    "adapted": false
+  },
+  "app.js:archiveRule": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "1e64dc26cc3234cf192c670ac8497989bef9c7801591954ebd4160127bd07865",
+    "adapted": false
+  },
+  "app.js:statEvents": {
+    "file": "pages/statistik/page.base.js",
+    "sha256": "b9f9e62cdb3be85c581dcdaa25e14523c019dc5cb5b8edac34ba5d5405c3f9c7",
+    "adapted": false
+  },
+  "app.js:saveBackgroundImage": {
+    "file": "pages/einstellungen/page.base.js",
+    "sha256": "6f30013c1145b61b8147759ed5d213d2812c36bea3956b1f4593096a8a46ead7",
+    "adapted": false
+  },
+  "app.js:settingsView05": {
+    "file": "pages/einstellungen/page.base.js",
+    "sha256": "df3a4771238438540b54553d3379a25b0fbf364a0610fe8adb3f28dfdf76ebce",
+    "adapted": false
+  },
+  "app.js:goals": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "1550ddefbc03c0d1e00526cb254dcf561563b95e23b6cb6032fa314777b18c40",
+    "adapted": false
+  },
+  "app.js:allGoals": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "401f611b1d7778c46084ea0c258d4cfb90ca14ea61a1442b73638383ce5a7b90",
+    "adapted": false
+  },
+  "app.js:rateBundles": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "1c1f9ba9cb6acac620bc25bb84414ff010919ac5dc185fc2ed75ef52d2ad7469",
+    "adapted": false
+  },
+  "app.js:effectiveFate": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "e473ccc3a0f0a17ee3aac7d3fb16157fbff84b2814827da5ea7b3fb63c506464",
+    "adapted": false
+  },
+  "app.js:eventFor": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "f3db2b972c7ba7c7bb25bb1ae569c5ee4d2a33704f150d9fe82704c9198b2ea7",
+    "adapted": false
+  },
+  "app.js:xpEvents": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "e2f1ecd862ae46b056c399ac8bca746d5732e9cc17f6208ba5d52f20b8877765",
+    "adapted": false
+  },
+  "app.js:skillXp": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "6bcaaae88c3c255f7c2df2cd6f95fe8bc26e4ce32576231d6caec688a8510191",
+    "adapted": false
+  },
+  "app.js:xpStats": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "7957c3c1adb6984a5599b9e718eb08dd5738def7a065cdfdb17e356e02f3430b",
+    "adapted": false
+  },
+  "app.js:characterView": {
+    "file": "pages/charakter/page.base.js",
+    "sha256": "7ea365131f0a076208802c73b213aa4247b11c3ffd1325edd2a8038cb94adf44",
+    "adapted": false
+  },
+  "app.js:cardStatus": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "660dbd34c8a9ae738563ef16bb9ce9652b647e5b3f4b429057f139cbddc528cb",
+    "adapted": false
+  },
+  "app.js:skillOptions": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "f41fbac2e853272f41ac65fc5730476cc3d634d0d27e567c77394992716f1ac5",
+    "adapted": false
+  },
+  "app.js:rateRows": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "5e6b30329e5a74a95daec0eb553ad6848f96d92a097cbdb40833e8163fda3e9f",
+    "adapted": false
+  },
+  "app.js:rateRowHTML": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "15b5baa30f5c91a6dd1d988bc668b97b5a83f2d79a1b12a61252288be20a2d60",
+    "adapted": false
+  },
+  "app.js:rewardRowHTML": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "1fd8ac931a10cb19be5ea0b7e795e6e1cc5989ba6099a7be78ee496ec2a7df8d",
+    "adapted": false
+  },
+  "app.js:parseBindings": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "567436490c97b1e7339def0d59d6e378a6397da93e9e09917be84eea94c3567d",
+    "adapted": false
+  },
+  "app.js:renderModal": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "9364cbae51f8428421169c1be28920ec6557000f0a2dbda3b79bd8f421db1972",
+    "adapted": false
+  },
+  "app.js:saveProfile": {
+    "file": "pages/charakter/page.base.js",
+    "sha256": "9abb30ca78a13daecbae76f1fb39e48d298dc9fada7034afe664efab18bf053b",
+    "adapted": false
+  },
+  "app.js:deleteSkill": {
+    "file": "pages/charakter/page.base.js",
+    "sha256": "a55032ab12620693c875a9e8880fceaff70d3f8d1aa584781a6fd0490749e4b5",
+    "adapted": false
+  },
+  "app.js:completeOnce": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "2ec0276c0f90d63a3bfda0f3febdb04a9a1f7048f948b0646eccd23d6c7bb954",
+    "adapted": false
+  },
+  "app.js:archiveOnce": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "8c23b5cadbb97816ef07aa27f0ac52354bd4840651d879d23e3ced747847d530",
+    "adapted": false
+  },
+  "app.js:dbOpen": {
+    "file": "src/shared/data/database.js",
+    "sha256": "8f4b2e2c8d54cc1cd6c0f7ae4dfe7172f91c7923fcca90aaa2354676460d602f",
+    "adapted": false
+  },
+  "app.js:sync": {
+    "file": "src/shared/data/database.js",
+    "sha256": "6fd86d31aca9ffe740db295f2717cde7f98d836b6c631369d4c8ab2b4c9c3842",
+    "adapted": false
+  },
+  "app.js:validateBackup": {
+    "file": "src/shared/data/database.js",
+    "sha256": "ea296e3cba71e7f313d36df31192ff60e56ff544d17df17790ab264f44ca239e",
+    "adapted": false
+  },
+  "app.js:handleRPGAction": {
+    "file": "src/shared/ui/dialoge.js",
+    "sha256": "bcbcc9628a2a963c52688d5bdfd91e8942b7178dbd062282a6aeb67e6d624e44",
+    "adapted": false
+  },
+  "app.js:shortCode": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "11166a69617a53de998ef414889db1e4d275a51478ea8cd67e8d492eecf4e136",
+    "adapted": false
+  },
+  "app.js:suggestStandard": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "3441c5af137645f700df2330c4a3ad4adf21d8183d1ba43e9b41d23dc5ff11ae",
+    "adapted": false
+  },
+  "app.js:nav": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "3eec46d03626b7259ca0c7a0351909553d3808c51b7f83e0e6cbc6242f2ef9c9",
+    "adapted": false
+  },
+  "app.js:goalGroups": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "c5f1e02b142287af7f27917d502d94453f25ca4486c2dc14945e36e0f6679f56",
+    "adapted": false
+  },
+  "app.js:onceQuestState": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "f18870cb1037c2d1f4679ba3e3b2831918a43027b6e8e87bcc87256ad9dfd110",
+    "adapted": false
+  },
+  "app.js:oneTimeGoals": {
+    "file": "src/shared/domain/zeitraum.js",
+    "sha256": "afbd1af17c48fcb2ee5c857bc37bda8d81950e06f9fe933e52b7afefd0fd0617",
+    "adapted": false
+  },
+  "app.js:detailGoal": {
+    "file": "src/shared/ui/elemente.js",
+    "sha256": "3a0e0aaa6713b2327853e03abd07a0af941f3eb5c74acf68c4c9da915cca5f03",
+    "adapted": false
+  },
+  "app.js:skillModal": {
+    "file": "pages/charakter/page.base.js",
+    "sha256": "6e7976d54d28f0eeac19513eadf616c9670f7f530cb4ca2a1199bbe033b09616",
+    "adapted": false
+  },
+  "app.js:profileModal": {
+    "file": "pages/charakter/page.base.js",
+    "sha256": "1ba1d20a231d9f09f2bac015a73c68ce221ec26b31bc12ca20f48cd405338f0f",
+    "adapted": false
+  },
+  "app.js:avatarMarkup": {
+    "file": "pages/charakter/page.base.js",
+    "sha256": "e44b0e7f04b0ef3060f5aa6326b69091a77495a9252ab476abbc5162c9d3d3cb",
+    "adapted": false
+  },
+  "app.js:onceQuestRow": {
+    "file": "pages/quests/page.base.js",
+    "sha256": "305777b24729338b854d6785c6a138e99e588e0d8ad3984090b7fd3cecadf00b",
+    "adapted": false
+  },
+  "app.js:cardDraft": {
+    "file": "pages/heute/page.base.js",
+    "sha256": "6203de401eae1b183bb7a42af4e03b45d3e690b04d988e1f6ee4711f55cd05dd",
+    "adapted": false
+  },
+  "app.js:bookingFields": {
+    "file": "pages/heute/page.base.js",
+    "sha256": "97687797eb15bb21015c769c4d8300db9a4ca7403ff62524527edf774c5abce0",
+    "adapted": false
+  },
+  "app.js:migrateV08toV09": {
+    "file": "src/shared/data/database.js",
+    "sha256": "b090aa2acdf0b77674b246aa844541e6f14fd22babdf4e3e078fd0948365ca5f",
+    "adapted": false
+  },
+  "app.js:enhanceIconSelectors": {
+    "file": "src/shared/ui/icon-galerie.js",
+    "sha256": "95eecd79b212ef559ba020bb36228e71a8cb6871f7a423f92292703fd0b621d6",
+    "adapted": false
+  },
+  "app.js:openIconGallery": {
+    "file": "src/shared/ui/icon-galerie.js",
+    "sha256": "fb35bf5621648a1fa86830552de0fdcf93600aeea1b50c5a248d6a20d44b22b7",
+    "adapted": false
+  },
+  "app.js:chooseIcon": {
+    "file": "src/shared/ui/icon-galerie.js",
+    "sha256": "5403e5ac980150da05a9b73101803dd50ce3ac6d3cfa86cfc2749cb634564eec",
+    "adapted": false
+  },
+  "app.js:closeIconGallery": {
+    "file": "src/shared/ui/icon-galerie.js",
+    "sha256": "6d1d1359fa26a3dad677be0e41514e4b701e2e7ffde23d7eca0e3cf9db369800",
+    "adapted": false
+  },
+  "app.js:iconChoices": {
+    "file": "src/shared/ui/icon-galerie.js",
+    "sha256": "2b2a640394ec802d7421ea29f75ca0cdb710bd3680094eca0540cb79f046a627",
+    "adapted": false
+  },
+  "app.js:unknownFields": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "9870974da42eb15288ddd8b5a4c2b5d691bb7410b9ffcf84512dec01c55e78a4",
+    "adapted": false
+  },
+  "app.js:recordedConsumption": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "0a265adce9229b915d36cc326366bb8cf2c9f6081a650bad1ae7ae8ef8dfa5ba",
+    "adapted": false
+  },
+  "app.js:checkinItems": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "9a2768fdd01b5b0d3c32ea11e7d730e14ebedfc600107ac63809ccd16f8be275",
+    "adapted": false
+  },
+  "app.js:assessment": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "fa9c905e7d8304f709f2683037f4dbce3965b2b0707542fa42c1828d125a3434",
+    "adapted": false
+  },
+  "app.js:reconcile": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "ed3f08c4fa83ae64c30417a4d26b0032fb55cf2affec63a912ae4a7b59ada082",
+    "adapted": false
+  },
+  "app.js:manaInPeriod": {
+    "file": "src/shared/domain/erfahrung.js",
+    "sha256": "c9ce98fb6cf864e25c772844f13497c38af0c823d7cc746a9ebc3b92274d7e29",
+    "adapted": false
+  },
+  "app.js:updatePlayAmount": {
+    "file": "pages/heute/page.base.js",
+    "sha256": "4d5b349f312ef8eb5b3489987aa5aeaf14f0473352220388e315fd1c113cd021",
+    "adapted": false
+  },
+  "app.js:checkinModal": {
+    "file": "pages/heute/page.base.js",
+    "sha256": "e24fb192efc8adbf38c53e81cde7fc05cefdebcdcdceaf4f43cffad54d9dd9e2",
+    "adapted": false
+  },
+  "app.js:answerManaCheckin": {
+    "file": "pages/heute/page.base.js",
+    "sha256": "385c46ba980cec7695d4524d872242ac73f84dd2371555b8abe11aa50325834b",
+    "adapted": false
+  },
+  "app.js:maybeCheckin": {
+    "file": "pages/heute/page.base.js",
+    "sha256": "0026c50689d47edc71c950ca9d507f791d0315b923d1e59d64908a24efbb20cf",
+    "adapted": false
+  },
+  "v010.js:ico": {
+    "file": "src/shared/v010/assets.js",
+    "sha256": "a6fb16c1b348279641fc8c4b8d0faa2de0000794bd2cf7e52cf80111cb30ce4f",
+    "adapted": false
+  },
+  "v010.js:art": {
+    "file": "src/shared/v010/assets.js",
+    "sha256": "0591c4eb051c1eb508f5db00b1a37dbadcef32693996765000d5a9f46408b90b",
+    "adapted": false
+  },
+  "v010.js:lv10Skin": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "1878a8338d7d4df57b5272fddfd2cc5b3dae7a5f77d6484a76315ff940bb3528",
+    "adapted": false
+  },
+  "v010.js:applyTheme": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "3d2e1eb1b8b65bd5c44bc249297b74d9073065d3441a6b26a914c13a4f83ebc0",
+    "adapted": false
+  },
+  "v010.js:lv10Paint": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "c418a20efaefd776b857be9e5caa09f69f70a0d25c84a82d055199e719298847",
+    "adapted": false
+  },
+  "v010.js:render": {
+    "file": "src/app/navigation.js",
+    "sha256": "0ab4bf813f7dc2e49b30195a7f68b776be869fcab7a8d311881d4f7b4856055c",
+    "adapted": true
+  },
+  "v010.js:lv10CardColor": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "faa9806e3cb0fe5afe58688f4bdd9b5a32c3f0cfdd373e0675460afe70fce875",
+    "adapted": false
+  },
+  "v010.js:lv10Lab": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "980c870efc3457bc9164d6206aabcbc5f445aba7e47bf0c2a5e69ae49f21a652",
+    "adapted": false
+  },
+  "v010.js:lv10Distance": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "766c5ed25f463cc63ae101d696f13254fdeb415d3137e49a9881a92f4298d1dc",
+    "adapted": false
+  },
+  "v010.js:lv10HslColor": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "eb85221039b46265a2490249303f6b5d277c1380c7fa62ca1523c8ca796aaa15",
+    "adapted": false
+  },
+  "v010.js:lv10DistinctColor": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "2c84fdbb6b3e7b1b6bc1988d2ee97d7201d2467b2ab049e901e94e501d1b0745",
+    "adapted": false
+  },
+  "v010.js:lv10StatisticColor": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "df99bc6adccdf20e12daa385bea947dbeb6492c28d91290febf62f61fcbbf175",
+    "adapted": false
+  },
+  "v010.js:lv10SkillStatisticColor": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "f4b59ae6b1c5402c6f25f1afbf1baaf9287f36e73414140c28f3a15c3d16c112",
+    "adapted": false
+  },
+  "v010.js:lv10NewStatColor": {
+    "file": "src/shared/v010/theme.js",
+    "sha256": "32311f98f8005fb1ae4505c9fa5782243d30b75bfc60b1d32c4d5f9a1bf2749a",
+    "adapted": false
+  },
+  "v010.js:migrateV09toV010": {
+    "file": "src/shared/v010/database.js",
+    "sha256": "6dd5f2ce3ac1a5fd0a3c7ba67ccda0d00b9e4b69569c27b5c4740c2141dad749",
+    "adapted": false
+  },
+  "v010.js:migrateInstalled": {
+    "file": "src/shared/v010/database.js",
+    "sha256": "747cd307796021a29f4929bf0a73ade5b8c2adf04326d73b8730072cecbfda0e",
+    "adapted": false
+  },
+  "v010.js:setup": {
+    "file": "src/shared/v010/database.js",
+    "sha256": "b52fd71ae974ae36ad2cae213f030d3f3ba77c1bde9912cdcaf8cf82032afe5a",
+    "adapted": false
+  },
+  "v010.js:importBackup": {
+    "file": "src/shared/v010/database.js",
+    "sha256": "e9bdcffd4c704ba0ea1fd443728717383cbea1cbe25dfdef5ec5b3b2e02bad0f",
+    "adapted": false
+  },
+  "v010.js:exportBackup": {
+    "file": "src/shared/v010/database.js",
+    "sha256": "2e8fa27a1c9d685d5419b315e22a00169a2162d3739a9037f586d710d2156b02",
+    "adapted": false
+  },
+  "v010.js:lv10RateRow": {
+    "file": "pages/quests/page.js",
+    "sha256": "691935641d3137b50a42970661d4f40c4e4edfaf9f02b5be244897790638a108",
+    "adapted": false
+  },
+  "v010.js:lv10MetricTable": {
+    "file": "pages/quests/page.js",
+    "sha256": "45ed83136a385650d320419026546b6e5f1c13df5e25ff658b3fa61e0d0d9700",
+    "adapted": false
+  },
+  "v010.js:lv10FormRule": {
+    "file": "pages/quests/page.js",
+    "sha256": "495338f14096c323b35679c4f15e3655a4831d3a49ed7f3935124996be1c99a4",
+    "adapted": false
+  },
+  "v010.js:editGoalModal": {
+    "file": "pages/quests/page.js",
+    "sha256": "9f828020c9791d1ad620c25e8792b5a148a22e8251dacba556e342ca3b578ca0",
+    "adapted": false
+  },
+  "v010.js:lv10ReadBindings": {
+    "file": "pages/quests/page.js",
+    "sha256": "a26deb103d6608a77b418708432d89638b3bdcc9361e393035c4ef0d582399a3",
+    "adapted": false
+  },
+  "v010.js:saveGoal": {
+    "file": "pages/quests/page.js",
+    "sha256": "4d120bd5fb17feaffdbc426cb88e56e42856e4d3b0d2f3d028ae334ade2e445e",
+    "adapted": false
+  },
+  "v010.js:saveSkill": {
+    "file": "pages/charakter/page.js",
+    "sha256": "41fdb4130e762e977a2c945ef42d07eb13ed2960753ffc29e4bf902b4dee8289",
+    "adapted": false
+  },
+  "v010.js:lv10DeckGoals": {
+    "file": "pages/heute/page.js",
+    "sha256": "fc14003afecf341f7f508aa4749fba2c5584fc003f43137b1ae2c79671aa83bf",
+    "adapted": false
+  },
+  "v010.js:lv10DeckSelect": {
+    "file": "pages/heute/page.js",
+    "sha256": "32c22b6558809bd8aae0ce6f9936fc5620f6449837c1a454e7fa3bb2d2339258",
+    "adapted": false
+  },
+  "v010.js:rotate": {
+    "file": "pages/heute/page.js",
+    "sha256": "eca9057776bb5687787aa4c4dff87b64b96f7618ff68160367342efcbc4cab3d",
+    "adapted": false
+  },
+  "v010.js:manaPanel": {
+    "file": "pages/heute/page.js",
+    "sha256": "8714a5f79d2352c12a3a2dc277a30fb5f8d8e01013da4683f2ac9a706fcc63ad",
+    "adapted": false
+  },
+  "v010.js:lv10PeriodResult": {
+    "file": "pages/heute/page.js",
+    "sha256": "4fa81062d1fcc72fc29ee9b1d5c28566b1e9024ac6b60b1779b79c254b67fac0",
+    "adapted": false
+  },
+  "v010.js:lv10CardGlow": {
+    "file": "pages/heute/page.js",
+    "sha256": "4e54087d26e5eac7d7089124e7d015fa79d7b34a20e6610757a705ac0fecc895",
+    "adapted": false
+  },
+  "v010.js:lv10PlayControls": {
+    "file": "pages/heute/page.js",
+    "sha256": "0adef4feecfae729c8c4050239cc78f257c3c7d5eb9e33b5698e1e7b92fb4833",
+    "adapted": false
+  },
+  "v010.js:cardHtml": {
+    "file": "pages/heute/page.js",
+    "sha256": "9954acc85e2c6ca0d2dc7f3566c4ef254dddbc22beff1f953ef7fa33a38a52d4",
+    "adapted": false
+  },
+  "v010.js:todayView": {
+    "file": "pages/heute/page.js",
+    "sha256": "7ac0d087ad11b77d57744ba8453f5338631118c1192eb030e8be85f5e8fd2bd0",
+    "adapted": false
+  },
+  "v010.js:startCard": {
+    "file": "pages/heute/page.js",
+    "sha256": "aace65797060a97067dfca7b85f353b5098df96a2f9456d88c16fdbc2cab43b4",
+    "adapted": false
+  },
+  "v010.js:goalsView": {
+    "file": "pages/quests/page.js",
+    "sha256": "9c0beae6e899b51f69fb76a5afdc9d2d3a4851e9854c652166b64c6e2d2af17c",
+    "adapted": false
+  },
+  "v010.js:lv10StatValue": {
+    "file": "pages/statistik/page.js",
+    "sha256": "988fa2613240cc6c3b9ce927f184bcf449cca90dc1183a47cda324f9c505a14f",
+    "adapted": false
+  },
+  "v010.js:statsView": {
+    "file": "pages/statistik/page.js",
+    "sha256": "fead1ea572fc173a3fe01cc947226a36f1b03958109b20dd53795b7d2b14ca99",
+    "adapted": false
+  },
+  "v010.js:lv10ManagerActivities": {
+    "file": "pages/kartenverwaltung/page.js",
+    "sha256": "714608edcfe88ef8242aa11c8b6eeba5b67482809e438948930bd97732babbf5",
+    "adapted": false
+  },
+  "v010.js:lv10ManagerMini": {
+    "file": "pages/kartenverwaltung/page.js",
+    "sha256": "08f0a49564e049d8f5885bb73a27fbda331991b7ebc154b7a8fd865bd2fbb52f",
+    "adapted": false
+  },
+  "v010.js:lv10ManagerRender": {
+    "file": "pages/kartenverwaltung/page.js",
+    "sha256": "0006199eaf520f153672299b275c08e1fcc2fc82acfbebaf0f44a3235ed89a90",
+    "adapted": false
+  },
+  "v010.js:lv10ManagerOpen": {
+    "file": "pages/kartenverwaltung/page.js",
+    "sha256": "39c6c91b9df984a5c5c3a2f98c9673cfe39f959caa871f449f828bc5917c9f04",
+    "adapted": false
+  },
+  "v010.js:lv10ManagerClose": {
+    "file": "pages/kartenverwaltung/page.js",
+    "sha256": "b047a59594dbd1a58d6b278ad46075d12ffb4aec934d081bf2aa5e46012803ae",
+    "adapted": false
+  },
+  "v010.js:lv10SaveDeckOrder": {
+    "file": "pages/kartenverwaltung/page.js",
+    "sha256": "e3a8f9bf17fe6d53b6256e245dfc29332a9719dc23f14ac605a68bd5a3620812",
+    "adapted": false
+  },
+  "v010.js:lv10SortDeck": {
+    "file": "pages/kartenverwaltung/page.js",
+    "sha256": "287301f6f8f0ca818a0cdb1dcdfe8dffe982fe8d4d4d20448af0e00473d6fb84",
+    "adapted": false
+  },
+  "v010.js:lv10ToggleCard": {
+    "file": "pages/kartenverwaltung/page.js",
+    "sha256": "9601273ef4d87a715c48cf9e37f1ea5f547199a629fb481be3401ef029cd116f",
+    "adapted": false
+  },
+  "v010.js:handleAction": {
+    "file": "src/app/navigation.js",
+    "sha256": "1336d9baf4ec8f13b379b4601b88d0307164cc3e1b389fec4091732c569297be",
+    "adapted": false
+  },
+  "v010.js:renderIconGallery": {
+    "file": "src/shared/v010/icon-galerie.js",
+    "sha256": "cdc7c2e9dcb06a07cf86c88a147b2916f259305dc51b288f0284bb2b1617f892",
+    "adapted": false
+  },
+  "v010.js:settingsView": {
+    "file": "pages/einstellungen/page.js",
+    "sha256": "10700988c54976ff2af6af4ce2824706feb38a7aa05ba295ec61d4518e0bc0d7",
+    "adapted": false
+  },
+  "v010.js:lv10StepAmount": {
+    "file": "src/shared/v010/bedienung.js",
+    "sha256": "8d328e38f730049cc9eb31e589a67af0e322becdc3731e9e5734d7f5d7767d21",
+    "adapted": false
+  },
+  "v010.js:lv10HoldTick": {
+    "file": "src/shared/v010/bedienung.js",
+    "sha256": "16c591a8cfa73fe01c1b4ca752e575ebd0bdae249ead57a331d82b09b187c240",
+    "adapted": false
+  },
+  "v010.js:lv10HoldStop": {
+    "file": "src/shared/v010/bedienung.js",
+    "sha256": "e7a0bae1cf485ad8300fc0ef3fd15496d4fb814075e667eef11073a7be9fb735",
+    "adapted": false
+  },
+  "v010.js:lv10DragSave": {
+    "file": "pages/kartenverwaltung/page.js",
+    "sha256": "efd5f93050989627795c4991510c97fa98cb75c2dc2439fb9052bb9182ea6c61",
+    "adapted": false
+  }
+}

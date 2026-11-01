@@ -1,0 +1,11 @@
+/* Current per-play quantity: single tap = 1 unit; hold accelerates smoothly. */
+.lv10-play-amounts{display:flex;flex-direction:column;gap:5px;width:min(100%,280px);margin:0 auto;position:relative;z-index:6;flex-shrink:0}
+.lv10-amount-row{display:flex;align-items:center;justify-content:center;gap:7px;width:100%}
+.lv10-amount-row>small{font-size:10px;font-weight:800;color:var(--lv-muted);min-width:36px}
+.lv10-amount-stepper{display:grid;grid-template-columns:45px minmax(76px,1fr) 45px;align-items:center;flex:1;border:1px solid var(--lv-card-accent,var(--border));border-radius:12px;background:var(--lv-surface-2);overflow:hidden;height:45px;max-width:228px;color:var(--lv-text)}
+.lv10-step{height:100%;width:100%;color:var(--lv-text);border:0;background:transparent;display:grid;place-items:center;font-size:24px;font-weight:650;touch-action:none;user-select:none;-webkit-user-select:none}
+.lv10-step:active{background:var(--lv-card-soft,var(--panel2))}
+.lv10-amount-stepper strong{text-align:center;font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lv10-amount-stepper em{font-style:normal;font-size:11px;color:var(--lv-muted)}
+html.lv10-root[data-leveln-skin="dark"] .lv10-amount-stepper{box-shadow:0 0 9px rgba(var(--lv-card-rgb),.20)}
+

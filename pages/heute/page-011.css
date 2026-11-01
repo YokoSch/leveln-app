@@ -1,0 +1,47 @@
+/* Leveln 0.11 – Darstellung der echten Kartenschichten und Statusanzeigen */
+html.lv10-root .today-head{padding-bottom:4px}
+html.lv10-root .deck-area{padding-top:9px}
+html.lv10-root .peek-wrap .play-card.peek .card-main{justify-content:center;opacity:1}
+html.lv10-root .peek-wrap .play-card.peek .card-art{width:clamp(65px,21vw,100px);height:clamp(65px,21vw,100px)}
+html.lv10-root .peek-wrap .play-card.peek .card-main h2{font-size:clamp(20px,6vw,29px)}
+html.lv10-root .peek-wrap .play-card.peek .card-foot{padding:7px 15px 10px}
+html.lv10-root .peek-wrap .play-card.peek .card-short{font-size:14px}
+html.lv10-root .peek-wrap.peek-1{transform:translateY(30px) scale(.982)}
+html.lv10-root .peek-wrap.peek-2{transform:translateY(58px) scale(.965)}
+html.lv10-root .play-card.face{inset:0 0 72px}
+html.lv10-root .peek-wrap{inset:0 0 72px!important}
+html.lv10-root .play-card .card-main .card-art{width:clamp(82px,24vw,128px);height:clamp(82px,24vw,128px)}
+html.lv10-root .play-card .card-head-icon .ico{width:37px;height:37px}
+html.lv10-root .card-header .card-pill{font-size:12px}
+html.lv10-root .deck-caption{font-size:11px;letter-spacing:.045em}
+html.lv10-root .deck-area.lv11-yesterday .play-card{outline:1px dashed rgba(125,125,125,.55);outline-offset:2px}
+html.lv10-root .deck-area.lv11-yesterday .deck-stack{filter:saturate(.75)}
+html.lv10-root .today-app:has(.lv11-yesterday) .today-head{opacity:.8}
+.lv11-progress{width:min(100%,300px);display:flex;flex-direction:column;gap:7px;margin:5px auto}
+.lv11-meter-row{display:grid;grid-template-columns:24px minmax(0,1fr);gap:7px;align-items:center}
+.lv11-metric-icon{font-size:17px;font-weight:900;text-align:center;color:var(--lv-card-ink,var(--lv-text))}
+.lv11-meter{position:relative;height:30px;background:var(--lv-track,var(--panel2));border:1px solid var(--lv-card-accent,var(--border));border-radius:11px;overflow:hidden}
+.lv11-meter-fill{height:100%;background:var(--lv-card-accent,var(--level));opacity:.58;transition:width .3s ease;width:0}
+.lv11-meter span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:850;font-variant-numeric:tabular-nums;font-size:12px;color:var(--lv-text);text-shadow:0 1px 3px var(--lv-card-face)}
+.lv11-meter-over{border-color:#de4343}
+html.lv10-root .peek-wrap .lv10-amount-stepper{opacity:.95}
+@media(max-height:720px){html.lv10-root .play-card .card-main .card-art{width:70px;height:70px}.lv11-progress{gap:3px}.lv11-meter{height:25px}}
+@media(prefers-reduced-motion:reduce){.lv11-meter-fill{transition:none!important}}
+/* Ersatz der vorübergehenden Randflammen durch ein kräftiges, dynamisches Leuchten */
+.lv10-flame-trim{display:none!important}
+html.lv10-root .play-card.face.level-glow,html.lv10-root .play-card.face.mana-glow{
+  border-color:var(--lv-card-accent,var(--card-accent));
+  box-shadow:0 0 15px rgba(var(--lv-card-rgb),.75),0 0 38px rgba(var(--lv-card-rgb),.36),0 10px 26px #0006!important;
+}
+html.lv10-root[data-leveln-skin="light"] .play-card.face.level-glow,html.lv10-root[data-leveln-skin="light"] .play-card.face.mana-glow{box-shadow:0 0 18px rgba(var(--lv-card-rgb),.5),0 0 33px rgba(var(--lv-card-rgb),.2),0 7px 17px #0002!important}
+html.lv10-root[data-leveln-skin="retro"] .play-card.face.level-glow,html.lv10-root[data-leveln-skin="retro"] .play-card.face.mana-glow{box-shadow:5px 7px 0 #111,0 0 0 3px rgba(var(--lv-card-rgb),.2)!important}
+html.lv10-root .streak,html.lv10-root .goal-streak,html.lv10-root .cal-icon.fire,html.lv10-root .lv11-resource-streak {color:#ff8617!important}
+html.lv10-root .streak .lv-asset-icon[data-icon="symbole/flamme"],html.lv10-root .goal-streak .lv-asset-icon[data-icon="symbole/flamme"],html.lv10-root .cal-icon.fire .lv-asset-icon[data-icon="symbole/flamme"],html.lv10-root .lv11-resource-streak .lv-asset-icon[data-icon="symbole/flamme"]{color:#ff8617!important}
+
+/* Großflächige, nicht-interaktive Leveln-/Zaubern-Sigilien. */
+html.lv10-root .play-card{isolation:isolate}
+html.lv10-root .lv11-type-watermark{position:absolute;inset:17% 5% 23%;z-index:0;display:grid;place-items:center;pointer-events:none;opacity:.095;color:var(--lv-card-ink,var(--lv-card-accent));overflow:hidden}
+html.lv10-root .lv11-type-watermark .ico{display:block;width:100%;height:100%;max-width:290px;max-height:290px}
+html.lv10-root[data-leveln-skin="dark"] .lv11-type-watermark{opacity:.14;filter:drop-shadow(0 0 14px var(--lv-card-accent))}
+html.lv10-root[data-leveln-skin="retro"] .lv11-type-watermark{opacity:.075}
+html.lv10-root .play-card .card-header,html.lv10-root .play-card .card-main,html.lv10-root .play-card .card-foot{position:relative;z-index:1}

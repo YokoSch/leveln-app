@@ -1,0 +1,21 @@
+/* Objective editor: one table per unit, compact labelled rows. */
+.lv10-quest-form .lv10-metrics{display:flex;flex-direction:column;gap:12px;margin:12px 0 4px}
+.lv10-add-metric{width:100%;min-height:74px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;background:var(--lv-surface-2);color:var(--lv-text);border:2px dashed var(--lv-active);border-radius:17px;font-size:13px;font-weight:850}
+.lv10-add-metric b{font-size:30px;line-height:1;color:var(--lv-active)}
+.lv10-metric-table{background:var(--lv-surface-2);border:1px solid var(--lv-line);border-radius:16px;padding:10px 11px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.lv10-metric-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lv10-metric-head h3{margin:0;font-size:15px}
+.lv10-danger-quiet{border:0;background:transparent;color:var(--lv-danger);font-size:24px;line-height:1;padding:3px 10px}
+.lv10-units-help{font-size:11px;line-height:1.4;color:var(--lv-muted);margin:0}
+.lv10-binding-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) 29px;gap:5px;font-size:10px;color:var(--lv-muted)}
+.lv10-binding-head b:first-child{grid-column:1}.lv10-binding-head b:nth-child(2){grid-column:2}
+.lv10-metric-table .binding-row{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) 29px;gap:5px;align-items:end}
+.lv10-metric-table .binding-row label{font-size:10px;font-weight:700;color:var(--lv-muted);min-width:0}
+.lv10-metric-table .binding-row select,.lv10-metric-table .binding-row input{display:block;height:42px!important;width:100%;padding:7px 5px!important;margin-top:4px;color:var(--lv-text);background:var(--lv-surface)}
+.lv10-metric-table .binding-remove{height:42px;width:28px;font-size:22px}
+.lv10-metric-table .lv10-add-skill{width:100%;min-height:36px}
+.lv10-quest-form #onceRewards{background:var(--lv-surface-2);padding:12px;border-radius:14px;display:flex;flex-direction:column;gap:9px}
+.lv10-quest-form #onceRewards h3{font-size:14px}
+.lv10-quest-form #onceRewards .thin-button{width:100%}
+.lv10-quest-form [hidden]{display:none!important}
+

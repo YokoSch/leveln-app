@@ -1,0 +1,32 @@
+/* New screen-independent manager: normal bottom navigation is hidden. */
+body.deck-menu-open #bottomNav{display:none!important}
+#deckManagerRoot{position:relative;z-index:550}
+.lv10-manager{position:fixed;inset:0;z-index:550;display:flex;flex-direction:column;background:var(--lv-backdrop);color:var(--lv-text);padding-top:env(safe-area-inset-top,0px);overscroll-behavior:contain}
+.lv10-manager-header{flex:none;display:flex;align-items:center;gap:8px;padding:12px 15px 6px}
+.lv10-manager-header strong{font-size:23px;letter-spacing:-.05em}
+.lv10-manager-header small{font-size:10px;color:var(--lv-muted);flex:1}
+.lv10-manager-header button{background:var(--lv-surface);color:var(--lv-text);width:42px;height:42px;display:grid;place-items:center;border-radius:12px;border:1px solid var(--lv-line)}
+.lv10-manager-kind{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 14px 13px}
+.lv10-manager-kind button{min-height:42px;border:1px solid var(--lv-line);background:var(--lv-surface);color:var(--lv-text);border-radius:11px;font-weight:800}
+.lv10-manager-kind button.on{border-color:var(--lv-active);box-shadow:inset 0 0 0 1px var(--lv-active);background:var(--lv-surface-2)}
+.lv10-manager-content{display:grid;grid-template-columns:minmax(108px,37%) minmax(0,1fr);gap:10px;padding:5px 11px 8px;min-height:0;overflow:auto;flex:1}
+.lv10-manager-list{display:flex;flex-direction:column;gap:6px;min-width:0}
+.lv10-manager-list-row{display:grid;grid-template-columns:24px minmax(0,1fr) 38px;align-items:center;gap:3px;min-height:57px;padding:4px;background:var(--lv-surface);border:1px solid var(--lv-line);border-radius:11px;font-size:11px;font-weight:750;touch-action:pan-y}
+.lv10-manager-list-row span{overflow:hidden;text-overflow:ellipsis}
+.lv10-drag-handle{border:0;background:transparent;color:var(--lv-text);font-size:20px;min-height:42px;touch-action:none;cursor:grab}
+.lv10-switch{display:grid;place-items:center;width:34px;height:25px;cursor:pointer}
+.lv10-switch input{position:absolute;opacity:0;width:1px;height:1px}
+.lv10-switch i{width:32px;height:20px;border-radius:20px;background:var(--lv-track);border:1px solid var(--lv-line);position:relative}
+.lv10-switch i::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:white;box-shadow:0 1px 3px #0004}
+.lv10-switch input:checked+i{background:var(--lv-xp)}.lv10-switch input:checked+i::after{left:15px}
+.lv10-manager-minis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-content:start}
+.lv10-mini-card{position:relative;min-width:0;aspect-ratio:3/4;max-height:175px;background:var(--lv-card-face);border:2px solid var(--lv-card-accent);border-radius:var(--lv-radius-card);color:var(--lv-text);box-shadow:2px 4px 10px #0002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.lv10-mini-card.hidden-card{opacity:.35;filter:grayscale(.8)}
+.lv10-mini-art .ico{width:40px;height:40px;color:var(--lv-card-ink)}
+.lv10-mini-card strong{font-size:11px;text-align:center}
+.lv10-manager-footer{flex:none;display:flex;gap:5px;padding:10px 9px max(12px,env(safe-area-inset-bottom));border-top:1px solid var(--lv-line);background:var(--lv-nav-background)}
+.lv10-manager-footer button{flex:1;min-width:0;min-height:53px;border:1px solid var(--lv-line);background:var(--lv-surface);color:var(--lv-text);font-size:10px;font-weight:850;border-radius:9px;padding:3px;line-height:1.1}
+.lv10-manager-footer button.lv10-manager-exit{width:48px;flex:0 0 44px;font-size:18px}
+.lv10-manager-list-row.lv10-dragging{outline:2px dashed var(--lv-active);opacity:.75}
+@media(max-width:350px){.lv10-manager-content{grid-template-columns:minmax(98px,38%) 1fr}.lv10-mini-card{gap:4px}.lv10-manager-footer button{font-size:9px}}
+

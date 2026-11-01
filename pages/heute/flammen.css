@@ -1,0 +1,15 @@
+/* Designed flames live in an isolated effect layer; text/buttons stay sharp. */
+.lv10-flame-trim{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible}
+.lv10-flame-trim i{position:absolute;display:block;pointer-events:none;background:var(--lv-card-accent);opacity:.8;filter:drop-shadow(0 0 6px var(--lv-card-accent));animation:lv10-flame-pulse 2.6s ease-in-out infinite alternate}
+.lv10-flame-trim .top,.lv10-flame-trim .bottom{left:8px;right:8px;height:24px;-webkit-mask:url('../../assets/flame-tiling.svg') repeat-x center / 26px 29px;mask:url('../../assets/flame-tiling.svg') repeat-x center / 26px 29px}
+.lv10-flame-trim .top{top:-21px}.lv10-flame-trim .bottom{bottom:-20px;transform:rotate(180deg);animation-delay:-1.3s}
+.lv10-flame-trim .left,.lv10-flame-trim .right{top:14px;bottom:14px;width:22px;-webkit-mask:url('../../assets/flame-tiling.svg') repeat-y center / 23px 28px;mask:url('../../assets/flame-tiling.svg') repeat-y center / 23px 28px}
+.lv10-flame-trim .left{left:-18px}.lv10-flame-trim .right{right:-18px;animation-delay:-1s}
+@keyframes lv10-flame-pulse{from{opacity:.4;filter:drop-shadow(0 0 2px var(--lv-card-accent))}to{opacity:.9;filter:drop-shadow(0 0 12px var(--lv-card-accent))}}
+html.lv10-root[data-leveln-skin="dark"] .play-card.face.level-glow,html.lv10-root[data-leveln-skin="dark"] .play-card.face.mana-glow{box-shadow:0 0 12px rgba(var(--lv-card-rgb),.73),0 0 32px rgba(var(--lv-card-rgb),.37),0 12px 36px #000b;animation:lv10-user-aura 4.5s ease-in-out infinite;border:2px solid var(--lv-card-accent)}
+html.lv10-root[data-leveln-skin="light"] .play-card.face{background:linear-gradient(155deg,var(--lv-card-soft) -25%,#fff 55%);box-shadow:0 10px 27px rgba(var(--lv-card-rgb),.15),0 1px 9px #0001}
+html.lv10-root[data-leveln-skin="light"] .lv10-flame-trim i{opacity:.32;filter:none}
+html.lv10-root[data-leveln-skin="retro"] .play-card.face,html.lv10-root[data-leveln-skin="retro"] .peek-wrap .play-card.peek{border:3px solid #111;background:#fff;border-radius:11px;box-shadow:6px 7px 0 #111}
+html.lv10-root[data-leveln-skin="retro"] .lv10-flame-trim i{opacity:0}
+html.lv10-root[data-leveln-skin="retro"] .lv10-amount-stepper{border:2px solid #111;border-radius:4px}
+

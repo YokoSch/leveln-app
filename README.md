@@ -1,59 +1,56 @@
-# Leveln 0.10 – iPhone-Web-App (PWA)
+# Leveln 0.11 – Funktionsupdate auf modularer Grundlage
 
-**Spiel deine Quests – trainiere Skills – gestalte deinen Charakter.** Version 0.10 baut auf dem **bereinigten Stand von Leveln 0.9** und den freigegebenen Designvorlagen auf. Die App funktioniert als lokale, installierbare Web-App (GitHub Pages) und erfordert keinen Benutzeraccount.
+Diese Version baut auf **Leveln 0.10 modular** auf. Der Code bleibt in eigenständigen Seitenmodulen, gemeinsamen Spielfunktionen und einer gemeinsamen Icon-Bibliothek organisiert. Die größere künstlerische Überarbeitung der Questkarten folgt später.
 
-## Sicheres Update von 0.9
+## Änderungen in dieser Version
 
-1. In der aktuell installierten **Leveln 0.9** über **Mehr → Backup sichern** ein **JSON-Backup** erstellen und außerhalb der App aufbewahren. Das alte ZIP ebenfalls behalten.
-2. Dieses 0.10-ZIP entpacken und **alle Dateien und Unterordner aus dem ZIP-Stamm** in das vorhandene GitHub-Repository kopieren. Vorhandene Dateien ersetzen, insbesondere `index.html`, `app.js`, `sw.js`, `styles.css`, Manifestdateien und Bilder. Zusätzlich müssen `v010.js`, `styles-010.css`, `assets/` und `theme/` mit hochgeladen werden.
-3. `git add . && git commit -m "Leveln 0.10" && git push` (im lokalen Repository). Die **GitHub-Pages-Adresse nicht ändern**, sonst liegt die bestehende IndexedDB unter einer anderen Website-Quelle.
-4. Die bisherige Leveln-App aktualisieren/neu öffnen. Ein installierter Service Worker kann beim ersten Aufruf noch Dateien der vorherigen Version liefern; gegebenenfalls erneut schließen und öffnen oder in Safari die Seite aktualisieren.
-5. Quests, Skills, Charakter-XP und zurückliegende Tageswerte prüfen, bevor du weitere Daten einträgst. **Die installierte 0.9-App vor der Überprüfung nicht löschen**.
+- **Karten:** Die provisorischen Randflammen sind entfernt. Ein kräftiges, nutzerfarbenabhängiges Leuchten ersetzt sie; die Streak-Flammen sind in allen Themes leuchtend orange.
+- **Fortschritt:** Leveln füllt einen Zielbalken, Zaubern leert den Restmana-Balken. Werte, Einheiten und Kennwertsymbole erscheinen direkt im Balken. Bei unbekanntem Verbrauch erscheint kein irreführender voller Mana-Balken.
+- **Icons & Kartenstapel:** Icons und die großen Leveln-/Zaubern-Sigilien sind besser sichtbar. Die beiden hinteren Karten werden als vollständige (nicht vereinfachte) Questkarten gerendert, einschließlich ihrer Kürzel, und ausreichend versetzt. Die gestrige Ansicht ist optisch gedämpft und gekennzeichnet.
+- **Kartenverwaltung:** Keine obere X-Schaltfläche; Leveln-/Zaubern-Filter sind unten. Miniaturkarten können direkt verschoben werden; die Sichtbarkeit wird mit einem beschrifteten Kontrollfeld an der Miniatur umgeschaltet. Die bisherige zusätzliche Sortierliste entfällt.
+- **Einmalige Quests:** Aktive, nicht ausgeblendete Missionen erscheinen im Leveln-Stapel; das bisherige unabhängige `pinned`-Kennzeichen ist für die Deckauswahl nicht mehr erforderlich. Einmalige Abschlüsse geben die vorhandenen einmaligen XP unverändert genau einmal.
+- **Heute:** Doppelte Stapel-Schaltflächen und dauerhafte Wischanweisungen entfernt. Gesten bleiben: ↑ buchen, ←/→ blättern, kurz ↓ Stapelwechsel, lang ↓ Kartenverwaltung.
+- **XP & Glut:** Leveln-XP werden weiterhin unmittelbar aus tatsächlichen Buchungen berechnet. Zauber-XP bleiben bis zur abgeschlossenen Bewertung gesperrt. **Keine zusätzlichen Streak-XP.** Eine Schatztruhe im Kalender weist auf eine mögliche oder bereits erhaltene Glut-Belohnung hin.
+- **Kalender:** Standardmäßig eingeklappter Wochenkalender; per Knopfdruck wie bisher aufklappbar und frei umschaltbar.
+- **Einführung:** Fünfteilige, überspringbare Einführung beim ersten Start einer neuen leeren Installation. Später unter Einstellungen erneut aufrufbar.
+- **Charakter:** Glut, Freezes und Anzahl aktiver Quest-Streaks unter dem Charakterprofil. Der Streak-Freeze-Shop befindet sich dort, nicht mehr unter Einstellungen. **Preis bleibt 5 Glut, Maximum 2 Freezes.**
 
-## Daten und Backups
+## Datenerhalt und Update
 
-- **Datenformat 5 / Backupformat 5** in Version 0.10; automatischer Migrationsweg **0.9 (Format 4) → 0.10 (Format 5)**. Import akzeptiert bewusst **nur Backupformat 4 oder 5**. Ältere Formate werden nicht zusätzlich unterstützt.
-- Der IndexedDB-Datenbankname und die bestehenden Stores bleiben erhalten. Beim Upgrade kommen neue Eigenschaften für Kartensichtbarkeit, Stapelreihenfolge und Statistikfarben hinzu. Historische Tagesdaten, XP-Quellen und Skillzuordnungen werden bei der Migration **nicht umgebucht oder verdoppelt**.
-- Backup-Name: `Leveln-Backup-JJJJ-MM-TT.json` (immer derselbe Vorschlag pro Tag). Über das Teilen-Menü wird ausschließlich die JSON-Datei übergeben. iOS kann beim Speichern trotzdem selbst eine Kopie mit Namenszusatz anlegen; automatisches Überschreiben eines gewählten Ordners ist in einer iPhone-PWA nicht zuverlässig möglich.
-- Daten bleiben lokal im Browser des Geräts; das Backup ist **nicht verschlüsselt**. Änderungen an Safari-Website-Daten oder der ursprünglichen Domain können die lokal gespeicherten Daten beeinflussen.
+**Datenbankschlüssel und Datenformat bleiben unverändert:** `progress-private-v1`, Schema 5, Backupversion 5. Lediglich ein neuer Metadaten-Eintrag `introCompleted` merkt sich die Einführung. Historische XP, Glut, Streaks, Tagesdaten, Skills und Quests werden nicht konvertiert.
 
-## Neuerungen in Leveln 0.10
+1. Zunächst in der bisherigen App unter Mehr → Backup sichern eine **JSON-Sicherung** erstellen und sicher aufbewahren.
+2. Alle Dateien und Unterordner dieses ZIP in das bestehende GitHub-Pages-Repository kopieren. Insbesondere die neuen Dateien in `pages/`, `src/styles/`, `assets/icons/` und `src/shared/ui/` übernehmen.
+3. Im lokalen Repository:
 
-**Quests und Skills.** Ein wiederkehrendes Ziel wird bei Bedarf als eigene **Zeit- und/oder Anzahl-Tabelle** angelegt. Jede Tabelle enthält den Zielwert, die tägliche Ausspielmenge und beliebig viele XP-Zeilen für zugehörige Skills – ausdrücklich **XP pro Stunde** oder **XP pro Anzahl**. Bei neuen Quests sind beide Tabellen zunächst deaktiviert. Die Lebensbereich-Zuordnung entfällt. Einmalige Missionen behalten ihre einmalige Abschlussbelohnung. Unklare Checkboxen sind beschriftet.
+```bash
+git add -A
+git commit -m "Leveln 0.11 – Karten und Inventar"
+git push
+```
 
-**Karten.** Zwei getrennte Stapel für **Leveln** und **Zaubern**. Hochwischen bucht die gewählte Menge und lässt dieselbe Karte liegen; seitliches Wischen wechselt zur nächsten. Kurzes Herunterwischen wechselt den Stapel; nach längerem Herunterziehen und Halten öffnet sich die Kartenverwaltung. Plus/Minus neben dem Ausspielwert verändern ihn durch Tippen um **1 Minute bzw. 1 Anzahl**, durch Halten zunehmend schneller (maximal **30 Minuten bzw. 10 Einheiten je wiederholtem Schritt**). Jede Questkarte hat einen direkten Bearbeiten-Button mit drei Punkten. Die Vorderkarte hat eine große Wischfläche, zwei weitere Karten liegen darunter sichtbar; Statuskonturen können flammenartig animiert werden.
+4. Bestehende Home-Bildschirm-App beibehalten, nach dem GitHub-Pages-Deployment neu öffnen. Bei altem Cache Safari aktualisieren und App erneut starten.
+5. Questdaten, XP, Mana, Glut, Navigation und Backups prüfen, bevor die Version produktiv verwendet wird.
 
-**Kartenverwaltung.** Vollbild mit Miniaturkarten, sichtbarem Kartenkürzel, Kartensichtbarkeit und Drag-and-drop-Reihenfolge. Sortierung alphabetisch oder nach Questzeitraum, jeweils auf-/absteigend. Erreichbar aus dem Tagesdeck und dem Questboard. Beim Verlassen gelangst du zur vorherigen Ansicht zurück.
+### Tests
 
-**Statistik.** Statistikfarben für Quests und Skills getrennt von den individuell wählbaren Kartenfarben. Zu ähnliche Statistikfarben werden beim Erstellen einmalig mithilfe von OKLab-Farbabständen unterschieden. Ein neuer Skillfilter ergänzt den Questfilter; Zeit/Anzahl werden bei Skillfilterung proportional zur XP-Zuordnung angezeigt.
+```bash
+node scripts/prepare-release.cjs
+npm test
+```
 
-**Design.** Drei gemeinsam freigegebene Modi: **Dunkel / Neon-RPG**, **Hell / Pastell** und **Minimalistisch / Weißes Pixel-Retro**. Individuelle Nutzerfarben bleiben erhalten; nur ihre Darstellung wird themenspezifisch abgeleitet. Gemeinsamer Pool aus **63 Original-SVGs**, darunter **44 auswählbare und 19 Systemicons**. Drei neue `lvl+`-App-Logos (mit Fackel und Kartenstapel).
+Diese Tests decken JavaScript-Syntax, Migrations-/XP-Logik, Mana-Sperre, neue Ansichten und Offline-Ressourcen ab. **Ein vollständiger iPhone-Safari- und Drag-and-drop-Test ist weiterhin offen.** Chromium in der Laufzeitumgebung blockiert das Laden lokaler Webseiten; der erfolgreiche Logiktest ersetzt diesen Gerätetest nicht.
 
-## Steuerung
+### Code-Wegweiser
 
-| Geste/Aktion | Bedeutung |
-| --- | --- |
-| Karte nach oben | Aktuelle Ausspielmenge buchen; Karte bleibt vorne |
-| Karte links/rechts | Vorherige/nächste Karte |
-| Kurz nach unten | Leveln-/Zaubern-Stapel wechseln |
-| Weiter nach unten ziehen und halten | Kartenverwaltung öffnen |
-| `−` / `+` tippen oder halten | Ausspielmenge ändern, Halten beschleunigt |
-| Drei Punkte auf Karte | Quest bearbeiten |
-| Kartenverwaltung unten | Sortieren, Sichtbarkeit, Schließen |
+- `pages/heute/`: Karten, Statusbalken, Stapel und Wischgesten
+- `pages/kartenverwaltung/`: Miniaturgalerie, Sortierung, Sichtbarkeit
+- `pages/charakter/`: Charakterbogen, Glut-/Freeze-Inventar
+- `pages/quests/`: Kalender und Kalendertruhen
+- `pages/einstellungen/`: Einführung erneut starten
+- `src/shared/domain/`: bestehende XP-, Mana-, Glut- und Streak-Regeln
+- `src/shared/ui/intro-shop.js`: neue Einleitung und Freeze-Shop-Dialoge
+- `src/styles/v011.css`: neue Ressourcen- und Dialogdarstellung
+- `scripts.json`: korrekte Script-Ladefolge; nicht willkürlich verschieben
 
-## Tests und Grenzen
-
-Zentrale Funktions- und Migrationsprüfungen lassen sich ohne weitere Installation mit `node tests/logic.test.cjs` ausführen. Außerdem wurden der JavaScript-Syntaxcheck und die Vollständigkeit der Offline-Ressourcen geprüft.
-
-**Noch offen:** Ein vollständiger Integrationstest auf einem echten iPhone in Safari, inklusive Gesten, Service-Worker-Update und Import eines persönlichen 0.9-Backups. **0.10 zunächst als Testversion verwenden und das 0.9-Backup behalten.**
-
-## Wichtige Projektdateien
-
-- `app.js`: bestehender, aus 0.9 übernommener Daten-/Gameplaykern und Event-Handler.
-- `v010.js`: v0.10-spezifische UI- und Datenformat-Erweiterungen, Start erst nach Registrierung aller Overrides.
-- `styles.css`: Kompatibilitätsstyles der bisherigen App.
-- `styles-010.css`: neue Karten, Formen, Themes, Gesten-Steuerelemente und Vollbild-Kartenverwaltung.
-- `theme/palette.js`: dynamische, kontrastabhängige Nutzerfarben.
-- `assets/icons/mono/`: ein originaler SVG-Satz für Icons und Systemzeichen.
-- `sw.js`: Precache der offline verfügbaren Ressourcen.
-- `WARTUNG.md`: Informationen für Weiterentwicklungen.
+Siehe außerdem `ARCHITEKTUR.md` für die vollständige Projektstruktur.

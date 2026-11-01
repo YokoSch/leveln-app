@@ -1,0 +1,25 @@
+/*
+ * LEVELN 0.10 · Live PWA integration of Design-Master (Oct 31, 2026)
+ * Three themes share layouts/icons; user hues are converted via palette.js.
+ * Scoped to .lv10-root and .lv10-app where possible. Historical CSS remains
+ * in styles.css to retain compatibility with 0.9 flows not redesigned here.
+ */
+html.lv10-root{--bg:var(--lv-bg);--panel:var(--lv-surface);--panel2:var(--lv-surface-2);--text:var(--lv-text);--muted:var(--lv-muted);--border:var(--lv-line);--save:var(--lv-zaubern);--level:var(--lv-leveln);--shadow:var(--lv-shadow);color:var(--lv-text);background:var(--lv-bg)}
+html.lv10-root body{background:var(--lv-backdrop);color:var(--lv-text);}
+html.lv10-root .app{background:transparent;color:var(--lv-text)}
+html.lv10-root button:focus-visible,html.lv10-root input:focus-visible,html.lv10-root select:focus-visible{outline:2px solid var(--lv-active);outline-offset:2px}
+html.lv10-root .ico.lv-asset-icon {display:inline-block;background-color:currentColor;flex:none;vertical-align:-.25em;stroke:none;fill:none;-webkit-mask-image:var(--lv-asset-url);mask-image:var(--lv-asset-url);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;width:1.28em;height:1.28em}
+html.lv10-root .ico.lv-asset-icon[data-icon="spielmechanik/mana"]{color:var(--lv-mana)}
+html.lv10-root .ico.lv-asset-icon[data-icon="spielmechanik/glut"]{color:var(--lv-ember)}
+html.lv10-root .ico.lv-asset-icon[data-icon="symbole/flamme"]{color:var(--lv-ember)}
+html.lv10-root .ico.lv-asset-icon[data-icon="symbole/schneeflocke"]{color:var(--lv-mana)}
+html.lv10-root[data-leveln-skin="dark"]{--bg:#071310;--panel:#101f1c;--panel2:#142a24;--text:#f0fff6;--muted:#a6c5b9;--border:#2b6550;color-scheme:dark;}
+html.lv10-root[data-leveln-skin="light"]{--bg:#fffdf8;--panel:#fffefa;--panel2:#f9f6f0;--text:#152630;--muted:#65777d;--border:#e6e9df;color-scheme:light;}
+html.lv10-root[data-leveln-skin="retro"]{--bg:#fefefb;--panel:#fff;--panel2:#f5f5f2;--text:#0c0c0b;--muted:#505050;--border:#222;color-scheme:light;}
+html.lv10-root[data-leveln-skin="retro"] .app,html.lv10-root[data-leveln-skin="retro"] .tabs{font-family:ui-monospace, Menlo, Consolas, monospace;letter-spacing:-.025em}
+html.lv10-root[data-leveln-skin="retro"] button:not(.tab){border-radius:5px}
+html.lv10-root[data-leveln-skin="retro"] .goal-row,html.lv10-root[data-leveln-skin="retro"] .settings-panel,html.lv10-root[data-leveln-skin="retro"] .skill-card{border:2px solid #161616;border-radius:9px;box-shadow:3px 3px 0 #111}
+
+
+/* Layoutneutrale HTML-Slots: der sticky Kalender bleibt relativ zum bisherigen Scrollcontainer. */
+.leveln-page-slot{display:contents}

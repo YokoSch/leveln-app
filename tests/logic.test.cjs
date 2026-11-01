@@ -7,9 +7,11 @@ const context=vm.createContext({console,document,addEventListener(){},navigator:
   matchMedia:()=>({matches:false}),confirm:()=>true,alert:console.log});
 context.__LEVELN_UNIT_TEST__=true;
 context.window=context;
-vm.runInContext(fs.readFileSync('app.js','utf8'),context,{filename:'app.js'});
-vm.runInContext(fs.readFileSync('theme/palette.js','utf8'),context,{filename:'palette.js'});
-vm.runInContext(fs.readFileSync('v010.js','utf8'),context,{filename:'v010.js'});
+// Einheitliche Lade-Reihenfolge mit dem tatsächlichen Browser-Einstiegspunkt.
+const moduleOrder=require('../scripts.json').scripts;
+for (const file of moduleOrder) {
+  vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
+}
 const E=s=>vm.runInContext(s,context);
 const current=E('nowDay()');
 const mock={activities:[{id:'quest-1',kind:'build',name:'Lesen',createdAt:current+'T12:00:00',order:0,
@@ -63,5 +65,12 @@ for(const skin of ['dark','light','retro'])for(const color of ['#000000','#fffff
   const palette=vm.runInContext(`LevelnPalette10.derive('${color}','${skin}')`,context);
   assert.match(palette.accent,/^#[0-9a-f]{6}$/);
   assert(palette.contrastText>=4.5||skin==='retro');
+}
+// All remaining page renderers must still be callable with a valid runtime fixture.
+E('S.wallet={glut:0,freezes:[],frozen:[],earned:[],milestones:[]};');
+for (const view of ['characterView','statsView','settingsView']) {
+  const output=E(`${view}()`);
+  assert.equal(typeof output,'string',`${view} must return HTML`);
+  assert(output.length>80,`${view} is unexpectedly empty`);
 }
 console.log('OK: logic checks, migration 4->5, original XP, add bookings, Mana pending, color contrast, deck visibility, skill allocation');

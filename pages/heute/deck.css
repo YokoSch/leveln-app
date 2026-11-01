@@ -1,0 +1,35 @@
+/* Thumb-optimised 2-deck page; the active card extends almost to bottom nav */
+html.lv10-root .today-head{padding-top:5px;padding-bottom:0;flex:none}
+html.lv10-root .today-topline{padding:0 18px}
+.lv10-deck-toggle{display:grid;grid-template-columns:1fr 1fr 42px;gap:8px;align-items:center;padding:6px 13px;flex:none}
+.lv10-deck-toggle button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:35px;border:1px solid var(--border);color:var(--muted);background:var(--panel);border-radius:12px;font-size:12px;font-weight:850}
+.lv10-deck-toggle button.on{color:var(--text);background:var(--panel2);border-color:var(--lv-active);box-shadow:0 2px 10px #0001}
+.lv10-deck-toggle .ico{width:19px;height:19px}
+html.lv10-root .deck-area{padding:1px 12px 0;min-height:0;flex:1}
+html.lv10-root .deck-stack{position:relative;height:100%;margin:0;isolation:isolate;max-height:740px;overflow:visible}
+html.lv10-root .play-card.face{inset:0 0 52px;z-index:3;overflow:visible;min-height:0;border-radius:var(--lv-radius-card);border:2px solid var(--lv-card-accent,var(--card-accent));box-shadow:var(--lv-card-shadow);background:var(--lv-card-face);color:var(--lv-text);touch-action:none;}
+html.lv10-root .peek-wrap{position:absolute;inset:0 0 52px!important;height:auto!important;width:100%;overflow:visible;pointer-events:none}
+html.lv10-root .peek-wrap.peek-1{transform:translateY(25px) scale(.976);z-index:2}
+html.lv10-root .peek-wrap.peek-2{transform:translateY(49px) scale(.952);z-index:1}
+html.lv10-root .peek-wrap .play-card.peek{inset:0;opacity:1;position:absolute;border:2px solid var(--lv-card-accent,var(--card-accent));background:var(--lv-card-face);border-radius:var(--lv-radius-card);filter:none;box-shadow:0 5px 17px #0002}
+html.lv10-root .play-card .card-header{padding:9px 14px 0;display:flex;align-items:center;gap:7px;flex-shrink:0}
+html.lv10-root .card-pill{color:var(--lv-card-ink,var(--text));border-color:var(--lv-card-accent,var(--border))}
+html.lv10-root .card-head-icon{color:var(--lv-card-ink,var(--card-accent));margin-left:auto}
+html.lv10-root .card-head-icon .ico{width:25px;height:25px}
+.lv10-card-edit{background:var(--lv-surface-2);color:var(--lv-text);border:1px solid var(--lv-line);border-radius:11px;width:37px;height:37px;display:grid;place-items:center;flex:none;z-index:5;position:relative}
+.lv10-card-edit .ico{width:20px;height:20px}
+html.lv10-root .play-card .card-main{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1.8vh,13px);flex:1;min-height:0;padding:4px 15px}
+html.lv10-root .play-card .card-main .card-art{width:clamp(50px,14vw,78px);height:clamp(50px,14vw,78px);color:var(--lv-card-ink,var(--lv-text));filter:none}
+html.lv10-root[data-leveln-skin="dark"] .play-card.face .card-art{filter:drop-shadow(0 0 7px var(--lv-card-accent))}
+html.lv10-root .play-card .card-main h2{color:var(--lv-text);font-size:clamp(20px,6vw,29px);margin:0;text-align:center}
+html.lv10-root .play-card .card-main p{color:var(--lv-muted);font-size:11px;line-height:1.25;text-align:center;margin:0}
+html.lv10-root .play-card .card-daily-tally{margin:0;color:var(--lv-muted)}
+html.lv10-root .play-card .card-foot{padding:7px 15px 10px;margin-top:auto;flex-shrink:0}
+html.lv10-root .peek-wrap .play-card.peek .card-main{justify-content:flex-start;opacity:.8}
+html.lv10-root .peek-wrap .play-card.peek .card-art{width:46px;height:46px}
+html.lv10-root .peek-wrap .play-card.peek .card-main h2{font-size:19px}
+html.lv10-root .peek-wrap .play-card.peek .card-foot{padding-bottom:6px}
+html.lv10-root .peek-wrap .play-card.peek .card-short{font-size:13px}
+html.lv10-root .deck-gesture-tail{z-index:4;height:52px;touch-action:none}
+html.lv10-root .deck-caption{font-size:10px;letter-spacing:.01em;padding:0 4px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+

@@ -1,0 +1,9 @@
+.lv10-goals-actions{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px}
+.lv10-goals-actions button{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;font-size:10px;padding:5px 3px}
+.lv10-goals-actions .ico{width:17px;height:17px}
+html.lv10-root .goals-sticky{background:var(--lv-bg)!important;box-shadow:0 10px 20px -15px #000a;isolation:isolate;z-index:30}
+html.lv10-root .goals-sticky::before{background:var(--lv-bg)}
+html.lv10-root .quest-filter-bar{background:var(--lv-bg)}
+html.lv10-root[data-leveln-skin="retro"] .tabs{background:#fff;border-top:2px solid #111}
+html.lv10-root[data-leveln-skin="retro"] .play-card .card-pill{border:1px solid #111;color:#111}
+@media(prefers-reduced-motion:reduce){.lv10-flame-trim i,.lv10-root .play-card.face{animation:none!important;transition:none!important}}
