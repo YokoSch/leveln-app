@@ -1,7 +1,8 @@
-const CACHE='leveln-pwa-v0.11-20261101-1';
+const CACHE='leveln-pwa-v0.11.2-20261101-1';
 const ASSETS=[
   "./",
   "./assets/flame-tiling.svg",
+  "./assets/icons/inline-library.js",
   "./assets/icons/manifest.json",
   "./assets/icons/mono/bedienung/aufklappen.svg",
   "./assets/icons/mono/bedienung/bearbeiten.svg",

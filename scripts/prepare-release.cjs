@@ -2,6 +2,7 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'..');
+require('./build-icons.cjs');
 const manifest=require('../scripts.json');
 for(const file of manifest.scripts){if(!fs.existsSync(path.join(root,file)))throw Error('Script fehlt: '+file);}
 const indexFile=path.join(root,'index.html');

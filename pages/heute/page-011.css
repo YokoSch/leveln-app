@@ -31,12 +31,12 @@ html.lv10-root .peek-wrap .lv10-amount-stepper{opacity:.95}
 .lv10-flame-trim{display:none!important}
 html.lv10-root .play-card.face.level-glow,html.lv10-root .play-card.face.mana-glow{
   border-color:var(--lv-card-accent,var(--card-accent));
-  box-shadow:0 0 18px rgba(var(--lv-card-rgb),.9),0 0 42px rgba(var(--lv-card-rgb),.55),0 0 78px rgba(var(--lv-card-rgb),.22),0 12px 34px #0008!important;
+  box-shadow:0 0 16px rgba(var(--lv-card-rgb),.91),0 0 42px rgba(var(--lv-card-rgb),.58),0 0 78px rgba(var(--lv-card-rgb),.28),0 12px 34px #0008!important;
 }
-html.lv10-root[data-leveln-skin="light"] .play-card.face.level-glow,html.lv10-root[data-leveln-skin="light"] .play-card.face.mana-glow{box-shadow:0 0 18px rgba(var(--lv-card-rgb),.62),0 0 40px rgba(var(--lv-card-rgb),.28),0 8px 20px #0003!important}
-html.lv10-root[data-leveln-skin="retro"] .play-card.face.level-glow,html.lv10-root[data-leveln-skin="retro"] .play-card.face.mana-glow{box-shadow:5px 7px 0 #111,0 0 0 4px rgba(var(--lv-card-rgb),.32)!important}
+html.lv10-root[data-leveln-skin="light"] .play-card.face.level-glow,html.lv10-root[data-leveln-skin="light"] .play-card.face.mana-glow{box-shadow:0 0 16px rgba(var(--lv-card-rgb),.65),0 0 39px rgba(var(--lv-card-rgb),.36),0 8px 22px #0002!important}
+html.lv10-root[data-leveln-skin="retro"] .play-card.face.level-glow,html.lv10-root[data-leveln-skin="retro"] .play-card.face.mana-glow{box-shadow:5px 7px 0 #111,0 0 0 4px rgba(var(--lv-card-rgb),.36)!important}
 html.lv10-root .streak,html.lv10-root .goal-streak,html.lv10-root .cal-icon.fire,html.lv10-root .lv11-resource-streak {color:#ff8617!important}
-html.lv10-root .streak .lv-asset-icon[data-icon="symbole/flamme"],html.lv10-root .goal-streak .lv-asset-icon[data-icon="symbole/flamme"],html.lv10-root .cal-icon.fire .lv-asset-icon[data-icon="symbole/flamme"],html.lv10-root .lv11-resource-streak .lv-asset-icon[data-icon="symbole/flamme"],html.lv10-root .streak .lv-inline-icon[data-icon="symbole/flamme"],html.lv10-root .goal-streak .lv-inline-icon[data-icon="symbole/flamme"],html.lv10-root .cal-icon.fire .lv-inline-icon[data-icon="symbole/flamme"],html.lv10-root .lv11-resource-streak .lv-inline-icon[data-icon="symbole/flamme"]{color:#ff8617!important;filter:drop-shadow(0 0 7px rgba(255,134,23,.8))}
+html.lv10-root .streak .lv-designed-svg[data-icon="symbole/flamme"],html.lv10-root .goal-streak .lv-designed-svg[data-icon="symbole/flamme"],html.lv10-root .cal-icon.fire .lv-designed-svg[data-icon="symbole/flamme"],html.lv10-root .lv11-resource-streak .lv-designed-svg[data-icon="symbole/flamme"]{color:#ff8617!important}
 
 /* Großflächige, nicht-interaktive Leveln-/Zaubern-Sigilien. */
 html.lv10-root .play-card{isolation:isolate}
@@ -45,3 +45,12 @@ html.lv10-root .lv11-type-watermark .ico{display:block;width:100%;height:100%;ma
 html.lv10-root[data-leveln-skin="dark"] .lv11-type-watermark{opacity:.14;filter:drop-shadow(0 0 14px var(--lv-card-accent))}
 html.lv10-root[data-leveln-skin="retro"] .lv11-type-watermark{opacity:.075}
 html.lv10-root .play-card .card-header,html.lv10-root .play-card .card-main,html.lv10-root .play-card .card-foot{position:relative;z-index:1}
+
+/* Always saturated orange for actual Streak flames (not the Glut resource). */
+html.lv10-root .streak .lv-designed-svg[data-icon="symbole/flamme"],
+html.lv10-root .goal-streak .lv-designed-svg[data-icon="symbole/flamme"],
+html.lv10-root .cal-icon.fire .lv-designed-svg[data-icon="symbole/flamme"],
+html.lv10-root .lv11-resource-streak .lv-designed-svg[data-icon="symbole/flamme"] {
+  color:#ff8617!important;
+  filter:drop-shadow(0 0 5px rgba(255,132,18,.65));
+}

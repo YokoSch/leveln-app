@@ -155,3 +155,11 @@ Die v0.10-Dateinamen in `src/shared/v010/` bleiben absichtlich unverändert, dam
 **Kartensichtbarkeit:** Ab 0.11 ist `cardShown` das einzige maßgebliche Feld für die Deckmitgliedschaft, auch bei einmaligen Quests. `pinned` wird für Bestandsdaten toleriert, aber nicht mehr für die Auswahl herangezogen. Kein Datenbankschemawechsel erforderlich.
 
 **Einführung:** `introCompleted` ist ein optionales Meta-Flag. Bei Migration oder bestehenden Spielständen erfolgt kein automatisches Tutorial. Neue leere Installationen sehen den Dialog einmal und können ihn später über Einstellungen öffnen.
+
+## Ergänzung Leveln 0.11.2: SVGs und iOS-Safari
+
+Die fertig gestalteten SVGs unter `assets/icons/mono/` sind die einzigen Quellen der Icon-Geometrie. Es gibt **keine vereinfachten Ersatzsymbole**. Beim Release wird mit `scripts/build-icons.cjs` eine `assets/icons/inline-library.js` generiert. Deren `LevelnSvgArtwork.render()` fügt die Original-SVGs direkt in den DOM ein. Die bisherigen externen CSS-Masken (`mask-image: url(...)`) werden nicht mehr zur Icon-Darstellung benötigt.
+
+Die Originaldateien enthalten teilweise `<mask id="...">`-Elemente. Bei mehreren Icon-Instanzen könnten gleichnamige SVG-IDs kollidieren. Deshalb versieht der Renderer alle lokalen IDs und die zugehörigen `url(#...)`-Referenzen mit einem eindeutigen Suffix. Die grafischen Pfade, Silhouetten und Aussparungen bleiben unverändert. Die Färbung erfolgt über das originale `currentColor` und die bisherigen Designtokens.
+
+**Release:** `npm run prepare:release` generiert Icons, `index.html` und den Offline-Cache. `npm test` prüft alle 64 Originaldateien auf unveränderte Geometrie und eindeutige IDs. `scripts.json` lädt die Bibliothek vor `src/shared/v010/assets.js`; diese Reihenfolge ist erforderlich. Die IndexedDB-Datenbank und Schema 5 werden nicht migriert.

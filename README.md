@@ -1,6 +1,29 @@
-# Leveln 0.11 – Funktionsupdate auf modularer Grundlage
+# Leveln 0.11.2 – Original-SVG-Fix auf modularer Grundlage
 
 Diese Version baut auf **Leveln 0.10 modular** auf. Der Code bleibt in eigenständigen Seitenmodulen, gemeinsamen Spielfunktionen und einer gemeinsamen Icon-Bibliothek organisiert. Die größere künstlerische Überarbeitung der Questkarten folgt später.
+
+## Korrektur 0.11.2: Original-Icons, keine Ersatzsymbole
+
+Die detaillierten SVGs aus der freigegebenen Leveln-Designbibliothek werden **unverändert** weiterverwendet. Die bisherige Darstellung als externe `mask-image`-Grafik war auf bestimmten Browsern, insbesondere im Safari-Umfeld, problematisch. Stattdessen baut das Projekt aus genau diesen 64 vorhandenen SVG-Dateien (`assets/icons/mono/...`) die Datei `assets/icons/inline-library.js`. Diese bettet die Originalgeometrie direkt in die Oberfläche ein.
+
+- **Keine Vereinfachung oder neu gezeichneten Ersatz-Icons**: Originalpfade und Aussparungen bleiben 1:1 erhalten.
+- Farbgebung via `currentColor`: individuelle Quest-, Skill- und Designfarben bleiben möglich; Streak-Flammen leuchten unabhängig vom Modus intensiv orange.
+- SVG-interne Masken-IDs werden pro Instanz eindeutig umbenannt, damit mehrfach dargestellte Icons sich nicht beeinflussen.
+- Das Kartenleuchten für erreichte Leveln-Ziele und verbleibendes Zauber-Mana wurde nochmals verstärkt.
+- Version des Offline-Caches erhöht, damit iPhones nicht versehentlich die alte Icon-Logik weiterladen.
+- Die Datenbank **`progress-private-v1`**, Schema **5**, und die Quest-/XP-/Glut-Daten bleiben unverändert.
+
+### Künftige Icon-Änderungen
+
+Die SVG-Dateien unter `assets/icons/mono/` bleiben die **bearbeitbaren Originalquellen**. Nach einer Änderung bitte die Bibliothek neu generieren:
+
+```bash
+npm run build:icons
+npm run prepare:release
+npm test
+```
+
+Die generierte Datei `assets/icons/inline-library.js` nicht von Hand verändern. Die App funktioniert ohne Online-Nachladen der Icons.
 
 ## Änderungen in dieser Version
 
@@ -25,7 +48,7 @@ Diese Version baut auf **Leveln 0.10 modular** auf. Der Code bleibt in eigenstä
 
 ```bash
 git add -A
-git commit -m "Leveln 0.11 – Karten und Inventar"
+git commit -m "Leveln 0.11.2 – Original-SVGs und stärkere Glows"
 git push
 ```
 
@@ -39,7 +62,7 @@ node scripts/prepare-release.cjs
 npm test
 ```
 
-Diese Tests decken JavaScript-Syntax, Migrations-/XP-Logik, Mana-Sperre, neue Ansichten und Offline-Ressourcen ab. **Ein vollständiger iPhone-Safari- und Drag-and-drop-Test ist weiterhin offen.** Chromium in der Laufzeitumgebung blockiert das Laden lokaler Webseiten; der erfolgreiche Logiktest ersetzt diesen Gerätetest nicht.
+Diese Tests decken JavaScript-Syntax, Migrations-/XP-Logik, Mana-Sperre, neue Ansichten und Offline-Ressourcen ab. **Ein vollständiger iPhone-Safari- und Drag-and-drop-Test ist weiterhin offen.** Die eingebetteten Original-SVGs wurden zusätzlich in Chromium ohne Netzwerk gerendert und als Bild kontrolliert; die vollständige PWA auf dem iPhone bleibt separat zu prüfen.
 
 ### Code-Wegweiser
 

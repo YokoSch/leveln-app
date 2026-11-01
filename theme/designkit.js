@@ -29,16 +29,16 @@
     if(variant==='themed'&&SKINS.includes(skin))return './assets/icons/mono/'+key+'.svg';
     throw new Error('Unbekannte Icon-Ausgabe');
   }
-  // CSS-mask from monochrome SVG: precisely the same detailed shape in every theme,
-  // recolored using currentColor. Also works with custom per-quest CSS color.
+  // The exact original paths are rendered inline (same source as ico()).
+  // This preserves complex cut-outs, original silhouettes and user colors.
   function icon(name, cssClass=''){
-    const key=resolve(name),url=path(key);
-    return '<span class="lv-icon lv-asset-icon '+cssClass+'" aria-hidden="true" data-icon="'+key+'" style="--lv-asset-url:url(\''+url+'\')"></span>';
+    const key=resolve(name);
+    return global.LevelnSvgArtwork.render(key,cssClass);
   }
   function img(name, skin='dark', cssClass='', alt=''){
-    // Neutral <img> compatibility only; for ANY user-selected colors use icon().
-    const src=path(name,'mono',skin);
-    return '<img class="lv-icon-image '+cssClass+'" src="'+src+'" alt="'+alt+'" loading="lazy">';
+    // Kept as a compatibility alias: we intentionally do NOT use <img>,
+    // because an external SVG cannot inherit user-selected currentColor.
+    return icon(name,cssClass);
   }
   global.LevelnDesign10=Object.freeze({SKINS,setSkin,resolve,path,icon,img,LEGACY});
 })(typeof window!=='undefined'?window:globalThis);

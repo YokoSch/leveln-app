@@ -4,6 +4,7 @@
   "scripts": [
     "theme/palette.js",
     "theme/designkit.js",
+    "assets/icons/inline-library.js",
     "src/shared/runtime.js",
     "src/shared/domain/zeitraum.js",
     "src/shared/domain/erfahrung.js",
