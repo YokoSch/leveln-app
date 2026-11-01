@@ -125,6 +125,8 @@ PATH.rune = '<path d="M12 2 19 10 15 10 20 21 12 16 4 21 9 10 5 10Z"/><path d="M
 
 PATH.pixel = '<path d="M7 3h4v4H7zM13 3h4v4h-4zM3 9h4v4H3zM9 9h6v6H9zM17 9h4v4h-4zM3 15h4v4H3zM17 15h4v4h-4zM7 19h4v3H7zM13 19h4v3h-4z"/>';
 
+PATH.chest = '<path d="M4 10h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M3 10V7a2 2 0 0 1 2-2h5v5H3m11-5h5a2 2 0 0 1 2 2v3h-7V5"/><path d="M12 5v16M4 14h16"/>';
+
 const ICON_NAMES = { user: 'Person', person: 'Mensch', mage: 'Magier', knight: 'Ritter', robot: 'Roboter', wizard: 'Zauberer', archer: 'Bogenschütze', ranger: 'Waldläufer', priest: 'Priesterin', cat: 'Katze', wolf: 'Wolf', fox: 'Fuchs', owl: 'Eule', paw: 'Tierpfote', bear: 'Bär', rabbit: 'Hase', horse: 'Pferd', bird: 'Vogel', dragon: 'Drache', unicorn: 'Einhorn', phoenix: 'Phönix', griffin: 'Greif', slime: 'Schleimwesen', shield: 'Schild', scroll: 'Schriftrolle', book: 'Buch', phone: 'Handy', dumbbell: 'Hantel', wallet: 'Geldbörse', game: 'Spielcontroller', sword: 'Schwert', potion: 'Zaubertrank', key: 'Schlüssel', bag: 'Tasche', spark: 'Funke', star: 'Stern', moon: 'Mond', sun: 'Sonne', heart: 'Herz', target: 'Zielscheibe', palette: 'Farbpalette', flame: 'Flamme', snow: 'Schneeflocke', plus: 'Plus', rune: 'Zauberrune', pixel: 'Pixel-Emblem', home: 'Zuhause', goals: 'Quests', chart: 'Statistik', settings: 'Einstellungen', close: 'Schließen', check: 'Haken', edit: 'Bearbeiten', calendar: 'Kalender', dots: 'Menü', back: 'Zurück', lock: 'Schloss', arrow: 'Pfeil', chevron: 'Aufklappen', save: 'Speichern' };
 
 const ICON_DETAILS = {

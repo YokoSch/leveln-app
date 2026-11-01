@@ -15,13 +15,13 @@
               radial-gradient(ellipse at 97% 100%,rgba(var(--lv-card-rgb),.10),transparent 48%);
 }
 .lv10-root .lv-card-tag, .lv10-root .lv-card-art {color:var(--lv-card-ink);}
-.lv10-root .lv-card-art .lv-asset-icon:not([data-icon="spielmechanik/mana"]):not([data-icon="spielmechanik/glut"]):not([data-icon="symbole/flamme"]):not([data-icon="symbole/schneeflocke"]) {color:var(--lv-card-ink)}
+.lv10-root .lv-card-art .lv-asset-icon:not([data-icon="spielmechanik/mana"]):not([data-icon="spielmechanik/glut"]):not([data-icon="symbole/flamme"]):not([data-icon="symbole/schneeflocke"]), .lv10-root .lv-card-art .lv-inline-icon:not([data-icon="spielmechanik/mana"]):not([data-icon="spielmechanik/glut"]):not([data-icon="symbole/flamme"]):not([data-icon="symbole/schneeflocke"]) {color:var(--lv-card-ink)}
 .lv10-root .lv-meter span {background:var(--lv-card-accent);}
 .lv10-root .lv-xp-track span {background:linear-gradient(90deg,var(--lv-leveln,var(--lv-xp)),var(--lv-xp));}
 .lv10-root .lv-compare-col {background:linear-gradient(to top,var(--lv-leveln,var(--lv-xp)),var(--lv-xp));}
 .lv10-root .lv-compare-col::after {background:var(--lv-zaubern,var(--lv-mana));}
 .lv10-root .lv-quest-item {border-left-color:var(--lv-quest-accent,var(--lv-active));}
-.lv10-root .lv-quest-item .lv-asset-icon {color:var(--lv-card-ink);}
+.lv10-root .lv-quest-item .lv-asset-icon, .lv10-root .lv-quest-item .lv-inline-icon {color:var(--lv-card-ink);}
 .lv10-root .lv-sort-card {border-color:var(--lv-quest-accent,var(--lv-active));}
 .lv10-root .lv-spark {background:var(--lv-card-core);box-shadow:0 0 8px var(--lv-card-accent);}
 .lv10-root .lv-flame {filter:drop-shadow(0 0 7px var(--lv-card-accent));}
@@ -56,7 +56,8 @@
 }
 .lv10-root[data-leveln-skin="retro"] .lv-card-art,
 .lv10-root[data-leveln-skin="retro"] .lv-card-tag,
-.lv10-root[data-leveln-skin="retro"] .lv-quest-item .lv-asset-icon {color:#111}
+.lv10-root[data-leveln-skin="retro"] .lv-quest-item .lv-asset-icon,
+.lv10-root[data-leveln-skin="retro"] .lv-quest-item .lv-inline-icon {color:#111}
 .lv10-root[data-leveln-skin="retro"] .lv-card::before {background:transparent}
 .lv10-root[data-leveln-skin="retro"] .lv-meter span {background:var(--lv-card-accent);}
 .lv10-root[data-leveln-skin="retro"] .lv-sort-card {border-color:#111;}

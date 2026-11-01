@@ -27,3 +27,33 @@
 
 /* Icons of quests/skills inherit the derived user color; system resources
    remain semantic tokens and may also be user-customized through applyGlobal. */
+
+/* Inline SVG fallback for iOS / GitHub Pages reliability. */
+.lv10-root .lv-inline-icon {
+  display:inline-block;
+  flex:none;
+  width:1.35em;
+  height:1.35em;
+  vertical-align:-.25em;
+  overflow:visible;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.lv10-root .lv-inline-icon [fill]:not([fill="none"]) { fill: currentColor; stroke: none; }
+.lv10-root .lv-inline-icon [stroke] { stroke: currentColor; }
+.lv10-root .lv-inline-icon[data-icon="spielmechanik/mana"] { color:var(--lv-mana); }
+.lv10-root .lv-inline-icon[data-icon="spielmechanik/glut"],
+.lv10-root .lv-inline-icon[data-icon="symbole/flamme"] { color:var(--lv-ember); }
+.lv10-root .lv-inline-icon[data-icon="symbole/schneeflocke"] { color:var(--lv-mana); }
+.lv10-root[data-leveln-skin="dark"] .lv-card-art .lv-inline-icon { filter:drop-shadow(0 0 8px currentColor); }
+.lv10-root[data-leveln-skin="retro"] .lv-card-art .lv-inline-icon { filter:none; }
+.lv10-root .lv-card-art .lv-inline-icon { width:62px; height:62px; }
+.lv10-root .lv-card-art .lv-inline-icon[data-icon="spielmechanik/zaubern"] { width:70px; height:70px; }
+.lv10-root .lv-card .lv-inline-icon { max-width:100%; }
+.lv10-root .lv-nav button .lv-inline-icon { width:23px; height:23px; }
+.lv10-root .lv-ghost-button .lv-inline-icon { width:19px; height:19px; }
+.lv10-root .lv-avatar .lv-inline-icon { width:52px; height:52px; }
+.lv10-root .lv-gallery-tile .lv-inline-icon { width:45px; height:45px; }

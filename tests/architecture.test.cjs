@@ -10,7 +10,7 @@ const originalHashes=require('./function-origin-sha256.json');
 const changedIn011=new Set(['oneTimeGoals','lv10DeckGoals','lv11Progress','cardHtml','todayView',
  'lv10ManagerMini','lv10ManagerRender','lv10DragSave','characterView','settingsView',
  'lv11ChestDay','badgeFor','handleAction','editGoalModal','saveGoal','lv11IntroOpen','lv11IntroFinish',
- 'lv11IntroModal','lv11FreezeShop','renderModal','setup','exportBackup']);
+ 'lv11IntroModal','lv11FreezeShop','renderModal','setup','exportBackup','ico','art','lv10InlineIconKey']);
 let verified=0;
 for(const file of scripts){
  assert(fs.existsSync(file),`fehlendes Script: ${file}`);
