@@ -15,7 +15,7 @@ function calRange() { let d = S.calAnchor; if (S.calView === 'week') {
     return { start: s, end: calendarNext('year', s) };
 } let start = String(Math.floor(+d.slice(0, 4) / 4) * 4) + '-01-01'; return { start, end: String(+start.slice(0, 4) + 4) + '-01-01' }; }
 
-function monthCalendar(anchor, g, mini = false) { let begin = calendarStart('month', anchor), end = calendarNext('month', begin); let offset = (asDate(begin).getDay() + 6) % 7; let cellCount = Math.ceil((offset + dayDiff(begin, end)) / 7) * 7; return `<div class="month-calendar ${mini ? 'mini' : ''}"><div class="cal-weekdays">${['M', 'D', 'M', 'D', 'F', 'S', 'S'].map(x => `<small>${x}</small>`).join('')}</div><div class="cal-days">${Array.from({ length: cellCount }, (_, i) => { let d = dayAdd(begin, i - offset), inside = d >= begin && d < end; return `<button data-act="cal-day" data-day="${d}" class="cal-day ${inside ? '' : 'outside'} ${d === nowDay() ? 'today' : ''}" ${d > nowDay() ? 'disabled' : ''}><b>${Number(d.slice(-2))}</b>${inside ? badgeFor(g, d) : ''}</button>`; }).join('')}</div></div>`; }
+function monthCalendar(anchor, g, mini = false) { let begin = calendarStart('month', anchor), end = calendarNext('month', begin); let offset = (asDate(begin).getDay() + 6) % 7; let cellCount = Math.ceil((offset + dayDiff(begin, end)) / 7) * 7; return `<div class="month-calendar ${mini ? 'mini' : ''}"><div class="cal-weekdays">${['M', 'D', 'M', 'D', 'F', 'S', 'S'].map(x => `<small>${x}</small>`).join('')}</div><div class="cal-days">${Array.from({ length: cellCount }, (_, i) => { let d = dayAdd(begin, i - offset), inside = d >= begin && d < end; return `<button data-act="cal-day" data-day="${d}" class="cal-day ${inside ? '' : 'outside'} ${d === nowDay() ? 'today' : ''}" ${d > nowDay() ? 'disabled' : ''}><b>${Number(d.slice(-2))}</b>${inside ? lv113DailyBadge(g, d) : ''}</button>`; }).join('')}${lv113PeriodFrames(g,dayAdd(begin,-offset),cellCount)}</div></div>`; }
 
 function calendarHTML() {
     if (!S.calendarOpen)
@@ -23,7 +23,7 @@ function calendarHTML() {
     let { start, end } = calRange(), g = goalByKey(S.selectedGoal), label = S.calView === 'week' ? `${pretty(start, { day: 'numeric', month: 'short' })} – ${pretty(dayAdd(end, -1), { day: 'numeric', month: 'short' })}` : S.calView === 'month' ? pretty(start, { month: 'long', year: 'numeric' }) : S.calView === 'year' ? start.slice(0, 4) : `${start.slice(0, 4)}–${+end.slice(0, 4) - 1}`;
     let content = '';
     if (S.calView === 'week')
-        content = `<div class="cal-week">${allDays(start, end).map(d => `<button data-act="cal-day" data-day="${d}" class="week-cell"><small>${dayName(d)}</small><b>${Number(d.slice(-2))}</b>${badgeFor(g, d)}</button>`).join('')}</div>`;
+        content = `<div class="cal-week">${allDays(start, end).map(d => `<button data-act="cal-day" data-day="${d}" class="week-cell"><small>${dayName(d)}</small><b>${Number(d.slice(-2))}</b>${lv113DailyBadge(g,d)}</button>`).join('')}${lv113PeriodFrames(g,start,7)}</div>`;
     else if (S.calView === 'month')
         content = monthCalendar(start, g);
     else if (S.calView === 'year')

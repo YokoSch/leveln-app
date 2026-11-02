@@ -76,7 +76,6 @@ function cardHtml(g,behind=false){
   return `<div class="play-card lv-card ${behind?'peek':'face lv-card--primary'} ${glow} ${once?'once-card':''}" style="--card-accent:${cardColor}" data-quest-color="${cardColor}" ${behind?'':'id="activeCard"'} data-goal="${k}">
   <div class="lv11-type-watermark" aria-hidden="true">${ico(a.kind==='reduce'?'zaubern':'leveln')}</div>
   <div class="card-header"><span class="card-pill">${once?'EINMALIG':a.kind==='reduce'?'ZAUBERN':'LEVELN'}</span>
-    <span class="card-head-icon">${ico(once?'scroll':a.kind==='reduce'?'zaubern':'leveln')}</span>
     ${`<button class="lv10-card-edit" data-act="${once?'once-edit':'edit-goal'}" ${once?`data-id="${safe(a.id)}"`:`data-key="${k}"`} aria-label="Quest bearbeiten" ${behind?'disabled tabindex="-1"':''}>${ico('dots')}</button>`}</div>
   <div class="card-main">${art(a)}<h2>${safe(a.name)}</h2><p>${once?(a.availableUntil?'Bis '+pretty(a.availableUntil):'Ohne Zeitlimit')+' · einmalige Quest':safe(detailGoal(g))}</p>
     ${!once?lv11Progress(g):''}<small class="card-daily-tally">${safe(subtext)}</small>

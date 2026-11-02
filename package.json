@@ -1,10 +1,10 @@
 {
   "name": "leveln-pwa",
   "private": true,
-  "version": "0.11.2",
+  "version": "0.11.3",
   "description": "Modular strukturierte, lokale iPhone-PWA Leveln",
   "scripts": {
-    "test": "node tests/logic.test.cjs && node tests/architecture.test.cjs && node tests/css-regression.test.cjs && node tests/v011.test.cjs && node tests/svg-original.test.cjs",
+    "test": "node tests/logic.test.cjs && node tests/architecture.test.cjs && node tests/css-regression.test.cjs && node tests/v011.test.cjs && node tests/svg-original.test.cjs && node tests/v0113.test.cjs && node tests/v0113-save.test.cjs",
     "prepare:release": "node scripts/prepare-release.cjs",
     "build:icons": "node scripts/build-icons.cjs"
   },

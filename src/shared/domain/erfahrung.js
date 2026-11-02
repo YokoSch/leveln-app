@@ -22,7 +22,7 @@ async function reconcileWallet() {
     const items = [];
     for (let g of goals().filter(g => !isOnce(g.a)))
         for (let p of periods(g)) {
-            if (!finalLocked(p) || p.end <= S.started)
+            if (!finalLocked(p) || p.end <= S.started || (g.a.historicalGlutLockDate && p.end <= g.a.historicalGlutLockDate))
                 continue;
             items.push({ g, p });
         }
@@ -55,7 +55,7 @@ async function reconcileWallet() {
             if (v.state === 'success') {
                 chain++;
                 successCount++;
-                if (chain > 0 && chain % 10 === 0 && p.end > S.started) {
+                if (chain > 0 && chain % 10 === 0 && p.end > S.started && (!g.a.historicalGlutLockDate || p.end > g.a.historicalGlutLockDate)) {
                     let milestone = `${key}|milestone-${chain}`;
                     if (!w.awarded.includes(milestone)) {
                         w.awarded.push(milestone);

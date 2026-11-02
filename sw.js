@@ -1,4 +1,4 @@
-const CACHE='leveln-pwa-v0.11.2-20261101-1';
+const CACHE='leveln-pwa-v0.11.3-20261102-1';
 const ASSETS=[
   "./",
   "./assets/flame-tiling.svg",
@@ -96,10 +96,14 @@ const ASSETS=[
   "./pages/heute/page.js",
   "./pages/heute/stepper.css",
   "./pages/kartenverwaltung/manager-011.css",
+  "./pages/kartenverwaltung/manager-0113.css",
   "./pages/kartenverwaltung/manager.css",
   "./pages/kartenverwaltung/page.html",
   "./pages/kartenverwaltung/page.js",
+  "./pages/quests/calendar-0113.css",
+  "./pages/quests/calendar-0113.js",
   "./pages/quests/formular.css",
+  "./pages/quests/history.js",
   "./pages/quests/page.base.js",
   "./pages/quests/page.html",
   "./pages/quests/page.js",
@@ -132,6 +136,7 @@ const ASSETS=[
   "./src/styles/v010-base.css",
   "./src/styles/v010-finish.css",
   "./src/styles/v011.css",
+  "./src/styles/v0113.css",
   "./styles.css",
   "./theme/assets.css",
   "./theme/components.css",

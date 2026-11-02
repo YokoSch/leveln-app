@@ -19,6 +19,8 @@ function render(){
 }
 
 function handleAction(act,el){
+  if(act==='quest-more'){S.questMoreOpen=!S.questMoreOpen;render();return;}
+  if(S.questMoreOpen&&['edit-day','deck-open','quest-filter','new'].includes(act))S.questMoreOpen=false;
   if(act==='freeze-shop'){S.modal={type:'freeze-shop'};renderModal();return;}
   if(act==='intro-open'){lv11IntroOpen();return;}
   if(act==='intro-skip'){lv11IntroFinish().catch(showError);return;}
@@ -41,12 +43,13 @@ function handleAction(act,el){
     if(!wrapper)return;
     const form=el.closest('form'),period=form.elements.period.value;
     el.outerHTML=lv10MetricTable(metric,{period,minutes:null,count:null},[],true);
+    lv113SyncHistoryInputs(form);
     // The user actively chooses the unit: no automatic XP row is generated.
     return;
   }
   if(act==='metric-remove'){
     if(!confirm('Diese Zielart und ihre Skill-XP-Zeilen aus der Questkonfiguration entfernen?'))return;
-    el.closest('.lv10-metric-table').outerHTML=lv10MetricTable(el.dataset.metric,{},[],false);return;
+    const form=el.closest('form');el.closest('.lv10-metric-table').outerHTML=lv10MetricTable(el.dataset.metric,{},[],false);lv113SyncHistoryInputs(form);return;
   }
   if(act==='binding-add'){
     const form=el.closest('form'),metric=el.dataset.metric||'minutes';

@@ -1,0 +1,30 @@
+/* Leveln 0.11.3 – begrenzte Anpassungen, unveränderte SVG-Geometrie. */
+html.lv10-root .skill-glyph .ico{width:31px;height:31px}
+html.lv10-root .skill-glyph{width:50px;height:50px}
+html.lv10-root .hero-intro .avatar-hero{width:min(43vw,164px);height:min(43vw,164px);min-width:130px;min-height:130px;object-fit:cover;flex:none}
+html.lv10-root .hero-intro .avatar-hero .ico{width: min(29vw,94px);height:min(29vw,94px)}
+html.lv10-root .hero-intro{padding-right:16px;gap:12px}
+html.lv10-root .hero-intro h2{font-size:clamp(17px,4.5vw,23px)}
+html.lv10-root #bottomNav .tab>.ico{width:25.3px;height:25.3px}
+/* Die Charakter-Miniatur bleibt absichtlich bei 27px. */
+html.lv10-root #bottomNav .nav-avatar{width:27px;height:27px}
+html.lv10-root #bottomNav .nav-avatar .ico{width:17px;height:17px}
+.lv113-history{border:1px solid var(--border);border-radius:14px;padding:12px;background:var(--panel);margin:12px 0}
+.lv113-history>summary{list-style:none;display:flex;align-items:center;gap:9px;font-weight:850;cursor:pointer;min-height:39px}
+.lv113-history>summary::-webkit-details-marker{display:none}
+.lv113-history>summary .ico{width:23px;height:23px}
+.lv113-history>summary small{font-size:10px;color:var(--muted);margin-left:auto}
+.lv113-history>.muted{margin:8px 0 14px}
+.lv113-history-range{padding:12px;margin:10px 0;background:var(--panel2);border:1px solid var(--border);border-radius:13px}
+.lv113-history-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px}
+.lv113-history-head button{border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--text);height:31px;width:31px}
+.lv113-history-range .field-grid{margin-bottom:8px}
+.lv113-history-range label[hidden]{display:none!important}
+.lv113-history-range input{width:100%;min-width:0;font-size:14px}
+.lv113-goals-actions{display:flex;gap:8px;position:relative}
+.lv113-goals-actions>.add-quest-button{flex:1}
+.lv113-quest-more-wrap{flex:1;position:relative;z-index:12}
+.lv113-quest-more-menu{position:absolute;z-index:20;top:calc(100% + 5px);left:0;min-width:min(82vw,255px);padding:6px;border:1px solid var(--border);border-radius:13px;background:var(--panel);box-shadow:0 14px 30px #0005;display:flex;flex-direction:column;gap:3px}
+.lv113-quest-more-menu button{display:flex;align-items:center;gap:9px;border:0;text-align:left;padding:12px;border-radius:10px;background:transparent;color:var(--text);font-size:12px;font-weight:750;min-height:43px}
+.lv113-quest-more-menu button:active{background:var(--panel2)}
+.lv113-quest-more-menu .ico{width:19px;height:19px}

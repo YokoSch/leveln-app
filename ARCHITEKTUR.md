@@ -163,3 +163,38 @@ Die fertig gestalteten SVGs unter `assets/icons/mono/` sind die einzigen Quellen
 Die Originaldateien enthalten teilweise `<mask id="...">`-Elemente. Bei mehreren Icon-Instanzen könnten gleichnamige SVG-IDs kollidieren. Deshalb versieht der Renderer alle lokalen IDs und die zugehörigen `url(#...)`-Referenzen mit einem eindeutigen Suffix. Die grafischen Pfade, Silhouetten und Aussparungen bleiben unverändert. Die Färbung erfolgt über das originale `currentColor` und die bisherigen Designtokens.
 
 **Release:** `npm run prepare:release` generiert Icons, `index.html` und den Offline-Cache. `npm test` prüft alle 64 Originaldateien auf unveränderte Geometrie und eindeutige IDs. `scripts.json` lädt die Bibliothek vor `src/shared/v010/assets.js`; diese Reihenfolge ist erforderlich. Die IndexedDB-Datenbank und Schema 5 werden nicht migriert.
+
+## 0.11.3 – Rückwirkende Erfolge, Zeitrahmen, synchrone Sortierung
+
+**Hinweis zum Versionstand:** Der ältere Hauptteil dieses Dokuments beschreibt die 0.10-Modularisierung. Aktueller Release: **0.11.3**, Datenbank/Backupformat weiterhin **5**.
+
+### Historische Leistungen: `pages/quests/history.js`
+
+- `lv113HistoryForm()` / `lv113HistoryRow()` erstellen den ganz unten einklappbaren Formularabschnitt. `lv113SyncHistoryInputs()` zeigt nur aktive Zeit-/Anzahlmetriken; der Questerstellungsdialog ruft die Funktion auch bei Metrikwechseln auf.
+- `lv113ReadHistory()` validiert jeden Zeitraum und die angegebenen Werte. Keine Überschneidungen, kein Datum am oder nach der ursprünglichen Erstellungsgrenze. Die Methode erzeugt **normale** Tages-Einträge mit `id=activityId|ruleId|YYYY-MM-DD`, `source:'user'`, `historicalOrigin:'quest-form'`. Bestätigte Nullverbräuche bei Zaubern erhalten `source:'zero-confirmed'`.
+- Beim Editieren werden **nur** Einträge mit `historicalOrigin:'quest-form'` der jeweiligen Quest gelöscht und aus den aktuellen Intervallen wiederhergestellt. Bereits vorhandene sonstige Buchungen werden nicht überschrieben.
+- `lv113PrepareHistoricalRevision()` setzt `originalCreatedOn` einmalig und verschiebt `createdAt` gegebenenfalls auf den ältesten nachgetragenen Tag. Die ursprünglichen XP-Sätze werden für die historischen Tage als eigene Revision gespeichert. `normalStartDate` merkt den ursprünglich geplanten Gültigkeitsbeginn, damit bei Entfernen aller historischen Zeilen nicht weiterhin leere Tage vor der Erstellung als aktive Quest gelten.
+- `lv113PreviewHistoricalWallet()` berechnet **nur bei Erst-Anlage** den Glut-Meilenstein aus erfolgreichen abgeschlossenen Bewertungszeiträumen vor `originalCreatedOn`. Die Gutschrift wird als `glut-earned` mit `source:'historical-once'` in der Wallet-Historie gespeichert. Das Flag `historicalGlutLockDate` sperrt `reconcileWallet()` gegen spätere historische Gutschriften und gegen automatischen Freeze-Verbrauch für diese abgeschlossenen Altzeiträume. Die normalen Meilensteine nach dem Erstellungsdatum funktionieren unverändert.
+- `saveGoal()` schreibt Quest, historische Entries, optionalen Skill und einmalige Wallet-Gutschrift **atomar in einer IndexedDB-Transaktion**. `xpEvents()` berechnet die XP aus den regulären Entries; es existiert **kein separater historischer XP-Zähler**.
+- **Konsequenz:** Nach Bearbeitung/Entfernung historischer Mengen bleiben bereits einmalig ausgeschüttete Glut und die ursprünglichen Wallet-History-Einträge bestehen. Das ist eine ausdrückliche Produktanforderung und kein Bug.
+
+### Kalender: `pages/quests/calendar-0113.js` und `.css`
+
+- `lv113DailyBadge()` stellt orange Tagesflammen in der Woche/Monat sowohl für eine ausgewählte tägliche Quest als auch als zusammengefasste Tagesanzeige ohne Auswahl dar.
+- `lv113PeriodFrames()` zeichnet über einem separaten CSS-Grid-Overlay **einen zusammenhängenden Rahmen pro sichtbarem Wochensegment**, statt jeden einzelnen Tag separat zu umranden. Bewertungszeiträume mit `assessment().state === 'success'` leuchten. Offene/erfolglose Perioden werden gestrichelt. Flamme bei erfolgreichem Zeitraum maximal einmal pro sichtbarer Perioden-Segmentgruppe; Freeze-Icon bei Frost.
+- Um Überschneidungen verschiedener mehrtägiger Quests nicht verwirrend darzustellen, erscheinen diese Rahmen für die **im Questboard ausgewählte Quest**. Bei nicht ausgewählter Quest bleiben die täglichen Streak-Flammen sichtbar.
+- Kalenderrahmen und Schatztruhen **schreiben keine XP oder Glut**.
+
+### Kartenverwaltung: `pages/kartenverwaltung/page.js`, `src/shared/v010/events.js`
+
+- Der Manager zeigt zwei DOM-Gruppen mit denselben `data-id`-Werten: links `.lv10-manager-list-row`, rechts `.lv10-mini-card`.
+- Der globale Pointer-Handler erzeugt eine nicht-interaktive schwebende Drag-Kopie; das eigentliche Element ist ein Platzhalter. Das Verschieben in einer der Gruppen sortiert beide Gruppen mit `lv113SyncDeckViews()` **sofort** synchron; FLIP-Animationen sorgen für gleitende Umordnung.
+- `lv10DragSave()` persistiert die **einmalige identische** Reihenfolge über `deckOrder` erst beim Loslassen. Die Sortierbuttons verwenden weiterhin `lv10SortDeck()` und damit ebenfalls eine gemeinsame Reihenfolge.
+- Die Original-SVG-Icons werden über die vorhandene `LevelnSvgArtwork.render()`-Bibliothek ausgegeben; kein Ersatzzeichensatz.
+
+### Tests, Cache und Grenzen
+
+- Neue Regressionstests: `tests/v0113.test.cjs` und `tests/v0113-save.test.cjs`.
+- Cache-Version: `leveln-pwa-v0.11.3-20261102-1` (`scripts/refresh-sw.cjs`).
+- Datenformat 5 bleibt. Nutzer müssen nicht neu installieren. **Vor dem Update lokale JSON-Sicherung anlegen.**
+- Ein vollständiger iOS-Safari-Pointer-/Layouttest konnte hier nicht ausgeführt werden. Die neue Drag-Animation wurde durch Logik- und Quelltextprüfungen kontrolliert, nicht durch reale Fingerbewegungen. Vor produktivem Einsatz auf dem Zielgerät testen.

@@ -24,6 +24,8 @@
     "src/shared/v010/theme.js",
     "src/shared/v010/database.js",
     "pages/heute/page.js",
+    "pages/quests/history.js",
+    "pages/quests/calendar-0113.js",
     "pages/quests/page.js",
     "pages/charakter/page.js",
     "pages/statistik/page.js",

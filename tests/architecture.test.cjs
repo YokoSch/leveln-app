@@ -10,7 +10,11 @@ const originalHashes=require('./function-origin-sha256.json');
 const changedIn011=new Set(['oneTimeGoals','lv10DeckGoals','lv11Progress','cardHtml','todayView',
  'lv10ManagerMini','lv10ManagerRender','lv10DragSave','characterView','settingsView',
  'lv11ChestDay','badgeFor','handleAction','editGoalModal','saveGoal','lv11IntroOpen','lv11IntroFinish',
- 'lv11IntroModal','lv11FreezeShop','renderModal','setup','exportBackup','ico','art']);
+ 'lv11IntroModal','lv11FreezeShop','renderModal','setup','exportBackup','ico','art',
+ 'reconcileWallet','editGoalModal','saveGoal','goalsView','monthCalendar','calendarHTML',
+ 'lv113HistoryForm','lv113HistoryRow','lv113SyncHistoryInputs','lv113AddHistoryRange',
+ 'lv113ReadHistory','lv113PrepareHistoricalRevision','lv113PreviewHistoricalWallet',
+ 'lv113DailyBadge','lv113PeriodFrames','lv113ManagerRow','lv113SyncDeckViews']);
 let verified=0;
 for(const file of scripts){
  assert(fs.existsSync(file),`fehlendes Script: ${file}`);
@@ -39,6 +43,6 @@ for(const name of ['today','goals','character','stats','settings']){
 }
 const stylePaths=html.match(/href="\.\/[^"']+\.css"/g)||[];
 for(const css of stylePaths){const file=css.slice(8,-1);assert(fs.existsSync(file),`Fehlendes CSS ${file}`);assert(sw.includes(`"./${file}"`),`Nicht offline: ${file}`)}
-assert(sw.includes('leveln-pwa-v0.11.2-'));
+assert(sw.includes('leveln-pwa-v0.11.3-'));
 assert(!html.includes('src="./app.js"')&&!html.includes('src="./v010.js"'));
 console.log(`OK: ${scripts.length} Scriptdateien, ${verified} verifizierte Funktionen (geplante Änderungen ausgenommen), Seitentemplates & Offline-Dateien`);

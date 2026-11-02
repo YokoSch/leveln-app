@@ -16,18 +16,36 @@ function lv10ManagerMini(a){
    <span class="lv10-mini-art">${art(a)}</span><strong>${safe(shortCode(a.shortName||a.name))}</strong><label class="lv11-mini-visible" title="Karte im Stapel anzeigen"><input type="checkbox" class="lv10-card-visible" data-id="${safe(a.id)}" ${a.cardShown!==false?'checked':''} aria-label="${safe(a.name)} anzeigen"></label></div>`;
 }
 
+function lv113ManagerRow(a){
+  return `<div class="lv10-manager-list-row" data-id="${safe(a.id)}" tabindex="0" role="listitem" aria-label="${safe(a.name)} verschieben">
+    <span class="lv10-drag-handle" aria-hidden="true">⠿</span><span class="lv113-row-name">${safe(a.name)}</span>
+    <small>${safe(shortCode(a.shortName||a.name))}</small></div>`;
+}
+
 function lv10ManagerRender(){
   if(!S.deckManagerOpen){$('#deckManagerRoot').innerHTML='';document.body.classList.remove('deck-menu-open');return;}
   document.body.classList.add('deck-menu-open');
   const kind=S.deckManagerKind||'build',items=lv10ManagerActivities(kind);
   $('#deckManagerRoot').innerHTML=`<section class="lv10-manager" role="dialog" aria-modal="true" aria-label="Karten verwalten">
-   <header class="lv10-manager-header"><strong>Kartendeck</strong><small>Miniaturkarten halten und verschieben</small></header>
-   <div class="lv10-manager-content">
-     <div class="lv10-manager-minis" aria-label="Kartenreihenfolge per Drag-and-drop">${items.map(lv10ManagerMini).join('')||'<p>Noch keine Quests.</p>'}</div>
+   <header class="lv10-manager-header"><strong>Kartendeck</strong><small>Karten oder Namen halten und verschieben</small></header>
+   <div class="lv10-manager-content lv113-manager-dual">
+     <div class="lv10-manager-list" role="list" aria-label="Sortierliste der Quests">${items.map(lv113ManagerRow).join('')}</div>
+     <div class="lv10-manager-minis" role="list" aria-label="Miniaturkarten sortieren">${items.map(lv10ManagerMini).join('')||'<p>Noch keine Quests.</p>'}</div>
    </div>
    <footer class="lv10-manager-footer"><button data-act="manager-kind" data-kind="build" class="lv11-kind ${kind==='build'?'on':''}">${ico('leveln')} Leveln</button><button data-act="manager-kind" data-kind="reduce" class="lv11-kind ${kind==='reduce'?'on':''}">${ico('zaubern')} Zaubern</button><button data-act="manager-sort" data-sort="alpha" data-dir="1">A → Z</button><button data-act="manager-sort" data-sort="alpha" data-dir="-1">Z → A</button><button data-act="manager-sort" data-sort="period" data-dir="1">Tag → Jahr</button><button data-act="manager-sort" data-sort="period" data-dir="-1">Jahr → Tag</button><button class="lv10-manager-exit" data-act="deck-close" aria-label="Kartenmenü schließen">✕</button></footer>
   </section>`;
   for(const mini of $('#deckManagerRoot').querySelectorAll('[data-quest-color]'))LevelnPalette10.applyQuest(mini,mini.dataset.questColor);
+}
+
+/** Keep both DOM representations synchronized while dragging – no database
+ * writes until the user releases the card / name row. */
+function lv113SyncDeckViews(origin){
+  const root=$('#deckManagerRoot');
+  const source=root.querySelector(origin==='list'?'.lv10-manager-list':'.lv10-manager-minis');
+  const target=root.querySelector(origin==='list'?'.lv10-manager-minis':'.lv10-manager-list');
+  if(!source||!target)return;
+  const ids=[...source.children].map(el=>el.dataset.id).filter(Boolean);
+  for(const id of ids){const card=[...target.children].find(el=>el.dataset.id===id);if(card)target.appendChild(card);}
 }
 
 function lv10ManagerOpen(origin=S.page){
@@ -70,8 +88,11 @@ async function lv10ToggleCard(id,on){
 }
 
 function lv10DragSave(){
-  if(!lv10Dragging)return;
+  const h=lv10Dragging;if(!h)return;
   lv10Dragging=null;
+  if(h.ghost)h.ghost.remove();
+  h.row?.classList.remove('lv10-dragging','lv113-placeholder');
+  h.row?.style.removeProperty('opacity');
   const ids=[...$('#deckManagerRoot').querySelectorAll('.lv10-mini-card')].map(el=>el.dataset.id);
   lv10SaveDeckOrder(ids).then(()=>{lv10ManagerRender();render();}).catch(showError);
 }

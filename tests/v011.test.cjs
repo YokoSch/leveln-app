@@ -28,7 +28,7 @@ assert.equal(E('LV11_INTRO.length'),5);
 const managerHtml=E('lv10ManagerMini(fixture.activities[0])');
 assert(managerHtml.includes('lv11-mini-visible'),'thumb visibility checkbox');
 assert(managerHtml.includes('lv10-mini-card'),'draggable thumbnails');
-assert(!fs.readFileSync('pages/kartenverwaltung/page.js','utf8').includes('lv10-manager-list-row'),'old drag list removed');
+assert(fs.readFileSync('pages/kartenverwaltung/page.js','utf8').includes('lv10-manager-list-row'),'0.11.3 synchronisierte Sortierliste wieder eingeführt');
 assert(!fs.readFileSync('pages/heute/page.js','utf8').includes('lv10-flame-trim'),'visual fake flames removed');
 assert(fs.readFileSync('src/shared/ui/elemente.js','utf8').includes("ico('chest')"),'chest icon visible');
 console.log('OK: Leveln 0.11 – direct XP, deferred mana, once cards, progress bars, character shop, intro, manager, legacy-data preservation');

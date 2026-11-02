@@ -89,6 +89,7 @@ document.addEventListener('change', e => { if (e.target.id === 'questTypeSelect'
     f.querySelector('#recurringFields').hidden = once;
     f.querySelector('#onceRewards').hidden = !once;
     f.querySelector('#recurringRates').hidden = once;
+    const history=f.querySelector('#lv113-history');if(history)history.hidden=once;
 } });
 
 $('#bgImageFile').addEventListener('change', e => { if (e.target.files[0])

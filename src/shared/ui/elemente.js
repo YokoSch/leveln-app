@@ -41,7 +41,7 @@ function badgeFor(g, d) { if (!g)
     return ''; const p = currentPeriod(g, d); if (!p)
     return ''; let o = outcome(g, p); if (g.r.period !== 'day' && dayAdd(p.end, -1) !== d)
     return ''; if (o.frozen)
-    return `<span class="cal-icon snow">${ico('snow')}</span>`; if(lv11ChestDay(g,d)) return `<span class="cal-icon lv11-chest" title="Glut-Belohnung bei erfolgreichem Streak">${ico('chest')}</span>`; if (o.state === 'success')
+    return `<span class="cal-icon snow">${ico('snow')}</span>`; if(lv11ChestDay(g,d)) return `<span class="lv113-chest-and-flame"><span class="cal-icon lv11-chest" title="Glut-Belohnung bei erfolgreichem Streak">${ico('chest')}</span>${o.state==='success'?`<span class="cal-icon fire">${ico('flame')}</span>`:''}</span>`; if (o.state === 'success')
     return `<span class="cal-icon fire" style="color:${goalColor(g)}">${ico('flame')}</span>`; return ''; }
 
 function freezeAction(g) { let ps = periods(g).filter(p => p.closed && outcome(g, p).state === 'fail' && !outcome(g, p).frozen); let p = ps.at(-1); if (!p || !finalLocked(p) || dayDiff(p.end, nowDay()) > 2)

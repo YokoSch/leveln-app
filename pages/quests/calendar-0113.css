@@ -1,0 +1,47 @@
+/* Leveln 0.11.3 – zusammenhängende Bewertungszeiträume im Kalender. */
+html.lv10-root .cal-week,
+html.lv10-root .cal-days{position:relative;isolation:isolate}
+html.lv10-root .cal-week>.week-cell,
+html.lv10-root .cal-days>.cal-day{position:relative;z-index:1}
+html.lv10-root .lv113-daily-summary{position:relative;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+html.lv10-root .lv113-daily-summary .cal-icon.fire .ico,
+html.lv10-root .cal-week .cal-icon.fire .ico{width:20px;height:20px;color:#ff8617;filter:drop-shadow(0 0 5px #ff861766)}
+html.lv10-root .lv113-daily-summary small{font-size:9px;color:#ff8617;font-weight:850;margin-left:2px}
+html.lv10-root .lv113-period-layer{position:absolute;inset:0;z-index:3;pointer-events:none;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(var(--lv113-rows),minmax(0,1fr));gap:4px}
+html.lv10-root .lv113-period-frame{
+  position:relative;grid-row:auto;z-index:3;pointer-events:none;
+  margin:2px -2px;min-width:0;
+  border-top:2px dashed var(--lv113-period-color,var(--lv-active));
+  border-bottom:2px dashed var(--lv113-period-color,var(--lv-active));
+  background:color-mix(in srgb,var(--lv113-period-color,var(--lv-active)) 6%,transparent);
+  opacity:.70;
+}
+html.lv10-root .lv113-period-frame.edge-start{
+  border-left:2px dashed var(--lv113-period-color,var(--lv-active));
+  border-top-left-radius:9px;border-bottom-left-radius:9px;
+}
+html.lv10-root .lv113-period-frame.edge-end{
+  border-right:2px dashed var(--lv113-period-color,var(--lv-active));
+  border-top-right-radius:9px;border-bottom-right-radius:9px;
+}
+html.lv10-root .lv113-period-frame.success{
+  opacity:1;border-top:2px solid var(--lv113-period-color);
+  border-bottom:2px solid var(--lv113-period-color);
+  box-shadow:0 -2px 8px -3px var(--lv113-period-color),0 2px 8px -3px var(--lv113-period-color),inset 0 0 12px -8px var(--lv113-period-color);
+  background:color-mix(in srgb,var(--lv113-period-color) 9%,transparent);
+}
+html.lv10-root .lv113-period-frame.success.edge-start{border-left:2px solid var(--lv113-period-color)}
+html.lv10-root .lv113-period-frame.success.edge-end{border-right:2px solid var(--lv113-period-color)}
+html.lv10-root .lv113-period-flame{
+  position:absolute;z-index:4;top:-14px;left:50%;transform:translateX(-50%);
+  display:grid;place-items:center;width:28px;height:28px;
+  border-radius:50%;background:var(--panel);color:#ff8617;
+  filter:drop-shadow(0 0 5px #ff8617cc);
+}
+html.lv10-root .lv113-period-flame .ico{width:21px;height:21px;color:#ff8617!important}
+html.lv10-root .lv113-period-flame.frost .ico{color:#70bcec!important}
+html.lv10-root .month-calendar .lv113-period-flame{width:23px;height:23px;top:-12px}
+html.lv10-root .month-calendar .lv113-period-flame .ico{width:18px;height:18px}
+
+html.lv10-root .lv113-chest-and-flame{display:inline-flex;align-items:center;gap:2px}
+html.lv10-root .lv113-chest-and-flame .cal-icon .ico{width:15px;height:15px}

@@ -61,8 +61,10 @@ function editGoalModal(){
   <label>Neuen Skill gleichzeitig anlegen (optional)<input name="newSkillName" maxlength="60" placeholder="z. B. Organisation"></label>
   <label>Kartenfarbe<input type="color" name="goalColor" value="${clr}"></label>
   ${a?`<label>Statistikfarbe (unabhängig)<input type="color" name="statColor" value="${lv10StatisticColor(a)}"></label>`:''}
+  ${lv113HistoryForm(a,once,r)}
   <div class="sheet-actions"><button type="button" class="thin-button" data-act="modal-close">Abbrechen</button><button class="primary" type="submit">Quest speichern</button></div>
   </form>`);
+  lv113SyncHistoryInputs(document.querySelector('#goalForm'));
 }
 
 function lv10ReadBindings(form,once,newId){
@@ -104,6 +106,7 @@ async function saveGoal(form){
     out.rewardBindings=bindings;out.revisions=[];out.color=color;
   }else{
     const start=f.startDate.value;
+    if(!old)out.normalStartDate=start;
     if(!/^\d{4}-\d\d-\d\d$/.test(start)||start<nowDay())throw Error('Startdatum muss heute oder später sein.');
     const t=form.querySelector('.lv10-metric-table[data-metric="minutes"]'),c=form.querySelector('.lv10-metric-table[data-metric="count"]');
     if(!t&&!c)throw Error('Bitte zuerst „Ziel – Zeit“ oder „Ziel – Anzahl“ aktivieren.');
@@ -124,7 +127,23 @@ async function saveGoal(form){
     out.revisions=out.revisions.filter(x=>x.from!==start);out.revisions.push(current);out.revisions.sort((a,b)=>a.from.localeCompare(b.from));
     if(!old||start<out.createdAt.slice(0,10))out.createdAt=start+'T12:00:00';
   }
-  await dbTx(newSkill?['activities','skills']:['activities'],t=>{t.objectStore('activities').put(out);if(newSkill)t.objectStore('skills').put(newSkill);});
+  // Version 0.11.3: regular entries and historical one-time Glut credits are
+  // persisted in the SAME IndexedDB transaction as the quest and new skill.
+  const historyPlan=lv113ReadHistory(form,out,old);
+  if(historyPlan.ranges.length && (out.normalStartDate||old?.createdAt?.slice(0,10)||nowDay())>nowDay() && !old?.historicalRanges?.length)throw Error('Für rückwirkende Erfolge muss die Quest spätestens heute beginnen. Bitte „Gültig ab“ auf heute setzen.');
+  if(!once)lv113PrepareHistoricalRevision(out,old,historyPlan);
+  const historicalWallet=once?null:lv113PreviewHistoricalWallet(out,historyPlan,old);
+  const stores=['activities',...(newSkill?['skills']:[]),...(once?[]:['entries']),...(historicalWallet?['meta']:[])];
+  await dbTx(stores,t=>{
+    t.objectStore('activities').put(out);
+    if(newSkill)t.objectStore('skills').put(newSkill);
+    if(!once){
+      const entries=t.objectStore('entries');
+      for(const id of historyPlan.deletes)entries.delete(id);
+      for(const row of historyPlan.writes)entries.put(row);
+    }
+    if(historicalWallet)t.objectStore('meta').put({key:'emberWallet',value:historicalWallet});
+  });
   S.modal=null;S.cardDrafts.clear();await sync();S.page='goals';render();toast('Quest gespeichert');
 }
 
@@ -134,12 +153,15 @@ function goalsView(){
   const show=p=>S.questFilter==='all'||S.questFilter===p;
   return `<div class="page-heading"><span class="eyebrow">DEIN ABENTEUER</span><h1>Quests</h1></div>
     <div class="goals-sticky">${calendarHTML()}</div>
-    <div class="quest-filter-bar">${filters.map(([k,v])=>`<button data-act="quest-filter" data-filter="${k}" class="quest-filter ${S.questFilter===k?'selected':''}">${v}</button>`).join('')}</div>
-    <div class="goals-scroll"><div class="goals-actions lv10-goals-actions">
-      <button class="thin-button" data-act="edit-day" data-day="${nowDay()}">${ico('edit')}<span>Heute korrig.</span></button>
-      <button class="thin-button" data-act="edit-day" data-day="${dayAdd(nowDay(),-1)}">${ico('edit')}<span>Gestern korrig.</span></button>
-      <button class="thin-button" data-act="deck-open">${ico('settings')}<span>Karten</span></button>
+    <div class="goals-scroll"><div class="goals-actions lv113-goals-actions">
+      <div class="lv113-quest-more-wrap"><button class="thin-button" data-act="quest-more" aria-expanded="${!!S.questMoreOpen}" aria-haspopup="true">${ico('dots')}<span>Mehr</span></button>
+      ${S.questMoreOpen?`<div class="lv113-quest-more-menu">
+        <button data-act="edit-day" data-day="${nowDay()}">${ico('edit')} Heute korrigieren</button>
+        <button data-act="edit-day" data-day="${dayAdd(nowDay(),-1)}">${ico('edit')} Gestern korrigieren</button>
+        <button data-act="deck-open">${ico('settings')} Karten verwalten</button>
+      </div>`:''}</div>
       <button class="thin-button add-quest-button" data-act="new">${ico('plus')}<span>Neue Quest</span></button></div>
+    <div class="quest-filter-bar">${filters.map(([k,v])=>`<button data-act="quest-filter" data-filter="${k}" class="quest-filter ${S.questFilter===k?'selected':''}">${v}</button>`).join('')}</div>
     ${show('once')?`<section class="goal-section"><h3>${ico('scroll')} EINMALIGE QUESTS</h3>${once.filter(a=>!a.archivedAt&&!a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine offenen Missionen</p>'}</section>`:''}
     ${goalGroups().filter(gr=>show(gr.p)).map(gr=>`<section class="goal-section"><h3>${({day:'TÄGLICHE',week:'WÖCHENTLICHE',month:'MONATLICHE',year:'JÄHRLICHE'})[gr.p]} QUESTS</h3>${gr.items.map(g=>goalRow(g)).join('')||'<p class="muted">Noch keine Quests</p>'}</section>`).join('')}
     ${show('archive')?`<section class="goal-section archived-list"><h3>ARCHIV & ABGESCHLOSSEN</h3>${archived.map(g=>goalRow(g,true)).join('')}${once.filter(a=>a.archivedAt||a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine archivierten Quests</p>'}</section>`:''}</div>`;

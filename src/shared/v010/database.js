@@ -73,7 +73,7 @@ async function importBackup(file){
 async function exportBackup(){
   const fileName=`Leveln-Backup-${nowDay()}.json`;
   const data={activities:S.activities,entries:S.entries,overrides:S.overrides,meta:S.meta,skills:S.skills};
-  const blob=new Blob([JSON.stringify({format:'progress-local-backup',version:5,exportedAt:new Date().toISOString(),appVersion:'0.11',data},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({format:'progress-local-backup',version:5,exportedAt:new Date().toISOString(),appVersion:'0.11.3',data},null,2)],{type:'application/json'});
   const file=new File([blob],fileName,{type:'application/json'});
   if(navigator.share&&navigator.canShare?.({files:[file]})){
     try{await navigator.share({files:[file]});return;}catch(error){if(error?.name==='AbortError')return;}
