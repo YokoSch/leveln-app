@@ -1,4 +1,4 @@
-/** Leveln 0.11.4 – per-quest wallets, pause, deletion, archive and guided intro. */
+/** Leveln 0.11.4 – per-quest wallets, pause, deletion, archive and permanent removal. */
 'use strict';
 const fs=require('node:fs'),assert=require('node:assert/strict'),vm=require('node:vm');
 const fake=()=>({addEventListener(){},querySelector(){return fake()},querySelectorAll(){return []},classList:{add(){},remove(){}},style:{setProperty(){}},dataset:{},setAttribute(){},innerHTML:'',closest(){return null}});
@@ -71,11 +71,9 @@ E('saveMeta=async(k,v)=>{S.wallet=v;S.meta=[...S.meta.filter(x=>x.key!==k),{key:
  await E('lv114DeleteQuest("read","all")');
  assert.equal(c.stores.activities.has('read'),false);assert.equal(c.stores.entries.size,0);
  assert.equal(E('xpStats().sum'),0);assert.equal(E('S.wallet.byQuest.read===undefined'),true);
- // Tutorial stages persist and never create synthetic activities.
- const before=c.stores.activities.size;
- await E('lv114TutorialStage("quest")');
- assert.equal(E('S.tutorialStage'),'quest');
- assert.equal(c.stores.activities.size,before);
- await E('lv114TutorialFinish()');assert.equal(E('S.tutorialStage'),null);
- console.log('OK: per-quest Glut/Freezes, no cross-quest spending, pause without XP, archive visibility, Vergangenes stats, permanent delete & tutorial states');
+ // No automatic interactive tutorial or synthetic quest data.
+ assert.equal(c.stores.activities.size,1); // the unrelated Zaubern-Quest remains untouched
+ assert(E('settingsView().includes("levelnHandbook")'));
+ assert(!E('settingsView().includes("Einführung starten")'));
+ console.log('OK: per-quest Glut/Freezes, no cross-quest spending, pause without XP, archive visibility, Vergangenes stats, permanent delete & handbook');
 })().catch(e=>{console.error(e);process.exitCode=1});

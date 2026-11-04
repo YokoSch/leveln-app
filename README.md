@@ -1,74 +1,49 @@
-# Leveln 0.11.4 – Questverwaltung, Dauer-Freeze und interaktive Einführung
+# Leveln 0.11.4 – korrigierte Ausgabe
 
-**Aktuelle Version: 0.11.4** · Vollständige lokal gespeicherte iPhone-PWA.
+**Ausgangspunkt für das Update: Leveln 0.11.3.** Vollständige, modularisierte iPhone-PWA für GitHub Pages. Die bestehende App muss **nicht** neu installiert werden. Die lokale Datenbank `progress-private-v1` sowie das Daten- und Backupformat **5** bleiben unverändert. Die 64 gestalteten Original-SVGs sind weiterhin enthalten.
 
-**Alle Änderungen, die Installation und Datenhinweise stehen in [RELEASE-0.11.4.md](RELEASE-0.11.4.md).**
+## Korrekturen gegenüber der ersten 0.11.4-Ausgabe
 
-Das Update ergänzt questgebundene Glut und Freezes, zwei Löscharten plus Archiv und Wiederherstellung, kostenlosen Dauer-Freeze, größere Kartengesten sowie eine echte, geführte Einführung. Die 64 Original-SVGs bleiben erhalten. Vor dem Update eine JSON-Sicherung erstellen und die bisherige Homescreen-App **nicht** löschen. Das Datenformat bleibt 5.
+1. **Questzeilen wieder als beidseitige Slider:** Im Normalzustand sind keine Verwaltungsbuttons sichtbar. **Nach links schieben:** Bearb., Archiv, Löschen hinter der Questzeile. **Nach rechts schieben:** kostenloser Dauer-Freeze hinter der anderen Seite. Das Archiv hat ebenfalls verschiebbare Zeilen mit De-Archivieren und Löschen. Auch die einmaligen Quests haben verdeckte Verwaltungsbuttons.
+2. **Echte physische Karten:** Die beiden darunterliegenden Karten werden in identischer Größe mit derselben Schrift, denselben Bildern, Farben und Details wie die oberste Karte gezeichnet. Nur der gesamte Kartenkörper ist nach unten versetzt. Die darunterliegenden Karten sind sichtbar, aber bis zum Aufdecken nicht anklickbar; ihre Kürzel bleiben sichtbar.
+3. **Keine interaktive Einführung mehr:** Stattdessen befindet sich in **Einstellungen → Leveln-Handbuch** eine umfangreiche, aufklappbare Erklärung der Philosophie, Spielregeln und Bedienung mit zwei konkreten Beispielen. Bei einem **wirklichen Erststart** erscheint nur ein kurzer Hinweis auf diese Dokumentation. Eine unterbrochene Einführung aus der ersten 0.11.4-Ausgabe wird ohne Veränderung der Spielstände beendet.
 
----
+## Andere Funktionen von 0.11.4 bleiben erhalten
 
-## Änderungen der vorherigen Version 0.11.3
+- Questgebundene Glut und Freezes (1 Glut je 10 erfolgreiche Streak-Schritte; 5 Glut je Freeze; maximal 2 Freezes pro Quest). Bestände nur im Charakter-Shop.
+- Kostenloser Dauer-Freeze: Die Streak-Zahl bleibt stehen, wächst während der Pause nicht, und es gibt keine neuen XP oder Glut während eingefrorener Bewertungszeiträume.
+- Quests archivieren, de-archivieren mit Nachträgen oder in zwei Varianten endgültig löschen: entweder Erfolge unter „Vergangenes“ behalten oder alle zugehörigen Daten entfernen.
+- Aufgeräumte große Karten mit mittiger Mengensteuerung, x/y-Balken, breiterem Leuchten und 2 Sekunden Haltezeit für das Kartensortiermenü.
+- Rückwirkende Leistungen aus 0.11.3, Kalenderrahmen, Flammen, Schatztruhen, synchronisierte Kartensortierung und Original-SVGs.
 
-Diese vollständige, modularisierte iPhone-PWA basiert auf **Leveln 0.11.2**. Die **64 detaillierten Original-SVGs** und alle bisherigen Leveln-/Mana-Spielregeln bleiben erhalten. Die größere künstlerische Neugestaltung ist **nicht** Bestandteil dieses Updates.
+## Installation als Update von 0.11.3
 
-## Was ist neu?
+1. In der **bestehenden 0.11.3-App** ein **JSON-Backup erstellen** und außerhalb der App sichern.
+2. ZIP entpacken. **Alle enthaltenen Dateien und Unterordner** direkt in die Wurzel deines bisherigen GitHub-Repositories kopieren und gleichnamige Dateien überschreiben. Nicht als zusätzlichen Unterordner hochladen. Alte, in 0.11.4 entfernte Dateien (z. B. `src/shared/ui/tutorial-0114.js`) sind nicht erforderlich und können im Repository gelöscht werden.
+3. Im Repository in Git Bash ausführen:
 
-1. **Bisherige Erfolge:** Ganz unten im Questformular gibt es einen standardmäßig eingeklappten Bereich. Mit `＋ Zeitraum hinzufügen` lassen sich beliebig viele Zeiträume mit Start- und Enddatum erfassen. Die angegebene Minuten- und/oder Anzahlmenge gilt für *jeden* Tag des Zeitraums. Die erste Zeile schlägt die in der Quest definierte Zielmenge vor. Nicht aktivierte Metriken werden ausgeblendet. Nur Tage **vor der ursprünglichen Questerstellung** sind zulässig; überlappende Intervalle werden abgewiesen. Bestehende fremde Tagesbuchungen werden nicht überschrieben.
-2. **XP und einmalige Glut:** Historische Tage werden als normale `entries` in IndexedDB gespeichert. Trainings-XP und eingespartes Mana folgen der vorhandenen Berechnungslogik. Der historische Streak und sein Glut-Meilenstein werden beim **ersten Speichern einer neuen Quest einmalig** berechnet. Nachträgliche Mengenänderungen korrigieren die berechneten XP und Streaks, erzeugen **keine zusätzliche historische Glut**. Bereits erhaltene historische Glut wird bei späteren Korrekturen nicht wieder abgezogen. Laufende Glut-Belohnungen nach dem Erstellungsdatum bleiben normal aktiv. Eine **bereits vorher angelegte Quest** erhält bei nachträglicher Ergänzung alter Erfolge keine rückwirkende Glut.
-3. **Charakter und Navigation:** Skillsymbole ungefähr 10 % größer; das große Abenteuerprofilbild ungefähr doppelt so groß. Icons in der Hauptnavigation ca. 10 % größer, **nicht** der kleine Charakteravatar in der Navigation.
-4. **Kalender:** In der Wochenansicht erscheinen Streak-Flammen für erfolgreiche tägliche Quests auch ohne ausgewählten Questfilter. Eine **ausgewählte mehrtägige Quest** erhält über ihren Bewertungszeitraum einen zusammenhängenden Rahmen: leuchtend bei Erfolg, gestrichelt bei noch nicht erreichtem Ziel. Bei einem erfolgreichen mehrtägigen Zeitraum erscheint eine Flamme mittig auf dem Rahmen. Monatsansichten trennen lange Rahmen an den Wochenumbrüchen. An einem Glut-Meilenstein sind die Schatztruhe **und** die Flamme sichtbar.
-5. **Quest-Menü:** `Heute korrigieren`, `Gestern korrigieren` und `Karten verwalten` sind im neuen **Mehr**-Menü untergebracht. `Neue Quest` bleibt direkt sichtbar. Die Filterleiste steht oberhalb der einmaligen Quests.
-6. **Kartenverwaltung:** Linke Namensliste und rechte Miniaturkarten-Galerie zeigen dieselbe Reihenfolge. **Beide** lassen sich durch Halten und Ziehen neu sortieren, wobei das jeweils andere Feld unmittelbar mitsortiert wird. Drag-Vorschau und animierte Verschiebung sind ergänzt. Die vier Sortierbuttons wirken auf beide Ansichten. Die Icons auf Leveln-/Zaubern-Filtern sind ca. 10 % größer.
-7. **Große Karten:** Kleines redundantes Leveln-/Zaubern-Icon im Kartenkopf entfernt. Die großen, originalen Hintergrund-SVGs sind ungefähr 10 % größer. Der Drei-Punkte-Bearbeiten-Button bleibt erhalten.
+   ```bash
+   git add -A
+   git commit -m "Leveln 0.11.4 – Slider, Karten und Handbuch korrigiert"
+   git push
+   ```
+4. Nach der Veröffentlichung auf GitHub Pages die **bereits installierte iPhone-App** neu öffnen bzw. aktualisieren. **Nicht deinstallieren oder löschen** – die bisherigen Daten werden lokal im Browser gespeichert.
+5. Quests, Skills, XP, Glut und Freezes überprüfen. Anschließend mit einer Testquest die beiden Wischrichtungen und das Stapeln ausprobieren.
 
-## Besondere Regeln für „Bisherige Erfolge“
+Die Korrektur führt **kein neues Datenbankschema und keine neue XP-/Glut-Migration** ein. Sie übernimmt den Datenbestand von 0.11.3 über die bereits vorhandene, version-5-kompatible Datenstruktur. Die bisherige automatische historische Migration wird nicht erneut ausgeführt. Für ein vollständiges Zurücksetzen ist **nicht** das Löschen der installierten PWA vorgesehen.
 
-- Die rückwirkende Mengenerfassung ist für **wiederkehrende, mengenbasierte Quests** vorgesehen. Bei **einmaligen Abschlussmissionen** bleibt sie ausgeblendet, da diese keine fortlaufenden Tagesziele besitzen.
-- Werden zwei Zielarten benutzt, gibt es **Minuten pro Tag** und **Anzahl pro Tag**. Bei Zaubern bedeuten diese Werte tatsächlichen Verbrauch. Ein ausdrücklich eingetragener Verbrauch von null wird als bestätigter Nullverbrauch gespeichert, nicht als unbekannter Wert.
-- Ein aktiver Zeitraum umfasst beide Datumsgrenzen. Nicht erfasste Tage werden **nicht als erfunden erfolgreich** markiert; bei Leveln zählen sie als null. Fehlende Zaubern-Verbräuche bleiben unbekannt.
-- Für eine **neu erstellte** Quest mit historischen Erfolgen muss `Gültig ab` spätestens heute sein. Bei späteren Bearbeitungen bleibt die ursprüngliche Erstellungsgrenze maßgeblich.
-- Bei jeder Korrektur werden nur die eigenen historischen Questformular-Einträge ersetzt; andere Buchungen sind geschützt. Neue und geänderte Einträge werden gemeinsam mit der Quest und der Glut-Historie in einer IndexedDB-Transaktion gespeichert.
-- Für große Zeiträume können mehrere Tausend Buchungen entstehen; für ungewöhnlich umfangreiche Nachträge zuerst eine JSON-Sicherung erstellen und die App auf dem iPhone überprüfen.
-
-## Installation auf GitHub Pages
-
-**Vor dem Update unbedingt ein JSON-Backup in der bisherigen Leveln 0.11.2 speichern.**
-
-1. ZIP entpacken und **alle darin enthaltenen Dateien und Ordner** in das Wurzelverzeichnis des bisherigen GitHub-Repositories kopieren. Bestehende Dateien überschreiben. Die neue JS-Datei `pages/quests/history.js`, Kalender- und Sortiermodule sowie Stylesheets müssen mitkopiert werden.
-2. Im Repository-Ordner in Git Bash:
+## Tests und Entwicklung
 
 ```bash
-git add -A
-git commit -m "Leveln 0.11.3 – Historie, Kalender, Kartenverwaltung"
-git push
+npm install
+npm run prepare:release
+npm test
 ```
 
-3. Auf die Veröffentlichung durch GitHub Pages achten, dann die **bestehende** installierte Leveln-App öffnen und gegebenenfalls neu laden. **Die iPhone-Home-Bildschirm-App nicht löschen**, denn ihre lokale IndexedDB enthält die Spielstände.
-4. Auf dem Gerät zuerst vorhandene Quests, Skills, Streaks, Glut und XP prüfen. Anschließend eine Testquest mit historischem Zeitraum erstellen und die Sortiergesten testen.
+Die automatisierten Tests prüfen die bisherige Daten- und XP-Logik, Questverwaltung, questgebundene Ressourcen, Dauer-Freeze, Original-SVGs, historische Tagesbuchungen, sowie neu die beidseitigen Slider, Kartenstapel und Handbuchintegration. Die Darstellung wurde zusätzlich in einer statischen Chromium-Vorschau auf iPhone-Größe überprüft. Ein vollständiger realer iPhone-Touch-Test bleibt offen.
 
-Der **Datenbankname `progress-private-v1`**, die Stores und das **Daten-/Backupformat 5** bleiben unverändert. Es ist keine Datenmigration erforderlich; neue optionale Felder an Quests und historischen Tagesbuchungen sind rückwärtskompatibel. Vorhandene XP und frühere Einträge werden beim Update nicht umgeschrieben.
-
-## Testen und Entwickeln
-
-```bash
-npm install                # nur beim ersten Mal, für die TypeScript-Parser-Tests
-npm run prepare:release    # originalgetreue Inline-SVG-Bibliothek + scripts.json + Offline-Cache
-npm test                   # Logik-, Migrations-, Browserstruktur-, SVG- und Historientests
-```
-
-Die Original-SVG-Quellen liegen weiterhin unter `assets/icons/mono/`. **Keine Ersatz-SVGs erzeugen**; `assets/icons/inline-library.js` wird daraus generiert. `scripts.json` bestimmt die Script-Ladereihenfolge, `scripts/refresh-sw.cjs` die Cache-Version.
-
-**Teststatus:** Die automatisierten Syntax-, Speichertransaktions-, XP-, Glut-, Datumskonflikt-, Kalenderstruktur-, Icon- und Migrationsprüfungen laufen. Ein **vollständiger Test mit iOS-Safari-Touch-Gesten** und ein vollständiger grafischer Browser-Test konnten hier nicht zuverlässig durchgeführt werden; insbesondere die flüssige Bewegung beider Sortieransichten ist noch auf dem iPhone zu prüfen. Dieses Paket daher vorerst als **Testversion** verwenden.
-
-## Code-Wegweiser
-
-- `pages/quests/history.js`: Erfassung, Validierung, Einmal-Glut, historische Revisionen
-- `pages/quests/page.js`: Questformular und neues „Mehr“-Menü
-- `pages/quests/calendar-0113.js` und `.css`: Rahmen über Zeiträume und tägliche Flammen
-- `pages/kartenverwaltung/page.js`, `manager-0113.css`: synchronisierte Miniaturen und Namensliste
-- `src/shared/v010/events.js`: Pointer-DnD, animiertes Verschieben
-- `src/shared/domain/erfahrung.js`: Glut-Sperre für die Vorgeschichte; XP weiterhin `xpEvents()`
-- `src/styles/v0113.css`: größere Icons, Avatar, Quest-Menü, historische Formularfelder
-- `tests/v0113.test.cjs`, `tests/v0113-save.test.cjs`: neue Sicherheits-/Regressionsprüfungen
-- `ARCHITEKTUR.md`: vollständige Architektur- und Änderungshinweise
+- `src/shared/ui/elemente.js`, `pages/quests/management-0114.js`, `src/shared/compat/events.js`: Quest-Slider
+- `pages/heute/page.js`, `src/styles/v0114.css`: physische Karten
+- `pages/einstellungen/page.js`, `src/shared/ui/intro-shop.js`, `src/shared/v010/database.js`: Handbuch und Erststart-Hinweis
+- `tests/v0114-fix.test.cjs`: zusätzliche Regressionstests
+- `RELEASE-0.11.4.md`: genaue Hinweise zur Korrektur

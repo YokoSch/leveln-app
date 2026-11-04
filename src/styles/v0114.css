@@ -9,10 +9,19 @@ html.lv10-root .play-card.face{inset:0 0 102px;overflow:visible}
 html.lv10-root .peek-wrap{inset:0 0 102px!important;overflow:visible;border-radius:var(--lv-radius-card)}
 html.lv10-root .peek-wrap.peek-1{transform:translateY(43px) scale(.992)}
 html.lv10-root .peek-wrap.peek-2{transform:translateY(86px) scale(.984)}
-html.lv10-root .peek-wrap .play-card.peek{overflow:visible;opacity:1}
-html.lv10-root .peek-wrap .play-card.peek .card-foot{position:absolute;bottom:-2px;left:0;right:0;padding:9px 19px;min-height:41px;background:var(--lv-card-face);border-radius:0 0 22px 22px}
-html.lv10-root .peek-wrap .play-card.peek .card-short{display:block;font-size:15px;font-weight:950;letter-spacing:.09em;color:var(--lv-card-ink);text-shadow:0 0 6px var(--lv-card-accent)}
-html.lv10-root .peek-wrap .play-card.peek .card-foot .streak,html.lv10-root .peek-wrap .play-card.peek .card-foot .played-label{visibility:hidden}
+/* A card below the top is the SAME fully rendered card; only its wrapper moves.
+ * Restores visibility/opacity overridden by the 0.10 peek presentation. */
+html.lv10-root .peek-wrap{pointer-events:none}
+html.lv10-root .peek-wrap > .play-card.face.lv114-under-card{
+  position:absolute!important;inset:0!important;width:100%;height:100%;
+  display:flex;flex-direction:column;visibility:visible!important;opacity:1!important;
+  border-radius:29px;overflow:hidden;
+}
+html.lv10-root .peek-wrap > .play-card.face.lv114-under-card .card-header,
+html.lv10-root .peek-wrap > .play-card.face.lv114-under-card .card-main,
+html.lv10-root .peek-wrap > .play-card.face.lv114-under-card .card-foot{
+  visibility:visible!important;opacity:1!important;
+}
 html.lv10-root .deck-gesture-tail{height:102px;position:absolute;bottom:0;left:0;right:0;z-index:7;touch-action:none;cursor:grab}
 html.lv10-root .deck-caption{display:none!important}
 html.lv10-root .play-card .card-main{gap:clamp(6px,1.35vh,12px);padding:4px 12px}
@@ -35,23 +44,23 @@ html.lv10-root .play-card.face.lv114-holding:before{content:"";position:absolute
 @keyframes lv114Hold{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 html.lv10-root .lv114-card-pause{color:#6abde9;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:850}
 html.lv10-root .lv114-card-pause .ico{width:19px;height:19px}
-/* Keep all quest utilities BELOW the sliding quest row. */
+/* Swipe actions live UNDER the moving row, on BOTH sides. */
 .lv114-quest-entry{margin:8px 0 14px}
-.lv114-quest-entry>.goal-swipe{margin:0 0 5px;}
-.lv114-quest-tools{display:flex;gap:6px;padding:0 5px;align-items:center}
-.lv114-quest-tools button{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:750;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:9px 4px;min-height:40px}
-.lv114-quest-tools .ico{width:17px;height:17px}
-.lv114-quest-tools .lv114-delete{color:#d85b68}
-.lv114-quest-entry .goal-row-actions{display:none}
-.lv114-quest-entry .goal-swipe.revealed .goal-row{transform:translateX(0)}
-.lv114-pause-action{display:none}
-.lv114-quest-entry .lv114-pause-action{display:flex;position:absolute;left:0;top:0;bottom:0;width:132px;z-index:1;justify-content:flex-start;align-items:stretch;background:var(--panel2);padding:4px}
-.lv114-pause-action button{border:0;border-radius:9px;background:#d0edf9;color:#144c6a;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;min-width:125px}
-.lv114-pause-action .ico{width:21px;height:21px}
-.lv114-pause-action small{font-size:11px;font-weight:850}
-.lv114-quest-entry .goal-swipe.revealed-freeze .goal-row{transform:translateX(130px)}
-.lv114-archived .lv114-pause-action{display:none}
-.lv114-archived .goal-streak{color:var(--muted)!important}
+.lv114-quest-entry>.goal-swipe{margin:0 0 5px}
+.lv114-quest-entry .goal-swipe{position:relative;overflow:hidden;isolation:isolate;touch-action:pan-y}
+.lv114-quest-entry .goal-row{z-index:2;position:relative;background:var(--panel);will-change:transform}
+.lv114-quest-entry .goal-row-actions{position:absolute;display:flex;right:0;left:auto;top:0;bottom:0;width:190px;align-items:stretch;gap:3px;padding:4px;z-index:1;background:var(--panel2)}
+.lv114-quest-entry .goal-row-actions button{display:flex;flex:1;min-width:0;min-height:40px;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:auto;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:10px;font-weight:750;background:var(--panel);padding:3px 1px}
+.lv114-quest-entry .goal-row-actions .ico{width:19px;height:19px}
+.lv114-quest-entry .goal-row-actions button.lv114-delete{color:#d85b68}
+.lv114-quest-entry .goal-swipe.revealed .goal-row{transform:translateX(-190px)}
+.lv114-quest-entry .lv114-pause-action{display:flex;position:absolute;left:0;right:auto;top:0;bottom:0;width:132px;z-index:1;align-items:stretch;padding:4px;background:var(--panel2)}
+.lv114-quest-entry .lv114-pause-action button{width:100%;border:0;border-radius:9px;background:#d0edf9;color:#144c6a;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px}
+.lv114-quest-entry .lv114-pause-action .ico{width:21px;height:21px}
+.lv114-quest-entry .lv114-pause-action small{font-size:11px;font-weight:850}
+.lv114-quest-entry .goal-swipe.revealed-freeze:not(.once-swipe) .goal-row{transform:translateX(130px)}
+.lv114-quest-entry.lv114-archived .lv114-pause-action{display:none}
+.lv114-quest-entry.lv114-archived .goal-streak{color:var(--muted)!important}
 .lv114-archive-toggle{width:100%;border:1px solid var(--border);color:var(--text);background:var(--panel);border-radius:14px;display:flex;align-items:center;gap:10px;padding:13px;font-weight:850}
 .lv114-archive-toggle>span{margin-left:auto;color:var(--muted)}
 .lv114-archive-toggle .ico{width:20px;height:20px}
@@ -74,13 +83,20 @@ html.lv10-root .lv114-shop-entry button{width:auto;min-height:42px;padding:10px 
 html.lv10-root .lv11-freeze-shop label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:13px}
 @media(max-height:700px){html.lv10-root .play-card.face{inset:0 0 92px}html.lv10-root .peek-wrap{inset:0 0 92px!important}html.lv10-root .peek-wrap.peek-2{transform:translateY(77px) scale(.98)}html.lv10-root .peek-wrap.peek-1{transform:translateY(38px) scale(.99)}}
 @media(prefers-reduced-motion:reduce){html.lv10-root .play-card.face.lv114-holding:before{animation:none;transform:scaleX(1)}}
-/* Friendly guide: uses the original in-app cat, not the uncolored new mascot. */
-#tutorialCoach{position:fixed;z-index:75;top:calc(env(safe-area-inset-top,0px) + 8px);left:50%;width:min(94vw,540px);transform:translateX(-50%);pointer-events:none}
-.lv114-tutorial-note{display:flex;align-items:center;gap:10px;padding:10px;background:var(--panel);color:var(--text);border:2px solid var(--save);border-radius:17px;box-shadow:0 7px 29px #0006;max-width:540px;margin:3px auto;pointer-events:auto}
-.lv114-tutorial-cat{width:56px;flex:none}.lv114-tutorial-cat svg{width:56px;height:55px}
-.lv114-tutorial-copy{display:flex;flex-direction:column;gap:5px;min-width:0}
-.lv114-tutorial-copy>b{font-size:12px;color:var(--save)}
-.lv114-tutorial-copy>span{font-size:12px;line-height:1.35}
-.lv114-tutorial-copy>button{border:1px solid var(--border);border-radius:8px;color:var(--text);background:var(--panel2);font-size:11px;font-weight:800;min-height:32px}
-.lv114-tutorial-copy>button.lv114-tutorial-exit{border:none;text-decoration:underline;color:var(--muted);min-height:22px;background:transparent;font-size:10px}
-.sheet>.lv114-tutorial-note{position:sticky;top:0;z-index:6;margin:0 0 12px}
+
+/* Readable reference handbook; hidden by default, always available in Settings. */
+.lv114-handbook-section{margin-bottom:22px}
+.lv114-handbook-section>p{line-height:1.55;margin:8px 0 15px}
+.lv114-handbook{border:1px solid var(--border);border-radius:14px;background:var(--panel2);overflow:hidden}
+.lv114-handbook>summary{display:flex;align-items:center;gap:10px;cursor:pointer;padding:14px;font-size:14px;font-weight:850;color:var(--text);list-style:none}
+.lv114-handbook>summary::-webkit-details-marker{display:none}
+.lv114-handbook>summary::after{content:'⌄';margin-left:auto}
+.lv114-handbook[open]>summary::after{content:'⌃'}
+.lv114-handbook>summary .ico{width:23px;height:23px;flex:none}
+.lv114-doc-content{padding:0 15px 19px;line-height:1.65;color:var(--text)}
+.lv114-doc-content h4{font-size:15px;margin:24px 0 8px;color:var(--save)}
+.lv114-doc-content p{margin:0 0 12px;font-size:13px;line-height:1.7}
+.lv114-doc-note{font-style:italic;color:var(--muted)}
+.lv114-first-hint{display:flex;flex-direction:column;gap:13px}
+.lv114-first-hint p{font-size:14px;line-height:1.6}
+.lv114-first-hint button{min-height:44px}

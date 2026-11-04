@@ -59,9 +59,9 @@ function lv10PlayControls(g,behind=false){
     const value=Number(draft[k]||0),unit=k==='minutes'?'Min.':'×',lab=k==='minutes'?'Minuten':'Anzahl';
     return `<div class="lv10-amount-row" data-metric="${k}">
       <div class="lv10-amount-stepper">
-      <button type="button" class="lv10-step" data-direction="-1" data-metric="${k}" data-goal="${safe(g.key)}" ${behind||lv114HasPause(g.a,S.day)?'disabled':''} aria-label="${lab} reduzieren">−</button>
+      <button type="button" class="lv10-step" data-direction="-1" data-metric="${k}" data-goal="${safe(g.key)}" ${lv114HasPause(g.a,S.day)?'disabled':behind?'tabindex="-1"':''} aria-label="${lab} reduzieren">−</button>
       <strong class="lv10-amount-value" aria-live="polite">${num(value,0)} <em>${unit}</em></strong>
-      <button type="button" class="lv10-step" data-direction="1" data-metric="${k}" data-goal="${safe(g.key)}" ${behind||lv114HasPause(g.a,S.day)?'disabled':''} aria-label="${lab} erhöhen">＋</button>
+      <button type="button" class="lv10-step" data-direction="1" data-metric="${k}" data-goal="${safe(g.key)}" ${lv114HasPause(g.a,S.day)?'disabled':behind?'tabindex="-1"':''} aria-label="${lab} erhöhen">＋</button>
       </div></div>`;
   }).join('')}</div>`;
 }
@@ -72,10 +72,10 @@ function cardHtml(g,behind=false){
   const glow=lv10CardGlow(g),st=once?null:stData(g).current;
   
   const cardColor=hex(color,a.kind==='reduce'?S.colors.save:S.colors.level);
-  return `<div class="play-card lv-card ${behind?'peek':'face lv-card--primary'} ${glow} ${once?'once-card':''}" style="--card-accent:${cardColor}" data-quest-color="${cardColor}" ${behind?'':'id="activeCard"'} data-goal="${k}">
+  return `<div class="play-card lv-card face lv-card--primary ${behind?'lv114-under-card':''} ${glow} ${once?'once-card':''}" style="--card-accent:${cardColor}" data-quest-color="${cardColor}" ${behind?'':'id="activeCard"'} data-goal="${k}">
   <div class="lv11-type-watermark" aria-hidden="true">${ico(a.kind==='reduce'?'zaubern':'leveln')}</div>
   <div class="card-header"><span class="card-pill">${once?'EINMALIG':a.kind==='reduce'?'ZAUBERN':'LEVELN'}</span>
-    ${`<button class="lv10-card-edit" data-act="${once?'once-edit':'edit-goal'}" ${once?`data-id="${safe(a.id)}"`:`data-key="${k}"`} aria-label="Quest bearbeiten" ${behind?'disabled tabindex="-1"':''}>${ico('dots')}</button>`}</div>
+    ${`<button class="lv10-card-edit" data-act="${once?'once-edit':'edit-goal'}" ${once?`data-id="${safe(a.id)}"`:`data-key="${k}"`} aria-label="Quest bearbeiten" ${behind?'tabindex="-1"':''}>${ico('dots')}</button>`}</div>
   <div class="card-main">${art(a)}<h2>${safe(a.name)}</h2>
     ${!once?lv10PlayControls(g,behind):'<p>Einmalige Mission</p>'}
     ${!once?lv11Progress(g):''}
@@ -91,7 +91,7 @@ function todayView(){
   return `<div class="today-head"><div class="today-topline"><span>${type} · KARTENDECK</span></div>${xpBar()}</div>
   <div class="deck-area ${S.day!==nowDay()?'lv11-yesterday':''}">${g?`<div class="deck-stack">${[2,1].map(i=>{
     if(gs.length<=i)return '';const next=gs[(S.card+i)%gs.length];
-    return `<div class="peek-wrap peek-${i}">${cardHtml(next,true)}</div>`;
+    return `<div class="peek-wrap peek-${i}" inert aria-hidden="true">${cardHtml(next,true)}</div>`;
   }).join('')}${cardHtml(g)}<div class="deck-gesture-tail" role="presentation" aria-hidden="true"></div></div>`:
   `<div class="empty-state">${ico(kind==='reduce'?'mana':'leveln')}<h2>Keine Karten auf diesem Stapel</h2><button class="primary" data-act="deck-select" data-kind="${kind==='build'?'reduce':'build'}">Zum anderen Stapel</button></div>`}</div>
   `;
@@ -112,7 +112,7 @@ async function startCard(g,up){
     const before=xpStats().sum,fields=bookingFields(g,true);
     await dbPut('entries',makeEntry(g,S.day,fields));
     // Note: NOT moving to next card. Same card can be played repeatedly.
-    S.cardDrafts.delete(entryKey(g,S.day));await sync();await reconcileWallet();await lv114TutorialAfterPlay(g);
+    S.cardDrafts.delete(entryKey(g,S.day));await sync();await reconcileWallet();
     const after=xpStats().sum;
     vibrate();if(after>before+1e-8)xpToast(after-before);
     if(Math.floor(after/1000)>Math.floor(before/1000))await celebrate(Math.floor(after/1000)+1);

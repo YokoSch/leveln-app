@@ -144,7 +144,7 @@ async function saveGoal(form){
     }
     if(historicalWallet)t.objectStore('meta').put({key:'emberWallet',value:historicalWallet});
   });
-  S.modal=null;S.cardDrafts.clear();await sync();if(await lv114TutorialAfterGoal(out))return;S.page='goals';render();toast('Quest gespeichert');
+  S.modal=null;S.cardDrafts.clear();await sync();S.page='goals';render();toast('Quest gespeichert');
 }
 
 function goalsView(){

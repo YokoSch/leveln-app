@@ -100,8 +100,8 @@ $('#importFile').addEventListener('change', e => { if (e.target.files[0])
 
 document.addEventListener('pointerdown', e => {
     const goalrow = e.target.closest('.goal-swipe');
-    if (goalrow && !e.target.closest('.goal-row-actions,button[data-act=once-complete],button[data-act=goal-expand]'))
-        goalSwipe = { id: e.pointerId, el: goalrow, startX: e.clientX, startY: e.clientY, old: goalrow.classList.contains('revealed') ? -130 : goalrow.classList.contains('revealed-freeze') ? 130 : 0 };
+    if (goalrow && !e.target.closest('.goal-row-actions,.lv114-pause-action,button[data-act=once-complete],button[data-act=goal-expand]'))
+        goalSwipe = { id: e.pointerId, el: goalrow, startX: e.clientX, startY: e.clientY, old: goalrow.classList.contains('revealed') ? -190 : goalrow.classList.contains('revealed-freeze') ? 130 : 0 };
     const surface = e.target.closest('#activeCard,.deck-gesture-tail');
     const card = surface?.id === 'activeCard' ? surface : surface?.closest('.deck-stack')?.querySelector('#activeCard');
     if (card && !e.target.closest('button,input,select,textarea,label') && !S.packet && !S.busy) {
@@ -126,7 +126,7 @@ document.addEventListener('pointermove', e => {
         const dx = e.clientX - goalSwipe.startX, dy = e.clientY - goalSwipe.startY;
         if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy) * 1.25) {
             goalSwipe.el.classList.add('dragging');
-            goalSwipe.el.style.setProperty('--row-shift', Math.max(-130, Math.min(130, goalSwipe.old + dx)) + 'px');
+            goalSwipe.el.style.setProperty('--row-shift', Math.max(-190, Math.min(130, goalSwipe.old + dx)) + 'px');
         }
     }
     if (gesture && e.pointerId === gesture.id) {
@@ -155,7 +155,7 @@ document.addEventListener('pointerup', e => {
         sw.el.style.removeProperty('--row-shift');
         if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) {
             suppressClickUntil = Date.now() + 280;
-            document.querySelectorAll('.goal-swipe.revealed').forEach(x => { if (x !== sw.el)
+            document.querySelectorAll('.goal-swipe.revealed,.goal-swipe.revealed-freeze').forEach(x => { if (x !== sw.el)
                 x.classList.remove('revealed','revealed-freeze'); });
             sw.el.classList.toggle('revealed', dx < 0);
             sw.el.classList.toggle('revealed-freeze', dx > 0 && !sw.el.classList.contains('once-swipe'));

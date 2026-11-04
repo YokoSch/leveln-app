@@ -374,7 +374,6 @@ async function saveDay(form) {
     S.cardDrafts.clear();
     await sync();
     await reconcileWallet();
-    if(S.tutorialStage==='correct'){await lv114TutorialFinish();return;}
     render();
     toast('Tagesdaten gespeichert');
     maybeCheckin(true);
@@ -383,7 +382,7 @@ async function saveDay(form) {
 function renderModal() { if (!S.modal) {
     $('#modalRoot').innerHTML = '';
     return;
-} if (S.modal.type === 'intro') return lv11IntroModal(); if (S.modal.type === 'freeze-shop') return lv11FreezeShop(); if (S.modal.type === 'profile')
+} if (S.modal.type === 'handbook-hint') return lv114HandbookHint(); if (S.modal.type === 'freeze-shop') return lv11FreezeShop(); if (S.modal.type === 'profile')
     return profileModal(); if (S.modal.type === 'skill')
     return skillModal(); return renderModal05(); }
 

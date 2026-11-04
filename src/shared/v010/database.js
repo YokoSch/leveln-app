@@ -50,8 +50,17 @@ async function setup(){
   if(!S.started){await saveMeta('v04StartedOn',nowDay());S.started=nowDay();}
   S.skills=await dbAll('skills');
   S.deckKind='build';S.deckManagerKind='build';S.deckManagerOpen=false;S.statSkill='all';
-  await reconcile();lv114TutorialResume();applyTheme();render();
-  if(firstLaunch&&!meta('introCompleted',false))lv11IntroOpen();else maybeCheckin();
+  await reconcile();
+  // Remove any discontinued 0.11.4 tutorial session without editing quests,
+  // entries, XP, wallet balances or the established schema (version 5).
+  if(meta('intro114Stage',null))await saveMeta('intro114Stage',null);
+  S.tutorialStage=null;
+  applyTheme();render();
+  if(firstLaunch&&!meta('handbookHintSeen',false)){
+    await saveMeta('handbookHintSeen',true);
+    S.modal={type:'handbook-hint'};
+    renderModal();
+  }else maybeCheckin();
   if('serviceWorker' in navigator && location.protocol==='https:')navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(console.warn);
 }
 

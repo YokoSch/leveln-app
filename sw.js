@@ -1,4 +1,4 @@
-const CACHE='leveln-pwa-v0.11.4-20261104-1';
+const CACHE='leveln-pwa-v0.11.4-20261104-korrektur2';
 const ASSETS=[
   "./",
   "./assets/flame-tiling.svg",
@@ -127,7 +127,6 @@ const ASSETS=[
   "./src/shared/ui/elemente.js",
   "./src/shared/ui/icon-galerie.js",
   "./src/shared/ui/intro-shop.js",
-  "./src/shared/ui/tutorial-0114.js",
   "./src/shared/v010/assets.js",
   "./src/shared/v010/bedienung.js",
   "./src/shared/v010/database.js",

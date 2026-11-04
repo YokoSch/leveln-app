@@ -14,7 +14,7 @@ const changedIn011=new Set(['oneTimeGoals','lv10DeckGoals','lv11Progress','cardH
  'reconcileWallet','editGoalModal','saveGoal','goalsView','monthCalendar','calendarHTML',
  'lv113HistoryForm','lv113HistoryRow','lv113SyncHistoryInputs','lv113AddHistoryRange',
  'lv113ReadHistory','lv113PrepareHistoricalRevision','lv113PreviewHistoricalWallet',
- 'lv113DailyBadge','lv113PeriodFrames','lv113ManagerRow','lv113SyncDeckViews',
+ 'lv113DailyBadge','lv113PeriodFrames','lv113ManagerRow','lv113SyncDeckViews','lv114HandbookHint',
  'statsView','lv11IntroFinish','saveDay','handleAction05','sync05','streakBefore','buyFreeze','xpEvents','checkinItems','reconcile','periods','outcome','stData','goals','oneTimeGoals','goalRow','badgeFor','lv113PreviewHistoricalWallet','archiveRule','onceQuestRow','lv11Progress','lv10PlayControls','startCard','todayView','cardHtml','lv11FreezeShop','lv113PeriodFrames','lv113DailyBadge']);
 let verified=0;
 for(const file of scripts){

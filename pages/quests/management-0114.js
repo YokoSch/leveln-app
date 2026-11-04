@@ -4,23 +4,19 @@
 'use strict';
 
 function lv114Row(g,archived=false){
- const id=safe(g.a.id),key=safe(g.key);
- return `<div class="lv114-quest-entry ${archived?'lv114-archived':''}">
-   ${goalRow(g,archived)}
-   <div class="lv114-quest-tools">
-    ${archived&&g.a.archivedAt?`<button data-act="quest-reopen" data-id="${id}">${ico('check')} De-Archivieren</button>`:archived?'':
-       `<button data-act="edit-goal" data-key="${key}">${ico('edit')} Bearb.</button>
-        <button data-act="archive-goal" data-key="${key}">${ico('bag')} Archiv</button>`}
-    <button class="lv114-delete" data-act="quest-delete" data-id="${id}">${ico('close')} Löschen</button>
-   </div>
- </div>`;
+ return `<div class="lv114-quest-entry ${archived?'lv114-archived':''}">${goalRow(g,archived)}</div>`;
 }
 function lv114OnceRow(a,archived=false){
+ // Keep the exact same sliding surface as recurring quests. The actions are
+ // underneath the row, never below it or floating outside.
  const id=safe(a.id);
- return `<div class="lv114-quest-entry ${archived?'lv114-archived':''}">${onceQuestRow(a)}
- <div class="lv114-quest-tools">${archived&&g.a.archivedAt?`<button data-act="quest-reopen" data-id="${id}">${ico('check')} De-Archivieren</button>`:archived?'':
- `<button data-act="once-edit" data-id="${id}">${ico('edit')} Bearb.</button><button data-act="once-archive" data-id="${id}">${ico('bag')} Archiv</button>`}
- <button class="lv114-delete" data-act="quest-delete" data-id="${id}">${ico('close')} Löschen</button></div></div>`;
+ const actions=archived?(a.archivedAt?
+   `<button data-act="quest-reopen" data-id="${id}" aria-label="De-Archivieren">${ico('check')}<small>De-Archiv</small></button>`:''):
+   `<button data-act="once-edit" data-id="${id}" aria-label="Bearbeiten">${ico('edit')}<small>Bearb.</small></button>
+    <button data-act="once-archive" data-id="${id}" aria-label="Archivieren">${ico('bag')}<small>Archiv</small></button>`;
+ const row=onceQuestRow(a).replace(/<div class="goal-row-actions">[\s\S]*?<\/div>/,
+   `<div class="goal-row-actions">${actions}<button class="lv114-delete" data-act="quest-delete" data-id="${id}" aria-label="Löschen">${ico('close')}<small>Löschen</small></button></div>`);
+ return `<div class="lv114-quest-entry ${archived?'lv114-archived':''}">${row}</div>`;
 }
 function lv114ArchiveHTML(){
  const archived=lv114ArchiveList();

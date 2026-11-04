@@ -1,15 +1,9 @@
-/* Leveln 0.11 – Inventar, Tutorial, Truhe */
+/* Leveln 0.11 – Inventar und Schatztruhen */
 .lv11-inventory{display:flex;align-items:stretch;gap:7px;margin:12px 0 16px;flex-wrap:wrap}
 .lv11-resource{display:flex;flex:1;min-width:63px;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 5px;border:1px solid var(--lv-line,var(--border));border-radius:11px;background:var(--lv-surface,var(--panel))}
 .lv11-resource span .ico{width:29px;height:29px}.lv11-resource strong{font-size:18px}.lv11-resource small{font-size:10px;color:var(--lv-muted,var(--muted));text-align:center}
 .lv11-shop-button{border:1px solid var(--lv-active,var(--level));border-radius:11px;padding:8px 12px;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:var(--lv-surface,var(--panel));color:var(--lv-text,var(--text));font-weight:800;font-size:12px}
 .lv11-shop-button .ico{width:27px;height:27px}
-.lv11-intro{text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:340px;justify-content:center}
-.lv11-intro-icon{width:95px;height:95px;display:grid;place-items:center;border:1px solid var(--lv-active,var(--level));border-radius:24px;background:var(--lv-surface-2,var(--panel2));box-shadow:0 0 22px #0d9c6233}
-.lv11-intro-icon .ico{width:68px;height:68px;color:var(--lv-active,var(--level))}
-.lv11-intro h3{font-size:22px;margin:6px 0 0}.lv11-intro p{line-height:1.65;font-size:15px;max-width:320px;margin:0}
-.lv11-intro-dots{display:flex;gap:7px;justify-content:center;margin:8px 0}.lv11-intro-dots i{display:block;width:9px;height:9px;border-radius:50%;background:var(--lv-track,var(--border))}.lv11-intro-dots .on{background:var(--lv-active,var(--level))}
-.lv11-intro-actions{width:100%;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.lv11-intro-actions button{min-height:42px}
 .lv11-freeze-shop{display:flex;flex-direction:column;gap:13px}.lv11-freeze-shop p{font-size:14px;line-height:1.5}.lv11-freeze-shop button{min-height:45px}
 .cal-icon.lv11-chest,.cal-icon.lv11-chest .ico{color:#e6a62c!important}.cal-icon.lv11-chest .ico{width:21px;height:21px;filter:drop-shadow(0 0 3px #f6c44c)}
 html.lv10-root .skill-glyph .ico,html.lv10-root .nav-avatar .ico{width:28px;height:28px}
