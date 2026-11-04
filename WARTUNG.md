@@ -10,3 +10,10 @@ Die historischen Funktionskörper sind – mit Ausnahme des Renderers, der nun d
 **Icon-Hinweis (0.11.2):** Ausschließlich die Originaldateien unter `assets/icons/mono/` bearbeiten. `npm run prepare:release` regeneriert daraus die Inline-SVG-Bibliothek und aktualisiert den PWA-Cache. Es gibt keine vereinfachten Ersatzgrafiken. Weitere Details in `ARCHITEKTUR.md`.
 
 **Update 0.11.3:** Die historischen Erfolge, die Kalender-Zeitrahmen und die duale Kartenverwaltung sind in ihren jeweiligen Seitenordnern implementiert. Details und kritische Datenregeln stehen im neuen Abschnitt „0.11.3“ der `ARCHITEKTUR.md`. Bei Änderungen an `reconcileWallet()`, `lv113PreviewHistoricalWallet()` oder `saveGoal()` **immer** `npm test` ausführen. Die Testdatei `tests/v0113-save.test.cjs` simuliert die vollständige Erst-Anlage und Korrektur von historischen Tagen einschließlich der einmaligen Glut. Schema 5 bleibt bestehen.
+
+
+## Update 0.11.4
+
+Bei Änderungen an Ressourcenlogik, Dauer-Freeze, Questentfernung und Einführung die Tests `tests/v0114.test.cjs` mit ausführen. Im Browser beide Richtungen des Questzeilen-Wischens und die 2-Sekunden-Geste der Karten testen. Der Release enthält eine eigene Installations- und Änderungsdokumentation unter `RELEASE-0.11.4.md`.
+
+Vor dem Deployment `node scripts/prepare-release.cjs` ausführen; erzeugte Icon-Bibliothek, `scripts.json` und Offline-Service-Worker dürfen nicht fehlen. Die Original-SVG-Quellen nicht durch vereinfachte Icons ersetzen.

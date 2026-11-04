@@ -30,7 +30,7 @@ async function sync05() {
     S.timeout = Math.min(10, Math.max(1, Number(meta('packetTimeout', 3)) || 3));
     S.sound = meta('sound', true) !== false;
     S.checkTime = meta('checkTime', '21:00');
-    S.wallet = meta('emberWallet', { glut: 0, inventory: 0, awarded: [], frozen: [], history: [] });
+    S.wallet = lv114NormalizeWallet(meta('emberWallet', { glut: 0, inventory: 0, awarded: [], frozen: [], history: [] }));
     S.bgMode = meta('backgroundMode', 'system');
     S.bgColor = hex(meta('backgroundColor', '#e6f8e9'), '#e6f8e9');
     S.bgImage = meta('backgroundImage', '');

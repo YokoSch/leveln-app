@@ -4,7 +4,7 @@
 'use strict';
 
 function lv113DailyBadge(g,d){
-  if(g)return g.r.period==='day'?badgeFor(g,d):'';
+  if(g)return (g.r.period==='day'||lv114HasPause(g.a,d))?badgeFor(g,d):'';
   // In der ungefilterten Ansicht sollen die Wochen-Kalenderflammen nicht
   // verschwinden, nur weil keine Quest ausgewählt ist.
   const daily=goals(d).filter(x=>!isOnce(x.a)&&x.r.period==='day');
@@ -28,15 +28,15 @@ function lv113PeriodFrames(g,visibleStart,cells){
     const from=p.start<visibleStart?visibleStart:p.start;
     const to=p.end>visibleEnd?visibleEnd:p.end;
     const a=dayDiff(visibleStart,from),b=dayDiff(visibleStart,to);
-    const v=outcome(g,p),success=v.state==='success';
-    const freeze=v.frozen;
+    const v=outcome(g,p),success=v.state==='success'&&!v.paused;
+    const freeze=v.frozen||v.paused;
     const firstRow=Math.floor(a/7),lastRow=Math.floor((b-1)/7);
     const midpoint=Math.floor((a+b-1)/2);
     for(let row=firstRow;row<=lastRow;row++){
       const first=Math.max(a,row*7),end=Math.min(b,(row+1)*7),col=first-row*7+1;
       const flame=success&&row===Math.floor(midpoint/7);
       const frost=freeze&&!success&&row===Math.floor(midpoint/7);
-      result.push(`<div aria-hidden="true" class="lv113-period-frame ${success?'success':'pending'} ${first===a?'edge-start':''} ${end===b?'edge-end':''}" style="grid-column:${col}/span ${end-first};grid-row:${row+1};--lv113-period-color:${goalColor(g)}">
+      result.push(`<div aria-hidden="true" class="lv113-period-frame ${v.paused?'lv114-paused':success?'success':'pending'} ${first===a?'edge-start':''} ${end===b?'edge-end':''}" style="grid-column:${col}/span ${end-first};grid-row:${row+1};--lv113-period-color:${goalColor(g)}">
         ${flame?`<span class="lv113-period-flame">${ico('flame')}</span>`:frost?`<span class="lv113-period-flame frost">${ico('snow')}</span>`:''}</div>`);
     }
   }

@@ -21,10 +21,10 @@ assert(!E('todayView().includes("lv10-deck-toggle")'),'no duplicate deck buttons
 assert(!E('todayView().includes("Wischen: seitlich")'),'no persistent gesture instructions');
 assert(E('cardHtml(oneTimeGoals(nowDay())[0]).includes("EINMALIG")'));
 assert(E('characterView().includes("freeze-shop")'));
-assert(E('characterView().includes("aktive Streaks")'));
+assert(E('characterView().includes("Quest-Shop")'));
 assert(!E('settingsView().includes("Freeze kaufen")'));
 assert(E('settingsView().includes("intro-open")'));
-assert.equal(E('LV11_INTRO.length'),5);
+assert.equal(E('LV11_INTRO.length'),3);
 const managerHtml=E('lv10ManagerMini(fixture.activities[0])');
 assert(managerHtml.includes('lv11-mini-visible'),'thumb visibility checkbox');
 assert(managerHtml.includes('lv10-mini-card'),'draggable thumbnails');

@@ -119,7 +119,7 @@ function lv113PrepareHistoricalRevision(out,old,plan){
 
 function lv113PreviewHistoricalWallet(out,plan,old){
   if(old)return null; // no second historical Glut credit after creation
-  const w=structuredClone(S.wallet||{glut:0,inventory:0,awarded:[],frozen:[],history:[]});
+  const w=lv114NormalizeWallet(S.wallet);
   w.awarded||=[];w.history||=[];
   if(!plan.writes.length)return w;
   const previousActivities=S.activities,previousEntries=S.entries,previousEM=EM;
@@ -138,7 +138,7 @@ function lv113PreviewHistoricalWallet(out,plan,old){
         if(run%10===0){
           const key=`${frozenKey(g,p)}|milestone-${run}`;
           if(!w.awarded.includes(key)){
-            w.awarded.push(key);w.glut++;
+            w.awarded.push(key);lv114Account(w,out.id).glut++;w.glut++;
             w.history.push({type:'glut-earned',source:'historical-once',key,at:new Date().toISOString()});
           }
         }

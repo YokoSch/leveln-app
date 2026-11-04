@@ -39,16 +39,11 @@ function calMove(step) { let d = asDate(S.calAnchor); if (S.calView === 'week')
     d.setFullYear(d.getFullYear() + step); if (S.calView === 'multi')
     d.setFullYear(d.getFullYear() + step * 4); S.calAnchor = iso(d); }
 
-async function archiveRule(key) { if (!confirm('Dieses Ziel ab heute archivieren? Vergangene Einträge bleiben erhalten.'))
-    return; const g = goalByKey(key); if (!g)
-    return; const a = structuredClone(g.a), today = nowDay(); const live = rules(a, today), remaining = live.filter(r => r.id !== g.r.id); if (live.length === 1) {
-    a.archivedAt = `${today}T12:00:00`;
+async function archiveRule(key){
+  const g=goalByKey(key);if(!g||!confirm('Quest archivieren? Alle Erfolge bleiben erhalten.'))return;
+  const a={...structuredClone(g.a),archivedAt:new Date().toISOString()};
+  await dbPut('activities',a);await sync();S.goalExpanded=null;render();toast('Quest archiviert');
 }
-else {
-    a.revisions = a.revisions.filter(x => x.from !== today);
-    a.revisions.push({ ...structuredClone(revision(a, today)), from: today, rules: remaining });
-    a.revisions.sort((x, y) => x.from.localeCompare(y.from));
-} await dbPut('activities', a); await sync(); S.goalExpanded = null; S.swipedGoal = null; render(); toast('Ziel archiviert; Historie bleibt erhalten'); }
 
 function skillOptions(selected = '', allowNew = true) { return `<option value="">Skill wählen</option>${S.skills.map(s => `<option value="${safe(s.id)}" ${selected === s.id ? 'selected' : ''}>${safe(s.name)}</option>`).join('')}${allowNew ? '<option value="__new__">＋ Neuen Skill erstellen …</option>' : ''}`; }
 

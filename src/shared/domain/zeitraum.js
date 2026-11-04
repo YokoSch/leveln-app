@@ -54,6 +54,7 @@ function allDays(start, end, cap = 4000) { const a = []; for (let x = start; x <
 function periods(g, end = nowDay()) {
     const { a, r } = g;
     let start = (a.createdAt || S.started || end).slice(0, 10), out = [];
+    if (a.removedAt && end >= a.removedAt.slice(0,10))end=dayAdd(a.removedAt.slice(0,10),-1);
     if (a.archivedAt && end >= a.archivedAt.slice(0, 10))
         end = dayAdd(a.archivedAt.slice(0, 10), -1);
     if (start > end)
@@ -99,13 +100,14 @@ function finalLocked(p) { return dayAdd(p.end, 1) <= nowDay(); }
 
 function frozenKey(g, p) { return `${g.key}|${p.start}`; }
 
-function outcome(g, p) { const a = assessment(g, p); return { ...a, frozen: S.wallet?.frozen?.includes(frozenKey(g, p)) || false }; }
+function outcome(g, p) { const a = assessment(g, p); return { ...a, frozen: S.wallet?.frozen?.includes(frozenKey(g, p)) || false, paused: lv114PeriodProtected(g,p) }; }
 
 function stData(g) {
     let ps = periods(g), run = 0, best = 0;
     for (let p of ps) {
         const o = outcome(g, p);
-        if (o.state === 'success') {
+        if (o.paused) { best=Math.max(best,run); }
+        else if (o.state === 'success') {
             run++;
             best = Math.max(best, run);
         }
@@ -138,7 +140,7 @@ function canEdit(d) { return d >= dayAdd(nowDay(), -1) && d <= nowDay(); }
 
 function goals(d = nowDay()) {
     return S.activities.flatMap(a => { if (isOnce(a))
-        return []; const started = (a.createdAt || S.started || d).slice(0, 10); if (started > d || a.archivedAt?.slice(0, 10) <= d)
+        return []; const started = (a.createdAt || S.started || d).slice(0, 10); if (started > d || a.removedAt || a.archivedAt?.slice(0, 10) <= d)
         return []; return rules(a, d).map((r, i) => ({ a, r, index: i, key: `${a.id}|${r.id}` })); })
         .concat(oneTimeGoals(d)).sort((g, h) => (g.a.order ?? 0) - (h.a.order ?? 0) || g.index - h.index);
 }
@@ -165,4 +167,4 @@ function effectiveFate(id) { const f = meta('skillFates', {}); const seen = new 
 
 function onceQuestState(a) { return a.completedAt ? 'completed' : a.archivedAt ? 'archived' : nowDay() < a.availableFrom ? 'planned' : a.availableUntil && nowDay() > a.availableUntil ? 'expired' : 'available'; }
 
-function oneTimeGoals(d) { return S.activities.filter(a => d === nowDay() && isOnce(a) && a.cardShown !== false && a.availableFrom <= d && (!a.availableUntil || a.availableUntil >= d) && !a.completedAt && !a.archivedAt).map(a => ({ a, r: { id: 'once', period: 'day', minutes: null, count: null }, index: 0, key: onceKey(a) })); }
+function oneTimeGoals(d) { return S.activities.filter(a => d === nowDay() && isOnce(a) && a.cardShown !== false && a.availableFrom <= d && (!a.availableUntil || a.availableUntil >= d) && !a.completedAt && !a.archivedAt && !a.removedAt).map(a => ({ a, r: { id: 'once', period: 'day', minutes: null, count: null }, index: 0, key: onceKey(a) })); }

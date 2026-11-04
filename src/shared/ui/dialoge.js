@@ -244,7 +244,7 @@ function handleAction05(act, el) {
             return;
         }
         if (act === 'buy') {
-            await buyFreeze(null);
+            await buyFreeze(null,S.shopQuestId);
             return;
         }
         if (act === 'refuse') {
@@ -374,6 +374,7 @@ async function saveDay(form) {
     S.cardDrafts.clear();
     await sync();
     await reconcileWallet();
+    if(S.tutorialStage==='correct'){await lv114TutorialFinish();return;}
     render();
     toast('Tagesdaten gespeichert');
     maybeCheckin(true);

@@ -14,18 +14,20 @@ function render(){
   const pageHtml=todayMode?todayView():S.page==='goals'?goalsView():S.page==='character'?characterView():S.page==='stats'?statsView():settingsView();
   app.innerHTML=(typeof LevelnPageFrames!=='undefined')?LevelnPageFrames.wrap(S.page,pageHtml):pageHtml;
   if(S.page!=='deck-manager')nav();
-  renderModal();lv10Paint();
+  renderModal();lv10Paint();lv114TutorialRender();
   if(S.packet)armTimer();
 }
 
 function handleAction(act,el){
+  if(['tutorial-stop','tutorial-finish','tutorial-create','tutorial-show-card','tutorial-correct'].includes(act)){lv114TutorialAction(act).catch(showError);return;}
   if(act==='quest-more'){S.questMoreOpen=!S.questMoreOpen;render();return;}
   if(S.questMoreOpen&&['edit-day','deck-open','quest-filter','new'].includes(act))S.questMoreOpen=false;
   if(act==='freeze-shop'){S.modal={type:'freeze-shop'};renderModal();return;}
+  if(['quest-delete','quest-delete-preserve','quest-delete-all','quest-reopen','reopen-empty','reopen-history','reopen-add','reopen-remove','archive-toggle','quest-pause'].includes(act)){lv114HandleQuestAction(act,el).catch(showError);return;}
   if(act==='intro-open'){lv11IntroOpen();return;}
   if(act==='intro-skip'){lv11IntroFinish().catch(showError);return;}
   if(act==='intro-back'){S.introIndex=Math.max(0,(S.introIndex||0)-1);renderModal();return;}
-  if(act==='intro-next'){if((S.introIndex||0)>=LV11_INTRO.length-1)lv11IntroFinish().catch(showError);else{S.introIndex++;renderModal();}return;}
+  if(act==='intro-next'){if((S.introIndex||0)>=LV11_INTRO.length-1)lv114TutorialBegin().catch(showError);else{S.introIndex++;renderModal();}return;}
 
   if(act==='export'){S.moreOpen=false;nav();exportBackup().catch(showError);return;}
   if(act==='more-toggle'){S.moreOpen=!S.moreOpen;nav();return;}

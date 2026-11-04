@@ -1,4 +1,14 @@
-# Leveln 0.11.3 – Historische Erfolge, Kalender und Kartenverwaltung
+# Leveln 0.11.4 – Questverwaltung, Dauer-Freeze und interaktive Einführung
+
+**Aktuelle Version: 0.11.4** · Vollständige lokal gespeicherte iPhone-PWA.
+
+**Alle Änderungen, die Installation und Datenhinweise stehen in [RELEASE-0.11.4.md](RELEASE-0.11.4.md).**
+
+Das Update ergänzt questgebundene Glut und Freezes, zwei Löscharten plus Archiv und Wiederherstellung, kostenlosen Dauer-Freeze, größere Kartengesten sowie eine echte, geführte Einführung. Die 64 Original-SVGs bleiben erhalten. Vor dem Update eine JSON-Sicherung erstellen und die bisherige Homescreen-App **nicht** löschen. Das Datenformat bleibt 5.
+
+---
+
+## Änderungen der vorherigen Version 0.11.3
 
 Diese vollständige, modularisierte iPhone-PWA basiert auf **Leveln 0.11.2**. Die **64 detaillierten Original-SVGs** und alle bisherigen Leveln-/Mana-Spielregeln bleiben erhalten. Die größere künstlerische Neugestaltung ist **nicht** Bestandteil dieses Updates.
 

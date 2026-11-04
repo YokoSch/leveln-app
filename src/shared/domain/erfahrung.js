@@ -10,6 +10,7 @@ function streakBefore(g, at, w) { let run = 0; for (let previous of periods(g, d
     if (previous.end > at.start)
         continue;
     let v = assessment(g, previous);
+    if (lv114PeriodProtected(g,previous))continue;
     if (v.state === 'success')
         run++;
     else if (w.frozen.includes(frozenKey(g, previous))) { }
@@ -17,76 +18,63 @@ function streakBefore(g, at, w) { let run = 0; for (let previous of periods(g, d
         run = 0;
 } return run; }
 
-async function reconcileWallet() {
-    let w = structuredClone(S.wallet), changed = false;
-    const items = [];
-    for (let g of goals().filter(g => !isOnce(g.a)))
-        for (let p of periods(g)) {
-            if (!finalLocked(p) || p.end <= S.started || (g.a.historicalGlutLockDate && p.end <= g.a.historicalGlutLockDate))
-                continue;
-            items.push({ g, p });
-        }
-    items.sort((x, y) => x.p.end.localeCompare(y.p.end) || x.g.key.localeCompare(y.g.key));
-    // Keep prior freeze decisions immutable; process each failed period once, even after offline gaps.
-    const processed = new Set((w.history || []).filter(x => x.type === 'settled').map(x => x.key));
-    for (let { g, p } of items) {
-        const key = frozenKey(g, p);
-        if (processed.has(key))
-            continue;
-        const v = assessment(g, p);
-        if (v.state === 'pending')
-            continue;
-        if (v.state === 'fail' && !v.hasUnknown && w.inventory > 0 && streakBefore(g, p, w) > 0) {
-            w.inventory--;
-            w.frozen.push(key);
-            w.history.push({ type: 'freeze-used', key, at: new Date().toISOString() });
-        }
-        w.history.push({ type: 'settled', key, status: v.state, at: new Date().toISOString() });
-        changed = true;
+async function reconcileWallet(){
+  const w=lv114NormalizeWallet(S.wallet),items=[];let changed=!S.wallet?.byQuest;
+  for(const g of goals().filter(g=>!isOnce(g.a))){
+    if(g.a.removedAt)continue;
+    for(const p of periods(g)){
+      if(!finalLocked(p)||p.end<=S.started||g.a.historicalGlutLockDate&&p.end<=g.a.historicalGlutLockDate||g.a.reopenedGlutLockUntil&&p.end<=g.a.reopenedGlutLockUntil||lv114PeriodProtected(g,p))continue;
+      items.push({g,p});
     }
-    // Count streaks, including already frozen failed periods, and issue only unique 10th-step milestones.
-    for (let g of goals().filter(g => !isOnce(g.a))) {
-        let successCount = 0;
-        let chain = 0;
-        for (let p of periods(g)) {
-            if (!finalLocked(p))
-                continue;
-            const v = assessment(g, p), key = frozenKey(g, p);
-            if (v.state === 'success') {
-                chain++;
-                successCount++;
-                if (chain > 0 && chain % 10 === 0 && p.end > S.started && (!g.a.historicalGlutLockDate || p.end > g.a.historicalGlutLockDate)) {
-                    let milestone = `${key}|milestone-${chain}`;
-                    if (!w.awarded.includes(milestone)) {
-                        w.awarded.push(milestone);
-                        w.glut++;
-                        w.history.push({ type: 'glut-earned', key: milestone, at: new Date().toISOString() });
-                        changed = true;
-                    }
-                }
-            }
-            else if (w.frozen.includes(key)) { /* protected without increment */ }
-            else if (v.state === 'fail')
-                chain = 0;
+  }
+  items.sort((a,b)=>a.p.end.localeCompare(b.p.end)||a.g.key.localeCompare(b.g.key));
+  const settled=new Set(w.history.filter(x=>x.type==='settled').map(x=>x.key));
+  for(const {g,p} of items){
+    const key=frozenKey(g,p),q=lv114Account(w,g.a.id);
+    if(settled.has(key))continue;
+    const v=assessment(g,p);
+    if(v.state==='pending')continue;
+    if(v.state==='fail'&&!v.hasUnknown&&q.inventory>0&&streakBefore(g,p,w)>0){
+      q.inventory--;w.frozen.push(key);w.history.push({type:'freeze-used',key,questId:g.a.id,at:new Date().toISOString()});
+    }
+    w.history.push({type:'settled',key,questId:g.a.id,status:v.state,at:new Date().toISOString()});changed=true;
+  }
+  for(const g of goals().filter(g=>!isOnce(g.a)&&!g.a.removedAt)){
+    let chain=0;
+    for(const p of periods(g)){
+      if(!finalLocked(p))continue;
+      if(lv114PeriodProtected(g,p))continue;
+      const v=assessment(g,p),key=frozenKey(g,p);
+      if(v.state==='success'){
+        chain++;
+        if(chain%10===0&&p.end>S.started&&(!g.a.historicalGlutLockDate||p.end>g.a.historicalGlutLockDate)&&(!g.a.reopenedGlutLockUntil||p.end>g.a.reopenedGlutLockUntil)){
+          const milestone=`${key}|milestone-${chain}`;
+          if(!w.awarded.includes(milestone)){
+            w.awarded.push(milestone);lv114Account(w,g.a.id).glut++;
+            w.history.push({type:'glut-earned',questId:g.a.id,key:milestone,at:new Date().toISOString()});changed=true;
+          }
         }
+      }else if(w.frozen.includes(key)){}else if(v.state==='fail')chain=0;
     }
-    if (changed) {
-        await saveMeta('emberWallet', w);
-        S.wallet = w;
-    }
+  }
+  const totals=lv114WalletTotals(w);w.glut=totals.glut;w.inventory=totals.inventory;
+  if(changed){await saveMeta('emberWallet',w);S.wallet=w;}
 }
 
-async function buyFreeze(useKey) { let w = structuredClone(S.wallet); if (w.glut < 5)
-    throw Error('Du brauchst 5 Glut.'); if (!useKey && w.inventory >= 2)
-    throw Error('Dein Inventar ist voll (maximal 2 Freezes).'); if (useKey && w.frozen.includes(useKey))
-    throw Error('Dieser Zeitraum ist bereits geschützt.'); w.glut -= 5; if (useKey) {
-    w.frozen.push(useKey);
-    w.history.push({ type: 'instant-freeze', key: useKey, at: new Date().toISOString() });
+async function buyFreeze(useKey,questId){
+  const id=questId||lv114ActivityFromKey(useKey)||S.shopQuestId;
+  const a=S.activities.find(a=>a.id===id);
+  if(!a||a.removedAt||a.archivedAt||isOnce(a))throw Error('Bitte eine aktive Quest im Shop auswählen.');
+  const w=lv114NormalizeWallet(S.wallet),q=lv114Account(w,id);
+  if(q.glut<5)throw Error('Diese Quest braucht 5 Glut für einen Freeze.');
+  if(!useKey&&q.inventory>=2)throw Error('Diese Quest hat bereits zwei Freezes.');
+  if(useKey&&w.frozen.includes(useKey))throw Error('Dieser Zeitraum ist bereits geschützt.');
+  q.glut-=5;
+  if(useKey){w.frozen.push(useKey);w.history.push({type:'instant-freeze',key:useKey,questId:id,at:new Date().toISOString()});}
+  else{q.inventory++;w.history.push({type:'freeze-bought',questId:id,at:new Date().toISOString()});}
+  Object.assign(w,lv114WalletTotals(w));await saveMeta('emberWallet',w);S.wallet=w;
+  render();toast(useKey?'Streak gerettet!':'Freeze für diese Quest gekauft');
 }
-else {
-    w.inventory++;
-    w.history.push({ type: 'freeze-bought', at: new Date().toISOString() });
-} await saveMeta('emberWallet', w); S.wallet = w; render(); toast(useKey ? 'Streak gerettet!' : 'Freeze gekauft'); }
 
 function rateBundles(a, d) { return revision(a, d).skillRates || { minutes: [], count: [] }; }
 
@@ -107,7 +95,7 @@ function xpEvents() {
         for (const g of allGoals().filter(g => g.a.id === a.id)) {
             if (a.kind === 'build') {
                 for (const e of S.entries) {
-                    if (e.date > nowDay() || a.archivedAt?.slice(0, 10) <= e.date || e.ruleId && e.ruleId !== g.r.id || e.activityId !== a.id)
+                    if (e.date > nowDay() || lv114HasPause(a,e.date) || (a.removedAt && e.date>=a.removedAt.slice(0,10)) || a.archivedAt?.slice(0, 10) <= e.date || e.ruleId && e.ruleId !== g.r.id || e.activityId !== a.id)
                         continue;
                     if (!e.ruleId && (g.index !== 0 || EM.has(entryKey(g, e.date))))
                         continue;
@@ -124,7 +112,7 @@ function xpEvents() {
             }
             else {
                 for (const p of periods(g)) {
-                    if (p.end > nowDay() || a.archivedAt && p.end > a.archivedAt.slice(0, 10))
+                    if (p.end > nowDay() || lv114PeriodProtected(g,p) || (a.removedAt && p.end > a.removedAt.slice(0,10)) || a.archivedAt && p.end > a.archivedAt.slice(0, 10))
                         continue;
                     const assess = assessment(g, p), historical = p.rule || g.r;
                     if (!assess.complete || assess.hasEstimated)
@@ -168,7 +156,7 @@ function unknownFields(g) { const v = { mode: 'refused', status: 'no', source: '
 
 function recordedConsumption(g, d) { const e = entry(g, d); return !!e && e.source !== 'unknown' && e.source !== 'auto' && e.source !== 'refused' && metricKeys(g.r).some(k => finite(e[k]) && e[k] > 0); }
 
-function checkinItems() { const d = dayAdd(nowDay(), -1); return goals(d).filter(g => !isOnce(g.a) && g.a.kind === 'reduce' && !recordedConsumption(g, d) && !['zero-confirmed', 'unknown'].includes(entry(g, d)?.source)).map(g => ({ g, d })); }
+function checkinItems() { const d = dayAdd(nowDay(), -1); return goals(d).filter(g => !isOnce(g.a) && !lv114HasPause(g.a,d) && g.a.kind === 'reduce' && !recordedConsumption(g, d) && !['zero-confirmed', 'unknown'].includes(entry(g, d)?.source)).map(g => ({ g, d })); }
 
 function assessment(g, p) {
     const a = g.a, r = p.rule || rules(a, p.start).find(x => x.id === g.r.id) || g.r, keys = metricKeys(r);
@@ -229,7 +217,7 @@ async function reconcile() {
     const cutoff = dayAdd(nowDay(), -1), fresh = [];
     if (S.started) {
         for (let d = S.started, i = 0; d <= cutoff && i < 3650; d = dayAdd(d, 1), i++) {
-            for (const g of goals(d).filter(x => !isOnce(x.a))) {
+            for (const g of goals(d).filter(x => !isOnce(x.a) && !lv114HasPause(x.a,d))) {
                 if (entry(g, d) || g.a.kind === 'reduce' && d === cutoff)
                     continue;
                 const fields = g.a.kind === 'reduce' ? unknownFields(g) : { mode: 'down', status: 'no', source: 'zero-auto', estimated: false, ...Object.fromEntries(metricKeys(g.r).map(k => [k, 0])) };

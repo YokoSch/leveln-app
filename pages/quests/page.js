@@ -144,11 +144,11 @@ async function saveGoal(form){
     }
     if(historicalWallet)t.objectStore('meta').put({key:'emberWallet',value:historicalWallet});
   });
-  S.modal=null;S.cardDrafts.clear();await sync();S.page='goals';render();toast('Quest gespeichert');
+  S.modal=null;S.cardDrafts.clear();await sync();if(await lv114TutorialAfterGoal(out))return;S.page='goals';render();toast('Quest gespeichert');
 }
 
 function goalsView(){
-  const archived=allGoals().filter(g=>!isOnce(g.a)&&!goals().some(x=>x.key===g.key)),once=S.activities.filter(isOnce);
+  const once=S.activities.filter(a=>isOnce(a)&&!a.removedAt);
   const filters=[['all','Alle'],['once','Einmalig'],['day','Täglich'],['week','Wöchentlich'],['month','Monatlich'],['year','Jährlich'],['archive','Archiv']];
   const show=p=>S.questFilter==='all'||S.questFilter===p;
   return `<div class="page-heading"><span class="eyebrow">DEIN ABENTEUER</span><h1>Quests</h1></div>
@@ -162,7 +162,7 @@ function goalsView(){
       </div>`:''}</div>
       <button class="thin-button add-quest-button" data-act="new">${ico('plus')}<span>Neue Quest</span></button></div>
     <div class="quest-filter-bar">${filters.map(([k,v])=>`<button data-act="quest-filter" data-filter="${k}" class="quest-filter ${S.questFilter===k?'selected':''}">${v}</button>`).join('')}</div>
-    ${show('once')?`<section class="goal-section"><h3>${ico('scroll')} EINMALIGE QUESTS</h3>${once.filter(a=>!a.archivedAt&&!a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine offenen Missionen</p>'}</section>`:''}
-    ${goalGroups().filter(gr=>show(gr.p)).map(gr=>`<section class="goal-section"><h3>${({day:'TÄGLICHE',week:'WÖCHENTLICHE',month:'MONATLICHE',year:'JÄHRLICHE'})[gr.p]} QUESTS</h3>${gr.items.map(g=>goalRow(g)).join('')||'<p class="muted">Noch keine Quests</p>'}</section>`).join('')}
-    ${show('archive')?`<section class="goal-section archived-list"><h3>ARCHIV & ABGESCHLOSSEN</h3>${archived.map(g=>goalRow(g,true)).join('')}${once.filter(a=>a.archivedAt||a.completedAt).map(onceQuestRow).join('')||'<p class="muted">Keine archivierten Quests</p>'}</section>`:''}</div>`;
+    ${show('once')?`<section class="goal-section"><h3>${ico('scroll')} EINMALIGE QUESTS</h3>${once.filter(a=>!a.archivedAt&&!a.completedAt).map(a=>lv114OnceRow(a)).join('')||'<p class="muted">Keine offenen Missionen</p>'}</section>`:''}
+    ${goalGroups().filter(gr=>show(gr.p)).map(gr=>`<section class="goal-section"><h3>${({day:'TÄGLICHE',week:'WÖCHENTLICHE',month:'MONATLICHE',year:'JÄHRLICHE'})[gr.p]} QUESTS</h3>${gr.items.map(g=>lv114Row(g)).join('')||'<p class="muted">Noch keine Quests</p>'}</section>`).join('')}
+    ${(S.questFilter==='all'||S.questFilter==='archive')?lv114ArchiveHTML():''}</div>`;
 }

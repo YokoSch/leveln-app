@@ -198,3 +198,19 @@ Die Originaldateien enthalten teilweise `<mask id="...">`-Elemente. Bei mehreren
 - Cache-Version: `leveln-pwa-v0.11.3-20261102-1` (`scripts/refresh-sw.cjs`).
 - Datenformat 5 bleibt. Nutzer müssen nicht neu installieren. **Vor dem Update lokale JSON-Sicherung anlegen.**
 - Ein vollständiger iOS-Safari-Pointer-/Layouttest konnte hier nicht ausgeführt werden. Die neue Drag-Animation wurde durch Logik- und Quelltextprüfungen kontrolliert, nicht durch reale Fingerbewegungen. Vor produktivem Einsatz auf dem Zielgerät testen.
+
+
+## Version 0.11.4 – Datenfluss und Module
+
+- `src/shared/domain/v0114.js`: per-Quest-Konto `emberWallet.byQuest[activityId]` mit `glut` und `inventory`, konservative Migration der alten gemeinsamen Werte, Dauer-Freeze-Bereiche (`pauseRanges`), historische Lücken.
+- `src/shared/domain/erfahrung.js`: questgebundene automatische Streak-Abrechnung (`reconcileWallet()`), Käufe (`buyFreeze()`), keine XP während Dauer-Freeze. Frühere Glut nach De-Archivierung ist durch `reopenedGlutLockUntil` gesperrt.
+- `pages/quests/management-0114.js`: Archiv- und Löschaktionen, inklusive atomarer Entfernung der Questeinträge bei „Alles löschen“, Form für Nachträge beim De-Archivieren und Dauer-Freeze-Schalter.
+- `src/shared/ui/tutorial-0114.js`: geführter Zustand `intro114Stage`, echte Questerstellung und Buchung; kein automatischer Testeintrag.
+- `src/styles/v0114.css`: Kartenergomomie, sichtbare Rückkarten, verbreiterter Glow, Questbuttons, Freeze-Aktion und Tutor-Hinweise.
+- `src/shared/ui/intro-shop.js`: kurzer philosophischer Einstieg und Shop mit Quest-Auswahl.
+- `pages/statistik/page.js`: virtuelle Statistikkategorie „Vergangenes“ für `activities[].removedAt`.
+- `tests/v0114.test.cjs`: neue Regressionen zu Questbeständen, Pause, Archiv, Wiederherstellung, Löschung und Tutorial.
+
+Die Quest bleibt nach dauerhaftem Entfernen mit erhaltenen Erfolgen als `activities`-Datensatz gespeichert; nur `removedAt` blendet sie aus. Das erlaubt korrekte historische Skill- und Charakter-XP ohne künstliche Sammelbuchungen. Bei vollständiger Löschung werden Quest, Tageswerte, Overrides und Questkonto in einer IndexedDB-Transaktion entfernt.
+
+**Datenkonsistenz:** Glut ist nicht übertragbar. Unzuordenbare Altkontobestände werden in `legacyUnassigned` konserviert, jedoch nicht als kaufbares Quest-Guthaben verwendet. Das Backupformat 5 und der DB-Name `progress-private-v1` bleiben unverändert.

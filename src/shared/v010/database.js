@@ -50,7 +50,7 @@ async function setup(){
   if(!S.started){await saveMeta('v04StartedOn',nowDay());S.started=nowDay();}
   S.skills=await dbAll('skills');
   S.deckKind='build';S.deckManagerKind='build';S.deckManagerOpen=false;S.statSkill='all';
-  await reconcile();applyTheme();render();
+  await reconcile();lv114TutorialResume();applyTheme();render();
   if(firstLaunch&&!meta('introCompleted',false))lv11IntroOpen();else maybeCheckin();
   if('serviceWorker' in navigator && location.protocol==='https:')navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(console.warn);
 }
@@ -73,7 +73,7 @@ async function importBackup(file){
 async function exportBackup(){
   const fileName=`Leveln-Backup-${nowDay()}.json`;
   const data={activities:S.activities,entries:S.entries,overrides:S.overrides,meta:S.meta,skills:S.skills};
-  const blob=new Blob([JSON.stringify({format:'progress-local-backup',version:5,exportedAt:new Date().toISOString(),appVersion:'0.11.3',data},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({format:'progress-local-backup',version:5,exportedAt:new Date().toISOString(),appVersion:'0.11.4',data},null,2)],{type:'application/json'});
   const file=new File([blob],fileName,{type:'application/json'});
   if(navigator.share&&navigator.canShare?.({files:[file]})){
     try{await navigator.share({files:[file]});return;}catch(error){if(error?.name==='AbortError')return;}

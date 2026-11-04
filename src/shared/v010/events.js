@@ -61,16 +61,17 @@ document.addEventListener('pointermove',e=>{
   if(gesture&&gesture.id===e.pointerId){
     const dx=e.clientX-gesture.x,dy=e.clientY-gesture.y;
     if(dy>83&&Math.abs(dx)<75&&!lv10GestureTimer){
+      gesture.el.classList.add('lv114-holding');
       lv10GestureTimer=setTimeout(()=>{
-        if(gesture){gesture.el.style.transform='';gesture=null;lv10ManagerOpen();vibrate();}
+        if(gesture){gesture.el.style.transform='';gesture.el.classList.remove('lv114-holding');gesture=null;lv10ManagerOpen();vibrate();}
         lv10GestureTimer=null;
-      },540);
-    }else if((dy<68||Math.abs(dx)>88)&&lv10GestureTimer){clearTimeout(lv10GestureTimer);lv10GestureTimer=null;}
+      },2000);
+    }else if((dy<68||Math.abs(dx)>88)&&lv10GestureTimer){clearTimeout(lv10GestureTimer);lv10GestureTimer=null;gesture?.el.classList.remove('lv114-holding');}
   }
 },{capture:true,passive:false});
 
 document.addEventListener('pointerup',e=>{
-  if(lv10GestureTimer){clearTimeout(lv10GestureTimer);lv10GestureTimer=null;}
+  if(lv10GestureTimer){clearTimeout(lv10GestureTimer);lv10GestureTimer=null;gesture?.el.classList.remove('lv114-holding');}
   if(lv10Hold){e.stopPropagation();lv10HoldStop();}
   if(lv10Dragging&&e.pointerId===lv10Dragging.id){
     e.preventDefault();e.stopPropagation();lv10DragSave();

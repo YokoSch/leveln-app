@@ -19,14 +19,15 @@ function statsView(){
   const chosen=S.statGoal||'all',skill=S.statSkill||'all';
   // Denominator deliberately unfiltered (same overall baseline as 0.9).
   const total=ev.reduce((sum,e)=>sum+lv10StatValue(e,metric),0)*fac;
-  const filtered=ev.filter(e=>chosen==='all'||e.goal===chosen);
+  const filtered=ev.filter(e=>chosen==='all'||(chosen==='past'?!!goalByKey(e.goal)?.a.removedAt:e.goal===chosen));
   const parts=[],individual=S.statStack;
   const grouped=new Map();
   for(const e of filtered){
     const g=goalByKey(e.goal),val=lv10StatValue(e,metric,skill)*fac;if(val<=0)continue;
     if(!g)continue;
     let key,name,color;
-    if(skill!=='all'){
+    if(g.a.removedAt){key='past';name='Vergangenes';color='#8c91a8';}
+    else if(skill!=='all'){
       if(individual && chosen==='all'){
         key=e.goal;name=g.a.name;color=lv10StatisticColor(g.a);
       }else{
@@ -43,7 +44,7 @@ function statsView(){
   const value=parts.reduce((s,p)=>s+p.value,0),scale=total>0?Math.min(100,value/total*100):0,{start,end}=statsRange();
   return `<div class="stats-compact lv10-statistics"><div class="page-heading"><span class="eyebrow">DEINE BILANZ</span><h1>Statistik</h1></div>
   <div class="stats-controls"><div class="stats-two-filter"><label>Zeitraum<div class="stats-period">${['day','week','month','year','all'].map((p,i)=>`<button data-act="stat-period" data-period="${p}" class="${S.statPeriod===p?'selected':''}">${['Tag','Woche','Monat','Jahr','Gesamt'][i]}</button>`).join('')}</div></label>
-  <label>Quest<select id="statGoal"><option value="all">Alle Quests</option>${allGoals().map(g=>`<option value="${safe(g.key)}" ${chosen===g.key?'selected':''}>${safe(g.a.name)} · ${NAMES[g.r.period]||'Einmalig'}</option>`).join('')}</select></label>
+  <label>Quest<select id="statGoal"><option value="all">Alle Quests</option><option value="past" ${chosen==='past'?'selected':''}>Vergangenes · erhaltene Erfolge</option>${allGoals().filter(g=>!g.a.removedAt).map(g=>`<option value="${safe(g.key)}" ${chosen===g.key?'selected':''}>${safe(g.a.name)} · ${NAMES[g.r.period]||'Einmalig'}</option>`).join('')}</select></label>
   <label>Skill<select id="statSkill"><option value="all">Alle Skills</option>${S.skills.map(s=>`<option value="${safe(s.id)}" ${skill===s.id?'selected':''}>${safe(s.name)}</option>`).join('')}</select></label></div>
   <div class="stats-metric">${[['minutes','Zeit'],['count','Anzahl'],['xp','XP']].map(([k,t])=>`<button data-act="stat-metric" data-metric="${k}" class="${metric===k?'selected':''}">${t}</button>`).join('')}</div>
   <div class="stats-nav"><button class="icon-button" data-act="stat-prev" ${S.statPeriod==='all'?'disabled':''}>‹</button><span>${S.statPeriod==='all'?'Gesamter Zeitraum':`${pretty(start,{day:'numeric',month:'short',year:'numeric'})} – ${pretty(dayAdd(end,-1),{day:'numeric',month:'short',year:'numeric'})}`}</span><button class="icon-button" data-act="stat-next" ${S.statPeriod==='all'?'disabled':''}>›</button></div></div>

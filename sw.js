@@ -1,4 +1,4 @@
-const CACHE='leveln-pwa-v0.11.3-20261102-1';
+const CACHE='leveln-pwa-v0.11.4-20261104-1';
 const ASSETS=[
   "./",
   "./assets/flame-tiling.svg",
@@ -104,6 +104,7 @@ const ASSETS=[
   "./pages/quests/calendar-0113.js",
   "./pages/quests/formular.css",
   "./pages/quests/history.js",
+  "./pages/quests/management-0114.js",
   "./pages/quests/page.base.js",
   "./pages/quests/page.html",
   "./pages/quests/page.js",
@@ -119,12 +120,14 @@ const ASSETS=[
   "./src/shared/compat/events.js",
   "./src/shared/data/database.js",
   "./src/shared/domain/erfahrung.js",
+  "./src/shared/domain/v0114.js",
   "./src/shared/domain/zeitraum.js",
   "./src/shared/runtime.js",
   "./src/shared/ui/dialoge.js",
   "./src/shared/ui/elemente.js",
   "./src/shared/ui/icon-galerie.js",
   "./src/shared/ui/intro-shop.js",
+  "./src/shared/ui/tutorial-0114.js",
   "./src/shared/v010/assets.js",
   "./src/shared/v010/bedienung.js",
   "./src/shared/v010/database.js",
@@ -137,6 +140,7 @@ const ASSETS=[
   "./src/styles/v010-finish.css",
   "./src/styles/v011.css",
   "./src/styles/v0113.css",
+  "./src/styles/v0114.css",
   "./styles.css",
   "./theme/assets.css",
   "./theme/components.css",

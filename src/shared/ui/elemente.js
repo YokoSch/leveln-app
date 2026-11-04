@@ -38,9 +38,9 @@ function lv11ChestDay(g,d){
 }
 
 function badgeFor(g, d) { if (!g)
-    return ''; const p = currentPeriod(g, d); if (!p)
+    return ''; if(lv114HasPause(g.a,d))return `<span class="cal-icon lv114-pause-icon" title="Dauer-Freeze">${ico('snow')}</span>`; const p = currentPeriod(g, d); if (!p)
     return ''; let o = outcome(g, p); if (g.r.period !== 'day' && dayAdd(p.end, -1) !== d)
-    return ''; if (o.frozen)
+    return ''; if (o.paused) return ''; if (o.frozen)
     return `<span class="cal-icon snow">${ico('snow')}</span>`; if(lv11ChestDay(g,d)) return `<span class="lv113-chest-and-flame"><span class="cal-icon lv11-chest" title="Glut-Belohnung bei erfolgreichem Streak">${ico('chest')}</span>${o.state==='success'?`<span class="cal-icon fire">${ico('flame')}</span>`:''}</span>`; if (o.state === 'success')
     return `<span class="cal-icon fire" style="color:${goalColor(g)}">${ico('flame')}</span>`; return ''; }
 
@@ -105,7 +105,7 @@ function goalColor(g) { return g.r.colorEnabled === false || !g.r.color ? (g.a.k
 
 function goalRow(g, archived = false) {
     const k = safe(g.key), expanded = S.goalExpanded === g.key, selected = S.selectedGoal === g.key;
-    return `<div class="goal-swipe" data-goal="${k}"><div class="goal-row-actions"><button data-act="edit-goal" data-key="${k}" aria-label="Bearbeiten">${ico('edit')}<small>Bearbeiten</small></button>${archived ? '' : `<button data-act="archive-goal" data-key="${k}" aria-label="Archivieren">${ico('bag')}<small>Archiv</small></button>`}</div><div class="goal-row ${selected ? 'active' : ''}" style="--goal-color:${goalColor(g)}"><button data-act="goal-select" data-key="${k}" class="goal-name"><span class="goal-dot"></span><strong>${safe(g.a.name)}</strong></button><span class="goal-streak">${ico('flame')} ${stData(g).current}</span><button class="icon-button" data-act="goal-expand" data-key="${k}">${ico('chevron')}</button>${expanded ? `<div class="goal-details"><p>${safe(detailGoal(g))}</p><small>Beste Streak ${stData(g).best} · ${g.a.kind === 'reduce' ? 'Zaubern' : 'Leveln'}</small><div><button data-act="edit-day" data-day="${nowDay()}" data-key="${k}">Heute korrigieren</button><button data-act="edit-day" data-day="${dayAdd(nowDay(), -1)}" data-key="${k}">Gestern korrigieren</button></div>${freezeAction(g)}</div>` : ''}</div></div>`;
+    return `<div class="goal-swipe" data-goal="${k}"><div class="goal-row-actions"><button data-act="edit-goal" data-key="${k}" aria-label="Bearbeiten">${ico('edit')}<small>Bearbeiten</small></button>${archived ? '' : `<button data-act="archive-goal" data-key="${k}" aria-label="Archivieren">${ico('bag')}<small>Archiv</small></button>`}</div><div class="lv114-pause-action"><button data-act="quest-pause" data-id="${safe(g.a.id)}" aria-label="${lv114HasPause(g.a,nowDay())?'Dauer-Freeze beenden':'Dauer-Freeze aktivieren'}">${ico('snow')}<small>${lv114HasPause(g.a,nowDay())?'Fortsetzen':'Dauer-Freeze'}</small></button></div><div class="goal-row ${selected ? 'active' : ''}" style="--goal-color:${goalColor(g)}"><button data-act="goal-select" data-key="${k}" class="goal-name"><span class="goal-dot"></span><strong>${safe(g.a.name)}</strong></button><span class="goal-streak">${ico('flame')} ${stData(g).current}</span><button class="icon-button" data-act="goal-expand" data-key="${k}">${ico('chevron')}</button>${expanded ? `<div class="goal-details"><p>${safe(detailGoal(g))}</p><small>Beste Streak ${stData(g).best} · ${g.a.kind === 'reduce' ? 'Zaubern' : 'Leveln'}</small><div><button data-act="edit-day" data-day="${nowDay()}" data-key="${k}">Heute korrigieren</button><button data-act="edit-day" data-day="${dayAdd(nowDay(), -1)}" data-key="${k}">Gestern korrigieren</button></div></div>` : ''}</div></div>`;
 }
 
 function cardStatus(g, d) { return isOnce(g.a) ? 'open' : initialState(g, d); }
